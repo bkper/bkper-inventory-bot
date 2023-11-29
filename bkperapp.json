@@ -1,8 +1,8 @@
 {
     "id": "inventory-bot",
     "name": "Inventory Bot",
-    "clientId": "810345555447-9sa9np3moubbtbgqmbkc00dsplc3iv6a.apps.googleusercontent.com",
     "description": "Keep inventory book in sync with financial books",
+    "logoUrl": "https://static.thenounproject.com/png/2318887-200.png",
     "ownerName": "Bkper",
     "ownerLogoUrl": "https://avatars.githubusercontent.com/u/11943086?v=4",
     "ownerWebsite": "https://bkper.com",
@@ -10,5 +10,8 @@
     "repoPrivate": false,
     "deprecated": false,
     "webhookUrl": "https://us-central1-inventory-bot-405017.cloudfunctions.net/prod",
-    "apiVersion": "v5"
+    "apiVersion": "v5",
+    "events": [
+        "TRANSACTION_CHECKED"
+    ]
 }
