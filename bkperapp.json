@@ -12,6 +12,7 @@
     "webhookUrl": "https://us-central1-inventory-bot-405017.cloudfunctions.net/prod",
     "apiVersion": "v5",
     "events": [
-        "TRANSACTION_CHECKED"
+        "TRANSACTION_CHECKED",
+        "TRANSACTION_POSTED"
     ]
 }
