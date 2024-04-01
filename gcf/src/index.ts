@@ -44,9 +44,9 @@ async function handleEvent(req: Request, res: Response) {
         console.log("EVENT: ", event.type);
 
         switch (event.type) {
-            // case 'TRANSACTION_POSTED':
-            //     result = await new EventHandlerTransactionPosted().handleEvent(event);
-            //     break;
+            case 'TRANSACTION_POSTED':
+                result = await new EventHandlerTransactionPosted().handleEvent(event);
+                break;
             case 'TRANSACTION_CHECKED':
                 result = await new EventHandlerTransactionChecked().handleEvent(event);
                 break;
