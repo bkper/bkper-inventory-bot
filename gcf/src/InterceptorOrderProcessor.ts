@@ -20,17 +20,17 @@ export class InterceptorOrderProcessor {
 
         if (!transactionPayload.posted) {
             return { result: false };
-        } else {
-            return { result: "POSTED!!!" };
         }
 
-        // const quantity = this.getQuantity(baseBook, transactionPayload);
-        // if (quantity == null) {
-        //     return { result: false };
-        // }
-        // if (quantity.eq(0)) {
-        //     throw `Quantity must not be zero`;
-        // }
+        const quantity = this.getQuantity(baseBook, transactionPayload);
+        if (quantity == null) {
+            return { result: false };
+        }
+        if (quantity.eq(0)) {
+            throw `Quantity must not be zero`;
+        }
+
+        return this.processPurchase(baseBook, transactionPayload);
 
         // if (this.isPurchase(baseBook, transactionPayload)) {
         //     return this.processPurchase(baseBook, transactionPayload);
@@ -59,17 +59,16 @@ export class InterceptorOrderProcessor {
     //     return { result: responses };
     // }
 
-    // protected async processPurchase(baseBook: Book, transactionPayload: bkper.Transaction): Promise<Result> {
-    //     let exchangeAccount = this.getExchangeAccountOnPurchase(baseBook, transactionPayload);
-    //     let responses: string[] = await Promise.all(
-    //         [
-    //             this.postFees(baseBook, exchangeAccount, transactionPayload),
-    //             this.postInterestOnPurchase(baseBook, exchangeAccount, transactionPayload),
-    //             this.postInstrumentTradeOnPurchase(baseBook, exchangeAccount, transactionPayload)
-    //         ]);
-    //     responses = responses.filter(r => r != null).filter(r => typeof r === "string")
-    //     return { result: responses };
-    // }
+    protected async processPurchase(baseBook: Book, transactionPayload: bkper.Transaction): Promise<Result> {
+        let responses: string[] = await Promise.all(
+            [
+                this.postFees(baseBook, exchangeAccount, transactionPayload),
+                this.postInterestOnPurchase(baseBook, exchangeAccount, transactionPayload),
+                this.postInstrumentTradeOnPurchase(baseBook, exchangeAccount, transactionPayload)
+            ]);
+        responses = responses.filter(r => r != null).filter(r => typeof r === "string")
+        return { result: responses };
+    }
 
     protected isPurchase(baseBook: Book, transactionPayload: bkper.Transaction): boolean {
 
