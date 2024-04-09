@@ -1,6 +1,6 @@
 import { Account, AccountType, Amount, Book } from "bkper";
 import { Result } from ".";
-import { isInventoryBook } from "./BotService";
+import { getQuantity, isInventoryBook } from "./BotService";
 import { GOOD_PROP, PRICE_PROP, QUANTITY_PROP } from "./constants";
 
 export class InterceptorOrderProcessor {
@@ -22,7 +22,7 @@ export class InterceptorOrderProcessor {
             return { result: false };
         }
 
-        const quantity = this.getQuantity(baseBook, transactionPayload);
+        const quantity = getQuantity(baseBook, transactionPayload);
         if (quantity == null) {
             return { result: false };
         }
@@ -68,7 +68,7 @@ export class InterceptorOrderProcessor {
 
     private async postGoodTradeOnPurchase(baseBook: Book, buyerAccount: bkper.Account, transactionPayload: bkper.Transaction): Promise<string> {
         let goodAccount = await this.getGoodAccount(baseBook, transactionPayload);
-        let quantity = this.getQuantity(baseBook, transactionPayload);
+        let quantity = getQuantity(baseBook, transactionPayload);
         const amount = new Amount(transactionPayload.amount);
         const price = amount.div(quantity);
         let tx = await baseBook.newTransaction()
@@ -109,7 +109,7 @@ export class InterceptorOrderProcessor {
 
     private async postGoodTradeOnSale(baseBook: Book, customerAccount: bkper.Account, transactionPayload: bkper.Transaction): Promise<string> {
         let goodAccount = await this.getGoodAccount(baseBook, transactionPayload);
-        let quantity = this.getQuantity(baseBook, transactionPayload);
+        let quantity = getQuantity(baseBook, transactionPayload);
         const amount = new Amount(transactionPayload.amount);
         const price = amount.div(quantity);
         let tx = await baseBook.newTransaction()
@@ -123,14 +123,6 @@ export class InterceptorOrderProcessor {
             .addRemoteId(`${GOOD_PROP}_${transactionPayload.id}`)
             .post();
         return `${tx.getDate()} ${tx.getAmount()} ${await tx.getCreditAccountName()} ${await tx.getDebitAccountName()} ${tx.getDescription()}`;
-    }
-
-    private getQuantity(book: Book, transactionPayload: bkper.Transaction): Amount {
-        let quantityProp = transactionPayload.properties[QUANTITY_PROP];
-        if (quantityProp == null) {
-            return null;
-        }
-        return book.parseValue(quantityProp);
     }
 
     private async getGoodAccount(baseBook: Book, transactionPayload: bkper.Transaction): Promise<Account> {
