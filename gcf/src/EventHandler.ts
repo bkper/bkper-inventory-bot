@@ -19,8 +19,8 @@ export abstract class EventHandler {
         if (interceptionResponse.result) {
             return interceptionResponse;
         }
-        let responses: string[] = [];
 
+        let responses: string[] = [];
         let inventoryBook = getInventoryBook(baseBook);
 
         const logtag = `Handling ${event.type} event on book ${baseBook.getName()} from user ${event.user.username}`;

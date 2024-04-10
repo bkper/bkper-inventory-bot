@@ -21,6 +21,7 @@ export class EventHandlerTransactionChecked extends EventHandlerTransaction {
         return `FOUND: ${bookAnchor}: ${record}`;
     }
 
+    // create purchase (Buy) or sale (Sell) transactions in the inventory book in response to the financial transactions
     protected async connectedTransactionNotFound(financialBook: Book, goodBook: Book, financialTransaction: bkper.Transaction, goodExcCode: string): Promise<string> {
 
         let financialCreditAccount = financialTransaction.creditAccount;
@@ -92,6 +93,7 @@ export class EventHandlerTransactionChecked extends EventHandlerTransaction {
         return null;
     }
 
+    // returns the good account from the inventory book corresponding to the good account in the financial book
     private async getConnectedGoodAccount(goodBook: Book, financialAccount: bkper.Account): Promise<Account> {
         let goodExchangeCode = getGoodExchangeCodeFromAccount(financialAccount);
         if (goodExchangeCode != null) {

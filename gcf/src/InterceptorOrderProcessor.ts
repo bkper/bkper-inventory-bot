@@ -7,10 +7,12 @@ export class InterceptorOrderProcessor {
 
     async intercept(baseBook: Book, event: bkper.Event): Promise<Result> {
 
+        // prevent response to Exchange Bot transactions
         if (event.agent.id == 'exchange-bot') {
             return { result: false };
         }
 
+        // prevent response to transactions posted in the inventory book
         if (isInventoryBook(baseBook)) {
             return { result: false };
         }
@@ -22,11 +24,11 @@ export class InterceptorOrderProcessor {
             return { result: false };
         }
 
+        // prevent response to transactions posted without quantity or quantity = 0
         const quantity = getQuantity(baseBook, transactionPayload);
         if (quantity == null) {
             return { result: false };
         }
-
         if (quantity.eq(0)) {
             throw `Quantity must not be zero`;
         }
@@ -53,6 +55,7 @@ export class InterceptorOrderProcessor {
         return true;
     }
 
+    // post aditional financial transactions in response to the initial purchase transaction from Supplier to Buyer
     private async processPurchase(baseBook: Book, transactionPayload: bkper.Transaction): Promise<Result> {
         let buyerAccount = transactionPayload.debitAccount;
         let responses: string[] = await Promise.all(
@@ -94,6 +97,7 @@ export class InterceptorOrderProcessor {
         return true;
     }
 
+    // post aditional financial transactions in response to the initial sale transaction from Customer to Bank Account
     private async processSale(baseBook: Book, transactionPayload: bkper.Transaction): Promise<Result> {
         let customerAccount = transactionPayload.creditAccount;
         let responses: string[] = await Promise.all(

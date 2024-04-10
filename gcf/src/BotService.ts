@@ -9,6 +9,7 @@ export function isInventoryBook(book: Book): boolean {
     return false;
 }
 
+// returns the quantity property from a transaction or null if it does not exist
 export function getQuantity(book: Book, transaction: bkper.Transaction): Amount {
     let quantityStr = transaction.properties[QUANTITY_PROP];
     if (quantityStr == null || quantityStr.trim() == '') {
@@ -17,11 +18,12 @@ export function getQuantity(book: Book, transaction: bkper.Transaction): Amount 
     return book.parseValue(quantityStr).abs();
 }
 
-export function getInventoryBook(book: Book): Book {
-    if (book.getCollection() == null) {
+// returns the inventory book from a collection or null if it does not exist
+export function getInventoryBook(financialBook: Book): Book {
+    if (financialBook.getCollection() == null) {
         return null;
     }
-    let connectedBooks = book.getCollection().getBooks();
+    let connectedBooks = financialBook.getCollection().getBooks();
     for (const connectedBook of connectedBooks) {
         if (connectedBook.getProperty(INVENTORY_BOOK_PROP)) {
             return connectedBook;
@@ -30,6 +32,7 @@ export function getInventoryBook(book: Book): Book {
     return null;
 }
 
+// returns the financial book in the collection corresponding to the excCode or null if it does not exist
 export async function getFinancialBook(book: Book, excCode?: string): Promise<Book> {
     if (book.getCollection() == null) {
         return null;
@@ -48,6 +51,7 @@ export function getBookExcCode(book: Book): string {
     return book.getProperty(EXC_CODE_PROP, 'exchange_code');
 }
 
+// returns the excCode from an account based on its groups good_exc_code property
 export function getGoodExchangeCodeFromAccount(account: bkper.Account): string {
     if (account == null || account.type == AccountType.INCOMING || account.type == AccountType.OUTGOING) {
         return null;
@@ -69,6 +73,7 @@ export function getGoodExchangeCodeFromAccount(account: bkper.Account): string {
     return null;
 }
 
+// returns the good account (asset account) from the transaction (purchase or sale)
 export async function getGoodAccount(goodTransaction: Transaction): Promise<Account> {
     if (await isSale(goodTransaction)) {
         return await goodTransaction.getCreditAccount();
