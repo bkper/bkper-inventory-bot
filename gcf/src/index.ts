@@ -4,10 +4,11 @@ import httpContext = require('express-http-context');
 import { HttpFunction } from '@google-cloud/functions-framework/build/src/functions';
 import { Bkper } from 'bkper';
 
-import { EventHandlerTransactionChecked } from './EventHandlerTransactionChecked';
 import { EventHandlerTransactionPosted } from './EventHandlerTransactionPosted';
+import { EventHandlerTransactionChecked } from './EventHandlerTransactionChecked';
+import { EventHandlerTransactionDeleted } from './EventHandlerTransactionDeleted';
 
-require('dotenv').config({path:`${__dirname}/../../.env`});
+require('dotenv').config({ path: `${__dirname}/../../.env` });
 
 const app = express();
 app.use(httpContext.middleware);
@@ -22,14 +23,14 @@ export type Result = {
 
 function init(req: Request, res: Response) {
     res.setHeader('Content-Type', 'application/json');
-  
+
     //Sets API key from env for development or from headers
     Bkper.setApiKey(process.env.BKPER_API_KEY ? process.env.BKPER_API_KEY : req.headers['bkper-api-key'] as string);
-  
+
     //Put OAuth token from header in the http context for later use when calling the API. https://julio.li/b/2016/10/29/request-persistence-express/
     const oauthTokenHeader = 'bkper-oauth-token';
     httpContext.set(oauthTokenHeader, req.headers[oauthTokenHeader]);
-    Bkper.setOAuthTokenProvider(async () => httpContext.get(oauthTokenHeader));  
+    Bkper.setOAuthTokenProvider(async () => httpContext.get(oauthTokenHeader));
 }
 
 async function handleEvent(req: Request, res: Response) {
@@ -41,7 +42,7 @@ async function handleEvent(req: Request, res: Response) {
         let event: bkper.Event = req.body
         let result: Result = { result: false };
 
-        console.log("EVENT: ", event.type);
+        console.log("EVENT: Transaction ", event.type);
 
         switch (event.type) {
             case 'TRANSACTION_POSTED':
@@ -50,6 +51,8 @@ async function handleEvent(req: Request, res: Response) {
             case 'TRANSACTION_CHECKED':
                 result = await new EventHandlerTransactionChecked().handleEvent(event);
                 break;
+            case 'TRANSACTION_DELETED':
+                result = await new EventHandlerTransactionDeleted().handleEvent(event);
         }
 
         res.send(response(result));

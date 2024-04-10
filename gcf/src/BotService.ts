@@ -19,11 +19,11 @@ export function getQuantity(book: Book, transaction: bkper.Transaction): Amount 
 }
 
 // returns the inventory book from a collection or null if it does not exist
-export function getInventoryBook(financialBook: Book): Book {
-    if (financialBook.getCollection() == null) {
+export function getInventoryBook(book: Book): Book {
+    if (book.getCollection() == null) {
         return null;
     }
-    let connectedBooks = financialBook.getCollection().getBooks();
+    let connectedBooks = book.getCollection().getBooks();
     for (const connectedBook of connectedBooks) {
         if (connectedBook.getProperty(INVENTORY_BOOK_PROP)) {
             return connectedBook;
@@ -70,6 +70,26 @@ export function getGoodExchangeCodeFromAccount(account: bkper.Account): string {
         }
     }
 
+    return null;
+}
+
+// returns the excCode from an account based on its groups good_exc_code property
+export async function getExchangeCodeFromAccount(account: Account): Promise<string> | null {
+    if (account.getType() == AccountType.INCOMING || account.getType() == AccountType.OUTGOING) {
+        return null;
+    }
+    let groups = await account.getGroups();
+    if (groups != null) {
+        for (const group of groups) {
+            if (group == null) {
+                continue;
+            }
+            let excCode = group.getProperty(GOOD_EXC_CODE_PROP);
+            if (excCode != null && excCode.trim() != '') {
+                return excCode;
+            }
+        }
+    }
     return null;
 }
 
