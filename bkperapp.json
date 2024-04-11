@@ -15,5 +15,23 @@
         "TRANSACTION_CHECKED",
         "TRANSACTION_POSTED",
         "TRANSACTION_DELETED"
-    ]
+    ],
+    "propertiesSchema": {
+        "book": {
+          "keys": [
+            "good_book"
+          ]
+        },
+        "transaction": {
+          "keys": [
+            "quantity",
+            "good"
+          ]
+        },
+        "group": {
+          "keys": [
+            "good_exc_code"
+          ]
+        }
+    }
 }
