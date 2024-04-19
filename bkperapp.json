@@ -9,6 +9,12 @@
     "repoUrl": "https://github.com/bkper/inventory-bot",
     "repoPrivate": false,
     "deprecated": false,
+    "scriptId": "1GOxxlrAKjvwVImGXv_F8bNtnwOkFzlMo390H7j5QP_KJhcOmDeWxptkC",
+    "menuUrl": "https://www.google.com",
+    "menuUrlDev": "https://www.uol.com.br",
+    "menuText": "Inventory Bot",
+    "menuPopupWidth": 600,
+    "menuPopupHeight": 600,
     "webhookUrl": "https://us-central1-inventory-bot-405017.cloudfunctions.net/prod",
     "apiVersion": "v5",
     "events": [
