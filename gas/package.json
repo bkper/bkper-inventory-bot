@@ -16,7 +16,7 @@
     "minor": "yarn version --minor --no-git-tag-version",
     "major": "yarn version --major --no-git-tag-version",
     "predeploy": "yarn push",
-    "deploy": "clasp deploy --description $npm_package_version",
+    "deploy": "clasp deploy --description $npm_package_version --deploymentId AKfycbzQEzvupNCQbCDHkN_jLgRoraB1ROZ5gX1W1VQ129Kh3wKvWxA6VmDt7qwy09LGwFBY",
     "postversion": "git add -A && git commit -m \"gas-$npm_package_version\" && git push && yarn deploy && echo \"Successfully released version $npm_package_version!\""
   },
   "devDependencies": {
