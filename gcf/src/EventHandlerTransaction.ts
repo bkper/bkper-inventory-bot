@@ -5,10 +5,10 @@ import { getBookExcCode, getGoodExchangeCodeFromAccount } from "./BotService";
 export abstract class EventHandlerTransaction extends EventHandler {
 
     protected abstract getTransactionQuery(transaction: bkper.Transaction): string;
-    protected abstract connectedTransactionNotFound(financialBook: Book, goodBook: Book, financialTransaction: bkper.Transaction, goodExcCode: string): Promise<string>;
+    protected abstract connectedTransactionNotFound(financialBook: Book, inventoryBook: Book, financialTransaction: bkper.Transaction, goodExcCode: string): Promise<string>;
     protected abstract connectedTransactionFound(baseBook: Book, connectedBook: Book, financialTransaction: bkper.Transaction, goodTransaction: Transaction, goodExcCode: string): Promise<string>;
 
-    async processObject(financialBook: Book, goodBook: Book, event: bkper.Event): Promise<string> {
+    async processObject(financialBook: Book, inventoryBook: Book, event: bkper.Event): Promise<string> {
         let excCode = getBookExcCode(financialBook);
         let operation = event.data.object as bkper.TransactionOperation;
         let financialTransaction = operation.transaction;
@@ -17,7 +17,7 @@ export abstract class EventHandlerTransaction extends EventHandler {
             return null;
         }
 
-        let iterator = goodBook.getTransactions(this.getTransactionQuery(financialTransaction));
+        let iterator = inventoryBook.getTransactions(this.getTransactionQuery(financialTransaction));
 
         let goodExcCode = this.getGoodExcCodeFromTransaction(financialTransaction);
 
@@ -27,9 +27,9 @@ export abstract class EventHandlerTransaction extends EventHandler {
 
         if (await iterator.hasNext()) {
             let goodTransaction = await iterator.next();
-            return await this.connectedTransactionFound(financialBook, goodBook, financialTransaction, goodTransaction, goodExcCode);
+            return await this.connectedTransactionFound(financialBook, inventoryBook, financialTransaction, goodTransaction, goodExcCode);
         } else {
-            return await this.connectedTransactionNotFound(financialBook, goodBook, financialTransaction, goodExcCode)
+            return await this.connectedTransactionNotFound(financialBook, inventoryBook, financialTransaction, goodExcCode)
         }
     }
 

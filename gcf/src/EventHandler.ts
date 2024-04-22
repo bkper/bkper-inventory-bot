@@ -10,7 +10,6 @@ export abstract class EventHandler {
         return { result: false };
     }
 
-
     async handleEvent(event: bkper.Event): Promise<Result> {
 
         let baseBook = new Book(event.book);

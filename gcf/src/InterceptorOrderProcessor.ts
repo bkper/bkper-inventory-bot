@@ -37,9 +37,9 @@ export class InterceptorOrderProcessor {
             return this.processPurchase(baseBook, transactionPayload);
         }
 
-        if (this.isSale(transactionPayload)) {
-            return this.processSale(baseBook, transactionPayload);
-        }
+        // if (this.isSale(transactionPayload)) {
+        //     return this.processSale(baseBook, transactionPayload);
+        // }
 
         return { result: false };
 
@@ -87,47 +87,47 @@ export class InterceptorOrderProcessor {
         return `${tx.getDate()} ${tx.getAmount()} ${await tx.getCreditAccountName()} ${await tx.getDebitAccountName()} ${tx.getDescription()}`;
     }
 
-    private isSale(transactionPayload: bkper.Transaction): boolean {
-        if (this.getGood(transactionPayload) == null) {
-            return false;
-        }
-        if (transactionPayload.creditAccount.type != AccountType.ASSET) {
-            return false;
-        }
-        return true;
-    }
+    // private isSale(transactionPayload: bkper.Transaction): boolean {
+    //     if (this.getGood(transactionPayload) == null) {
+    //         return false;
+    //     }
+    //     if (transactionPayload.creditAccount.type != AccountType.INCOMING) {
+    //         return false;
+    //     }
+    //     return true;
+    // }
 
     // post aditional financial transactions in response to the initial sale transaction from Customer to Bank Account
-    private async processSale(baseBook: Book, transactionPayload: bkper.Transaction): Promise<Result> {
-        let customerAccount = transactionPayload.creditAccount;
-        let responses: string[] = await Promise.all(
-            [
-                // this.postFees(baseBook, exchangeAccount, transactionPayload),
-                // this.postInterestOnSale(baseBook, exchangeAccount, transactionPayload),
-                this.postGoodTradeOnSale(baseBook, customerAccount, transactionPayload)
-            ]);
-        responses = responses.filter(r => r != null).filter(r => typeof r === "string");
+    // private async processSale(baseBook: Book, transactionPayload: bkper.Transaction): Promise<Result> {
+    //     let customerAccount = transactionPayload.creditAccount;
+    //     let responses: string[] = await Promise.all(
+    //         [
+    //             // this.postFees(baseBook, exchangeAccount, transactionPayload),
+    //             // this.postInterestOnSale(baseBook, exchangeAccount, transactionPayload),
+    //             this.postGoodTradeOnSale(baseBook, customerAccount, transactionPayload)
+    //         ]);
+    //     responses = responses.filter(r => r != null).filter(r => typeof r === "string");
 
-        return { result: responses };
-    }
+    //     return { result: responses };
+    // }
 
-    private async postGoodTradeOnSale(baseBook: Book, customerAccount: bkper.Account, transactionPayload: bkper.Transaction): Promise<string> {
-        let goodAccount = await this.getGoodAccount(baseBook, transactionPayload);
-        let quantity = getQuantity(baseBook, transactionPayload);
-        const amount = new Amount(transactionPayload.amount);
-        const price = amount.div(quantity);
-        let tx = await baseBook.newTransaction()
-            .setAmount(amount)
-            .from(goodAccount)
-            .to(customerAccount)
-            .setDescription(transactionPayload.description)
-            .setDate(transactionPayload.date)
-            .setProperty(QUANTITY_PROP, quantity.toString())
-            .setProperty(PRICE_PROP, price.toString())
-            .addRemoteId(`${GOOD_PROP}_${transactionPayload.id}`)
-            .post();
-        return `${tx.getDate()} ${tx.getAmount()} ${await tx.getCreditAccountName()} ${await tx.getDebitAccountName()} ${tx.getDescription()}`;
-    }
+    // private async postGoodTradeOnSale(baseBook: Book, customerAccount: bkper.Account, transactionPayload: bkper.Transaction): Promise<string> {
+    //     let goodAccount = await this.getGoodAccount(baseBook, transactionPayload);
+    //     let quantity = getQuantity(baseBook, transactionPayload);
+    //     const amount = new Amount(transactionPayload.amount);
+    //     const price = amount.div(quantity);
+    //     let tx = await baseBook.newTransaction()
+    //         .setAmount(amount)
+    //         .from(goodAccount)
+    //         .to(customerAccount)
+    //         .setDescription(transactionPayload.description)
+    //         .setDate(transactionPayload.date)
+    //         .setProperty(QUANTITY_PROP, quantity.toString())
+    //         .setProperty(PRICE_PROP, price.toString())
+    //         .addRemoteId(`${GOOD_PROP}_${transactionPayload.id}`)
+    //         .post();
+    //     return `${tx.getDate()} ${tx.getAmount()} ${await tx.getCreditAccountName()} ${await tx.getDebitAccountName()} ${tx.getDescription()}`;
+    // }
 
     private async getGoodAccount(baseBook: Book, transactionPayload: bkper.Transaction): Promise<Account> {
         let good = this.getGood(transactionPayload);

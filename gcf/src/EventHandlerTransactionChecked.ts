@@ -1,5 +1,4 @@
 import { Account, AccountType, Amount, Book, Transaction } from "bkper";
-import { Result } from ".";
 import { EventHandlerTransaction } from "./EventHandlerTransaction";
 import { getGoodExchangeCodeFromAccount, getQuantity } from "./BotService";
 import { GOOD_BUY_ACCOUNT_NAME, GOOD_EXC_CODE_PROP, GOOD_SELL_ACCOUNT_NAME, ORIGINAL_AMOUNT_PROP, ORIGINAL_QUANTITY_PROP, PURCHASE_PRICE_PROP, SALE_PRICE_PROP } from "./constants";
@@ -15,20 +14,20 @@ export class EventHandlerTransactionChecked extends EventHandlerTransaction {
     //     return response;
     // }
 
-    protected async connectedTransactionFound(financialBook: Book, goodBook: Book, financialTransaction: bkper.Transaction, connectedTransaction: Transaction, goodExcCode: string): Promise<string> {
-        let bookAnchor = super.buildBookAnchor(goodBook);
+    protected async connectedTransactionFound(financialBook: Book, inventoryBook: Book, financialTransaction: bkper.Transaction, connectedTransaction: Transaction, goodExcCode: string): Promise<string> {
+        let bookAnchor = super.buildBookAnchor(inventoryBook);
         let record = `${connectedTransaction.getDate()} ${connectedTransaction.getAmount()} ${await connectedTransaction.getCreditAccountName()} ${await connectedTransaction.getDebitAccountName()} ${connectedTransaction.getDescription()}`;
         return `FOUND: ${bookAnchor}: ${record}`;
     }
 
     // create purchase (Buy) or sale (Sell) transactions in the inventory book in response to the financial transactions
-    protected async connectedTransactionNotFound(financialBook: Book, goodBook: Book, financialTransaction: bkper.Transaction, goodExcCode: string): Promise<string> {
+    protected async connectedTransactionNotFound(financialBook: Book, inventoryBook: Book, financialTransaction: bkper.Transaction, goodExcCode: string): Promise<string> {
 
         let financialCreditAccount = financialTransaction.creditAccount;
         let financialDebitAccount = financialTransaction.debitAccount;
-        let goodBookAnchor = super.buildBookAnchor(goodBook);
+        let inventoryBookAnchor = super.buildBookAnchor(inventoryBook);
 
-        let quantity = getQuantity(goodBook, financialTransaction);
+        let quantity = getQuantity(inventoryBook, financialTransaction);
         if (quantity == null || quantity.eq(0)) {
             return null;
         }
@@ -36,16 +35,16 @@ export class EventHandlerTransactionChecked extends EventHandlerTransaction {
         const originalAmount = new Amount(financialTransaction.amount);
         const price = originalAmount.div(quantity);
 
-        let goodAccount = await this.getConnectedGoodAccount(goodBook, financialCreditAccount);
+        let goodAccount = await this.getConnectedGoodAccount(inventoryBook, financialCreditAccount);
 
         if (goodAccount) {
             // Selling
-            let goodSellAccount = await goodBook.getAccount(GOOD_SELL_ACCOUNT_NAME);
+            let goodSellAccount = await inventoryBook.getAccount(GOOD_SELL_ACCOUNT_NAME);
             if (goodSellAccount == null) {
-                goodSellAccount = await goodBook.newAccount().setName(GOOD_SELL_ACCOUNT_NAME).setType(AccountType.OUTGOING).create();
+                goodSellAccount = await inventoryBook.newAccount().setName(GOOD_SELL_ACCOUNT_NAME).setType(AccountType.OUTGOING).create();
             }
 
-            let newTransaction = await goodBook.newTransaction()
+            let newTransaction = await inventoryBook.newTransaction()
                 .setDate(financialTransaction.date)
                 .setAmount(quantity)
                 .setCreditAccount(goodAccount)
@@ -60,18 +59,18 @@ export class EventHandlerTransactionChecked extends EventHandlerTransaction {
                 ;
 
             let record = `${newTransaction.getDate()} ${newTransaction.getAmount()} ${goodAccount.getName()} ${goodSellAccount.getName()} ${newTransaction.getDescription()}`;
-            return `SELL: ${goodBookAnchor}: ${record}`;
+            return `SELL: ${inventoryBookAnchor}: ${record}`;
 
         } else {
-            goodAccount = await this.getConnectedGoodAccount(goodBook, financialDebitAccount);
+            goodAccount = await this.getConnectedGoodAccount(inventoryBook, financialDebitAccount);
             if (goodAccount) {
                 // Buying
-                let goodBuyAccount = await goodBook.getAccount(GOOD_BUY_ACCOUNT_NAME);
+                let goodBuyAccount = await inventoryBook.getAccount(GOOD_BUY_ACCOUNT_NAME);
                 if (goodBuyAccount == null) {
-                    goodBuyAccount = await goodBook.newAccount().setName(GOOD_BUY_ACCOUNT_NAME).setType(AccountType.INCOMING).create();
+                    goodBuyAccount = await inventoryBook.newAccount().setName(GOOD_BUY_ACCOUNT_NAME).setType(AccountType.INCOMING).create();
                 }
 
-                let newTransaction = await goodBook.newTransaction()
+                let newTransaction = await inventoryBook.newTransaction()
                     .setDate(financialTransaction.date)
                     .setAmount(quantity)
                     .setCreditAccount(goodBuyAccount)
@@ -86,7 +85,7 @@ export class EventHandlerTransactionChecked extends EventHandlerTransaction {
                     ;
 
                 let record = `${newTransaction.getDate()} ${newTransaction.getAmount()} ${goodBuyAccount.getName()} ${goodAccount.getName()} ${newTransaction.getDescription()}`;
-                return `BUY: ${goodBookAnchor}: ${record}`;
+                return `BUY: ${inventoryBookAnchor}: ${record}`;
             }
         }
 
@@ -94,12 +93,12 @@ export class EventHandlerTransactionChecked extends EventHandlerTransaction {
     }
 
     // returns the good account from the inventory book corresponding to the good account in the financial book
-    private async getConnectedGoodAccount(goodBook: Book, financialAccount: bkper.Account): Promise<Account> {
+    private async getConnectedGoodAccount(inventoryBook: Book, financialAccount: bkper.Account): Promise<Account> {
         let goodExchangeCode = getGoodExchangeCodeFromAccount(financialAccount);
         if (goodExchangeCode != null) {
-            let goodAccount = await goodBook.getAccount(financialAccount.name);
+            let goodAccount = await inventoryBook.getAccount(financialAccount.name);
             if (goodAccount == null) {
-                goodAccount = goodBook.newAccount()
+                goodAccount = inventoryBook.newAccount()
                     .setName(financialAccount.name)
                     .setType(financialAccount.type as AccountType)
                     .setProperties(financialAccount.properties)
@@ -107,10 +106,10 @@ export class EventHandlerTransactionChecked extends EventHandlerTransaction {
                 if (financialAccount.groups) {
                     for (const financialGroup of financialAccount.groups) {
                         if (financialGroup) {
-                            let goodGroup = await goodBook.getGroup(financialGroup.name);
+                            let goodGroup = await inventoryBook.getGroup(financialGroup.name);
                             let goodExcCode = financialGroup.properties[GOOD_EXC_CODE_PROP];
                             if (goodGroup == null && goodExcCode != null && goodExcCode.trim() != '') {
-                                goodGroup = await goodBook.newGroup()
+                                goodGroup = await inventoryBook.newGroup()
                                     .setHidden(financialGroup.hidden)
                                     .setName(financialGroup.name)
                                     .setProperties(financialGroup.properties)
