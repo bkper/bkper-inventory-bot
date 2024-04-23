@@ -25,7 +25,7 @@
     "propertiesSchema": {
         "book": {
           "keys": [
-            "good_book"
+            "inventory_book"
           ]
         },
         "transaction": {
