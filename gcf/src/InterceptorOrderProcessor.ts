@@ -1,7 +1,7 @@
 import { Account, AccountType, Amount, Book } from "bkper";
 import { Result } from ".";
 import { getQuantity, isInventoryBook } from "./BotService";
-import { GOOD_PROP, PRICE_PROP, QUANTITY_PROP } from "./constants";
+import { GOOD_PROP, PURCHASE_CODE_PROP, PURCHASE_INVOICE_PROP, PURCHASE_PRICE_PROP, QUANTITY_PROP } from "./constants";
 
 export class InterceptorOrderProcessor {
 
@@ -81,7 +81,9 @@ export class InterceptorOrderProcessor {
             .setDescription(transactionPayload.description)
             .setDate(transactionPayload.date)
             .setProperty(QUANTITY_PROP, quantity.toString())
-            .setProperty(PRICE_PROP, price.toString())
+            .setProperty(PURCHASE_PRICE_PROP, price.toString())
+            .setProperty(PURCHASE_INVOICE_PROP, transactionPayload.properties[PURCHASE_INVOICE_PROP])
+            .setProperty(PURCHASE_CODE_PROP, transactionPayload.properties[PURCHASE_CODE_PROP])
             .addRemoteId(`${GOOD_PROP}_${transactionPayload.id}`)
             .post();
         return `${tx.getDate()} ${tx.getAmount()} ${await tx.getCreditAccountName()} ${await tx.getDebitAccountName()} ${tx.getDescription()}`;
