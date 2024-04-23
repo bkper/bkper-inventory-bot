@@ -1,7 +1,7 @@
 import { Account, AccountType, Amount, Book, Transaction } from "bkper";
 import { EventHandlerTransaction } from "./EventHandlerTransaction";
 import { getGoodExchangeCodeFromAccount, getQuantity } from "./BotService";
-import { GOOD_BUY_ACCOUNT_NAME, GOOD_EXC_CODE_PROP, GOOD_SELL_ACCOUNT_NAME, ORIGINAL_AMOUNT_PROP, ORIGINAL_QUANTITY_PROP, PURCHASE_PRICE_PROP, SALE_PRICE_PROP } from "./constants";
+import { GOOD_BUY_ACCOUNT_NAME, GOOD_EXC_CODE_PROP, GOOD_PROP, GOOD_SELL_ACCOUNT_NAME, ORIGINAL_AMOUNT_PROP, ORIGINAL_QUANTITY_PROP, PURCHASE_PRICE_PROP, SALE_PRICE_PROP } from "./constants";
 
 export class EventHandlerTransactionChecked extends EventHandlerTransaction {
 
@@ -23,7 +23,6 @@ export class EventHandlerTransactionChecked extends EventHandlerTransaction {
     // create purchase (Buy) or sale (Sell) transactions in the inventory book in response to the financial transactions
     protected async connectedTransactionNotFound(financialBook: Book, inventoryBook: Book, financialTransaction: bkper.Transaction, goodExcCode: string): Promise<string> {
 
-        let financialCreditAccount = financialTransaction.creditAccount;
         let financialDebitAccount = financialTransaction.debitAccount;
         let inventoryBookAnchor = super.buildBookAnchor(inventoryBook);
 
@@ -35,8 +34,7 @@ export class EventHandlerTransactionChecked extends EventHandlerTransaction {
         const originalAmount = new Amount(financialTransaction.amount);
         const price = originalAmount.div(quantity);
 
-        let goodAccount = await this.getConnectedGoodAccount(inventoryBook, financialCreditAccount);
-
+        let goodAccount = await inventoryBook.getAccount(financialTransaction.properties[GOOD_PROP]);
         if (goodAccount) {
             // Selling
             let goodSellAccount = await inventoryBook.getAccount(GOOD_SELL_ACCOUNT_NAME);

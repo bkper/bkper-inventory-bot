@@ -1,6 +1,7 @@
 import { Book, Transaction } from "bkper";
 import { EventHandler } from "./EventHandler";
-import { getBookExcCode, getGoodExchangeCodeFromAccount } from "./BotService";
+import { getBookExcCode, getExchangeCodeFromAccount, getGoodExchangeCodeFromAccount } from "./BotService";
+import { GOOD_PROP } from "./constants";
 
 export abstract class EventHandlerTransaction extends EventHandler {
 
@@ -19,7 +20,7 @@ export abstract class EventHandlerTransaction extends EventHandler {
 
         let iterator = inventoryBook.getTransactions(this.getTransactionQuery(financialTransaction));
 
-        let goodExcCode = this.getGoodExcCodeFromTransaction(financialTransaction);
+        let goodExcCode = await this.getGoodExcCodeFromTransaction(financialTransaction, financialBook);
 
         if (!this.matchGoodExchange(goodExcCode, excCode)) {
             return null;
@@ -33,12 +34,13 @@ export abstract class EventHandlerTransaction extends EventHandler {
         }
     }
 
-    private getGoodExcCodeFromTransaction(fiancialTransaction: bkper.Transaction) {
+    private async getGoodExcCodeFromTransaction(fiancialTransaction: bkper.Transaction, financialBook: Book): Promise<string> | null {
+        let goodProp = fiancialTransaction.properties[GOOD_PROP];
+        let goodAccount = await financialBook.getAccount(goodProp);
 
-        let financialCreditAccount = fiancialTransaction.creditAccount;
         let financialDebitAccount = fiancialTransaction.debitAccount;
 
-        let goodExcCode = getGoodExchangeCodeFromAccount(financialCreditAccount);
+        let goodExcCode = await getExchangeCodeFromAccount(goodAccount);
         if (goodExcCode == null) {
             goodExcCode = getGoodExchangeCodeFromAccount(financialDebitAccount);
         }
