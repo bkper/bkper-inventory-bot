@@ -1,7 +1,7 @@
 import { Account, AccountType, Amount, Book, Transaction } from "bkper";
 import { EventHandlerTransaction } from "./EventHandlerTransaction";
 import { getGoodExchangeCodeFromAccount, getQuantity } from "./BotService";
-import { GOOD_BUY_ACCOUNT_NAME, GOOD_EXC_CODE_PROP, GOOD_PROP, GOOD_SELL_ACCOUNT_NAME, ORIGINAL_AMOUNT_PROP, ORIGINAL_QUANTITY_PROP, PURCHASE_PRICE_PROP, SALE_PRICE_PROP } from "./constants";
+import { GOOD_BUY_ACCOUNT_NAME, GOOD_EXC_CODE_PROP, GOOD_PRICE_PROP, GOOD_PROP, GOOD_SELL_ACCOUNT_NAME, ORIGINAL_AMOUNT_PROP, ORIGINAL_QUANTITY_PROP, PURCHASE_CODE_PROP, SALE_PRICE_PROP, TOTAL_COST_PROP } from "./constants";
 
 export class EventHandlerTransactionChecked extends EventHandlerTransaction {
 
@@ -75,14 +75,18 @@ export class EventHandlerTransactionChecked extends EventHandlerTransaction {
                     .setDebitAccount(goodAccount)
                     .setDescription(financialTransaction.description)
                     .addRemoteId(financialTransaction.id)
-                    .setProperty(PURCHASE_PRICE_PROP, price.toString())
+                    .setProperty(GOOD_PRICE_PROP, price.toString())
                     .setProperty(ORIGINAL_QUANTITY_PROP, quantity.toString())
                     .setProperty(ORIGINAL_AMOUNT_PROP, originalAmount.toString())
+                    .setProperty(PURCHASE_CODE_PROP, financialTransaction.properties[PURCHASE_CODE_PROP])
                     .setProperty(GOOD_EXC_CODE_PROP, goodExcCode)
+                    .setProperty(TOTAL_COST_PROP, price.toString())
                     .post()
                     ;
 
                 let record = `${newTransaction.getDate()} ${newTransaction.getAmount()} ${goodBuyAccount.getName()} ${goodAccount.getName()} ${newTransaction.getDescription()}`;
+
+                console.log("connectedTransactionNotFound REMOTE_ID: ", newTransaction.getRemoteIds());
                 return `BUY: ${inventoryBookAnchor}: ${record}`;
             }
         }

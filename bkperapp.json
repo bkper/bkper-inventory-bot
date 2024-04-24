@@ -30,8 +30,10 @@
         },
         "transaction": {
           "keys": [
+            "good",
             "quantity",
-            "good"
+            "purchase_code",
+            "purchase_invoice"
           ]
         },
         "group": {

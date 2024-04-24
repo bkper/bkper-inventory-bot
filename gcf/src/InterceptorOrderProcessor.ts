@@ -118,6 +118,8 @@ export class InterceptorOrderProcessor {
             .setProperty(PURCHASE_CODE_PROP, transactionPayload.properties[PURCHASE_CODE_PROP])
             .addRemoteId(`${GOOD_PROP}_${transactionPayload.id}`)
             .post();
+
+        console.log("postGoodTradeOnPurchase REMOTE_ID: ", tx.getRemoteIds());
         return `${tx.getDate()} ${tx.getAmount()} ${await tx.getCreditAccountName()} ${await tx.getDebitAccountName()} ${tx.getDescription()}`;
     }
 
@@ -135,6 +137,8 @@ export class InterceptorOrderProcessor {
             .setProperty(PURCHASE_CODE_PROP, transactionPayload.properties[PURCHASE_CODE_PROP])
             .addRemoteId(`${GOOD_PROP}_${transactionPayload.id}`)
             .post();
+        
+        console.log("postAdditionalCostOnPurchase REMOTE_ID: ", tx.getRemoteIds());
         return `${tx.getDate()} ${tx.getAmount()} ${await tx.getCreditAccountName()} ${await tx.getDebitAccountName()} ${tx.getDescription()}`;
     }
 

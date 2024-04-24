@@ -37,13 +37,13 @@ export abstract class EventHandlerTransaction extends EventHandler {
     private async getGoodExcCodeFromTransaction(fiancialTransaction: bkper.Transaction, financialBook: Book): Promise<string> | null {
         let goodProp = fiancialTransaction.properties[GOOD_PROP];
         let goodAccount = await financialBook.getAccount(goodProp);
-
-        let financialDebitAccount = fiancialTransaction.debitAccount;
-
-        let goodExcCode = await getExchangeCodeFromAccount(goodAccount);
-        if (goodExcCode == null) {
-            goodExcCode = getGoodExchangeCodeFromAccount(financialDebitAccount);
+        if (goodAccount) {
+            // sale
+            return await getExchangeCodeFromAccount(goodAccount);
+        } else {
+            // purchase
+            const financialDebitAccount = fiancialTransaction.debitAccount;
+            return getGoodExchangeCodeFromAccount(financialDebitAccount);
         }
-        return goodExcCode;
     }
 }
