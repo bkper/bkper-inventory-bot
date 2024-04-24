@@ -1,4 +1,5 @@
 // Properties
+export const ADDITIONAL_COST_PROP = 'additional_cost';
 export const EXC_CODE_PROP = 'exc_code';
 export const GOOD_EXC_CODE_PROP = 'good_exc_code';
 export const GOOD_PROP = 'good';
