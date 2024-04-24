@@ -76,6 +76,7 @@ export class InterceptorOrderProcessor {
     // post aditional financial transaction from Buyer to Good (asset) in response to good purchase transaction from Supplier to Buyer
     private async processGoodPurchase(baseBook: Book, transactionPayload: bkper.Transaction): Promise<Result> {
         let buyerAccount = transactionPayload.debitAccount;
+        console.log("processGoodPurchase - TRANSACTION_ID: ", transactionPayload.id);
         let responses: string[] = await Promise.all(
             [
                 // this.postFees(baseBook, exchangeAccount, transactionPayload),
@@ -90,6 +91,7 @@ export class InterceptorOrderProcessor {
     // post aditional financial transaction from Buyer to Good (asset) in response to service purchase transaction from Supplier to Buyer
     private async processAdditionalCost(baseBook: Book, transactionPayload: bkper.Transaction): Promise<Result> {
         let buyerAccount = transactionPayload.debitAccount;
+        console.log("processAdditionalCost - TRANSACTION_ID: ", transactionPayload.id);
         let responses: string[] = await Promise.all(
             [
                 // this.postFees(baseBook, exchangeAccount, transactionPayload),
@@ -117,6 +119,7 @@ export class InterceptorOrderProcessor {
             .setProperty(PURCHASE_INVOICE_PROP, transactionPayload.properties[PURCHASE_INVOICE_PROP])
             .setProperty(PURCHASE_CODE_PROP, transactionPayload.properties[PURCHASE_CODE_PROP])
             .addRemoteId(`${GOOD_PROP}_${transactionPayload.id}`)
+            .addRemoteId(transactionPayload.properties[PURCHASE_CODE_PROP])
             .post();
 
         console.log("postGoodTradeOnPurchase REMOTE_ID: ", tx.getRemoteIds());
@@ -135,7 +138,7 @@ export class InterceptorOrderProcessor {
             .setProperty(ADDITIONAL_COST_PROP, amount.toString())
             .setProperty(PURCHASE_INVOICE_PROP, transactionPayload.properties[PURCHASE_INVOICE_PROP])
             .setProperty(PURCHASE_CODE_PROP, transactionPayload.properties[PURCHASE_CODE_PROP])
-            .addRemoteId(`${GOOD_PROP}_${transactionPayload.id}`)
+            .addRemoteId(`${ADDITIONAL_COST_PROP}_${transactionPayload.id}`)
             .post();
         
         console.log("postAdditionalCostOnPurchase REMOTE_ID: ", tx.getRemoteIds());
