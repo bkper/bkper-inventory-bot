@@ -17,4 +17,7 @@ namespace BotService {
         return null;
     }
 
+    export function hasPendingTasks(book: Bkper.Book): boolean {
+        return (book.getBacklog().getCount() > 0) ? true : false;
+    }
 }

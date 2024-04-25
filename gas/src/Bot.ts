@@ -13,3 +13,19 @@ function doGet(e: GoogleAppsScript.Events.AppsScriptHttpRequestEvent) {
 
     return BotViewService.getBotViewTemplate(bookId, accountId, groupId);
 }
+
+function validate(bookId: string): void {
+    // Check if Inventory Book has pending tasks
+    const book = BkperApp.getBook(bookId);
+    const inventoryBook = BotService.getInventoryBook(book);
+    if (BotService.hasPendingTasks(inventoryBook)) {
+        throw `Cannot start operation: Inventory Book has pending tasks`;
+    }
+}
+
+function calculateCostOfSales(bookId: string): void {
+
+    // Log user inputs
+    console.log(`book id: ${bookId}`);
+
+}

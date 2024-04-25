@@ -62,6 +62,39 @@
 
 <script>
 
+async function calculate() {
+    disableButtons(true);
+    google.script.run
+      .withSuccessHandler(async () => {
+        await fireCalculateForAll().catch(showError);
+        disableButtons(false);
+      })
+      .withFailureHandler((error) => {
+        showError(error);
+        disableButtons(false);
+      })
+      .validate('<?!= book.id ?>')
+    ;
+  }
+
+  function fireCalculateForAll() {
+    google.script.run.withSuccessHandler(disableButtons(false)).withFailureHandler(showError).calculateCostOfSales('<?!= book.id ?>');
+  }
+
+  function showError(error) {
+    window.alert(error);
+  }
+
+  function disableButtons(disable) {
+    if (disable) {
+      document.getElementById('calculate-button').setAttribute('disabled', true);
+      document.getElementById('close-button').setAttribute('disabled', true);
+    } else {
+      document.getElementById('calculate-button').removeAttribute('disabled');
+      document.getElementById('close-button').removeAttribute('disabled');
+    }
+  }
+
   function closeWindow() {
     try {
       window.top.close();
