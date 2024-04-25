@@ -1,7 +1,7 @@
 import { Account, AccountType, Amount, Book, Transaction } from "bkper";
 import { EventHandlerTransaction } from "./EventHandlerTransaction";
 import { getGoodExchangeCodeFromAccount, getQuantity } from "./BotService";
-import { GOOD_BUY_ACCOUNT_NAME, GOOD_EXC_CODE_PROP, GOOD_PRICE_PROP, GOOD_PROP, GOOD_SELL_ACCOUNT_NAME, ORIGINAL_AMOUNT_PROP, ORIGINAL_QUANTITY_PROP, PURCHASE_CODE_PROP, PURCHASE_INVOICE_PROP, SALE_PRICE_PROP, TOTAL_COST_PROP } from "./constants";
+import { GOOD_BUY_ACCOUNT_NAME, GOOD_EXC_CODE_PROP, GOOD_PROP, GOOD_PURCHASE_COST_PROP, GOOD_SELL_ACCOUNT_NAME, ORIGINAL_QUANTITY_PROP, PURCHASE_CODE_PROP, PURCHASE_INVOICE_PROP, SALE_PRICE_PROP, TOTAL_ADDITIONAL_COSTS_PROP, TOTAL_COST_PROP } from "./constants";
 
 export class EventHandlerTransactionChecked extends EventHandlerTransaction {
 
@@ -18,7 +18,22 @@ export class EventHandlerTransactionChecked extends EventHandlerTransaction {
     //     return response;
     // }
 
+    // add additional cost to inventory purchase transaction total cost property
     protected async connectedTransactionFound(financialBook: Book, inventoryBook: Book, financialTransaction: bkper.Transaction, connectedTransaction: Transaction, goodExcCode: string): Promise<string> {
+        const currentTotalCost = new Amount(connectedTransaction.getProperty(TOTAL_COST_PROP));
+
+        const currentTotalAdditionalCosts = new Amount(0);
+        if (connectedTransaction.getProperty(TOTAL_ADDITIONAL_COSTS_PROP)) {
+            currentTotalAdditionalCosts.plus(new Amount(connectedTransaction.getProperty(TOTAL_ADDITIONAL_COSTS_PROP)));
+        }
+
+        const additionalCost = new Amount(financialTransaction.amount);
+
+        const newTotalCosts = currentTotalCost.plus(additionalCost);
+        const newTotalAdditionalCosts = currentTotalAdditionalCosts.plus(additionalCost);
+
+        connectedTransaction.setProperty(TOTAL_ADDITIONAL_COSTS_PROP, newTotalAdditionalCosts.toString()).setProperty(TOTAL_COST_PROP, newTotalCosts.toString()).update();
+
         let bookAnchor = super.buildBookAnchor(inventoryBook);
         let record = `${connectedTransaction.getDate()} ${connectedTransaction.getAmount()} ${await connectedTransaction.getCreditAccountName()} ${await connectedTransaction.getDebitAccountName()} ${connectedTransaction.getDescription()}`;
         return `FOUND: ${bookAnchor}: ${record}`;
@@ -35,8 +50,8 @@ export class EventHandlerTransactionChecked extends EventHandlerTransaction {
             return null;
         }
 
-        const originalAmount = new Amount(financialTransaction.amount);
-        const price = originalAmount.div(quantity);
+        const goodPurchaseCost = new Amount(financialTransaction.amount);
+        const price = goodPurchaseCost.div(quantity);
 
         let goodAccount = await inventoryBook.getAccount(financialTransaction.properties[GOOD_PROP]);
         if (goodAccount) {
@@ -55,7 +70,7 @@ export class EventHandlerTransactionChecked extends EventHandlerTransaction {
                 .addRemoteId(financialTransaction.id)
                 .setProperty(SALE_PRICE_PROP, price.toString())
                 .setProperty(ORIGINAL_QUANTITY_PROP, quantity.toString())
-                .setProperty(ORIGINAL_AMOUNT_PROP, originalAmount.toString())
+                .setProperty(GOOD_PURCHASE_COST_PROP, goodPurchaseCost.toString())
                 .setProperty(GOOD_EXC_CODE_PROP, goodExcCode)
                 .post()
                 ;
@@ -79,12 +94,11 @@ export class EventHandlerTransactionChecked extends EventHandlerTransaction {
                     .setDebitAccount(goodAccount)
                     .setDescription(financialTransaction.description)
                     .addRemoteId(financialTransaction.properties[PURCHASE_CODE_PROP])
-                    .setProperty(GOOD_PRICE_PROP, price.toString())
                     .setProperty(ORIGINAL_QUANTITY_PROP, quantity.toString())
-                    .setProperty(ORIGINAL_AMOUNT_PROP, originalAmount.toString())
+                    .setProperty(GOOD_PURCHASE_COST_PROP, goodPurchaseCost.toString())
                     .setProperty(PURCHASE_CODE_PROP, financialTransaction.properties[PURCHASE_CODE_PROP])
                     .setProperty(GOOD_EXC_CODE_PROP, goodExcCode)
-                    .setProperty(TOTAL_COST_PROP, price.toString())
+                    .setProperty(TOTAL_COST_PROP, goodPurchaseCost.toString())
                     .post()
                     ;
 
