@@ -10,6 +10,7 @@ export const PURCHASE_CODE_PROP = 'purchase_code';
 export const PURCHASE_COST_PROP = 'purchase_cost';
 export const PURCHASE_INVOICE_PROP = 'purchase_invoice';
 export const QUANTITY_PROP = 'quantity';
+export const SALE_AMOUNT_PROP = 'sale_amount';
 export const SALE_PRICE_PROP = 'sale_price';
 export const TOTAL_ADDITIONAL_COSTS_PROP = 'additional_costs';
 export const TOTAL_COST_PROP = 'total_cost';
