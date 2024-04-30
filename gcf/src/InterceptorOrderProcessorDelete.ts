@@ -8,6 +8,8 @@ export abstract class InterceptorOrderProcessorDelete {
         return;
       }
       this.cascadeDeleteTransactions(book, transaction, ``);
+      this.cascadeDeleteTransactions(book, transaction, `additional_cost_`);
+      // this.cascadeDeleteTransactions(getBaseBook(book), transaction, `fx_`);
     }
   
     protected async cascadeDeleteTransactions(book: Book, remoteTx: bkper.Transaction, prefix: string) {

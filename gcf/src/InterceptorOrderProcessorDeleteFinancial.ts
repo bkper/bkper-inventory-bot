@@ -1,7 +1,7 @@
 import { Book } from "bkper";
 import { InterceptorOrderProcessorDelete } from "./InterceptorOrderProcessorDelete";
 import { Result } from ".";
-import { GOOD_PROP } from "./constants";
+import { ADDITIONAL_COST_PROP, GOOD_PROP } from "./constants";
 
 export class InterceptorOrderProcessorDeleteFinancial extends InterceptorOrderProcessorDelete {
 
@@ -16,10 +16,10 @@ export class InterceptorOrderProcessorDeleteFinancial extends InterceptorOrderPr
 
         let responses: string[] = [];
 
-        // let response1 = await this.deleteTransaction(financialBook, `${FEES_PROP}_${transactionPayload.id}`);
-        // if (response1) {
-        //     responses.push(await this.buildDeleteResponse(response1));
-        // }
+        let response1 = await this.deleteTransaction(financialBook, `${ADDITIONAL_COST_PROP}_${transactionPayload.id}`);
+        if (response1) {
+            responses.push(await this.buildDeleteResponse(response1));
+        }
         // let response2 = await this.deleteTransaction(financialBook, `${INTEREST_PROP}_${transactionPayload.id}`);
         // if (response2) {
         //     responses.push(await this.buildDeleteResponse(response2));
