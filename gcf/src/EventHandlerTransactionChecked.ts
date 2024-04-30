@@ -93,6 +93,7 @@ export class EventHandlerTransactionChecked extends EventHandlerTransaction {
                     .setCreditAccount(goodBuyAccount)
                     .setDebitAccount(goodAccount)
                     .setDescription(financialTransaction.description)
+                    .addRemoteId(financialTransaction.id)
                     .addRemoteId(financialTransaction.properties[PURCHASE_CODE_PROP])
                     .setProperty(ORIGINAL_QUANTITY_PROP, quantity.toString())
                     .setProperty(GOOD_PURCHASE_COST_PROP, financialAmount.toString())
