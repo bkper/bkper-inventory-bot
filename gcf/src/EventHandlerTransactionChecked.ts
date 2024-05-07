@@ -20,16 +20,14 @@ export class EventHandlerTransactionChecked extends EventHandlerTransaction {
 
     // add additional cost to inventory purchase transaction total cost property
     protected async connectedTransactionFound(financialBook: Book, inventoryBook: Book, financialTransaction: bkper.Transaction, connectedTransaction: Transaction, goodExcCode: string): Promise<string> {
-        const currentTotalCost = new Amount(connectedTransaction.getProperty(TOTAL_COST_PROP));
-
-        const currentTotalAdditionalCosts = new Amount(0);
-        if (connectedTransaction.getProperty(TOTAL_ADDITIONAL_COSTS_PROP)) {
-            currentTotalAdditionalCosts.plus(new Amount(connectedTransaction.getProperty(TOTAL_ADDITIONAL_COSTS_PROP)));
-        }
-
         const additionalCost = new Amount(financialTransaction.amount);
-
+        const currentTotalCost = new Amount(connectedTransaction.getProperty(TOTAL_COST_PROP));
         const newTotalCosts = currentTotalCost.plus(additionalCost);
+
+        let currentTotalAdditionalCosts = new Amount(0);
+        if (connectedTransaction.getProperty(TOTAL_ADDITIONAL_COSTS_PROP)) {
+            currentTotalAdditionalCosts = currentTotalAdditionalCosts.plus(new Amount(connectedTransaction.getProperty(TOTAL_ADDITIONAL_COSTS_PROP)));
+        }
         const newTotalAdditionalCosts = currentTotalAdditionalCosts.plus(additionalCost);
 
         connectedTransaction.setProperty(TOTAL_ADDITIONAL_COSTS_PROP, newTotalAdditionalCosts.toString()).setProperty(TOTAL_COST_PROP, newTotalCosts.toString()).update();
