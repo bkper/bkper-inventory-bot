@@ -85,13 +85,19 @@ export class EventHandlerTransactionChecked extends EventHandlerTransaction {
                     goodBuyAccount = await inventoryBook.newAccount().setName(GOOD_BUY_ACCOUNT_NAME).setType(AccountType.INCOMING).create();
                 }
 
+                for (const remoteId of financialTransaction.remoteIds) {
+                    if (remoteId.startsWith(GOOD_PROP)) {
+                        var rootPurchaseTxId = remoteId;
+                    }
+                }
+
                 let newTransaction = await inventoryBook.newTransaction()
                     .setDate(financialTransaction.date)
                     .setAmount(quantity)
                     .setCreditAccount(goodBuyAccount)
                     .setDebitAccount(goodAccount)
                     .setDescription(financialTransaction.description)
-                    .addRemoteId(financialTransaction.id)
+                    .addRemoteId(rootPurchaseTxId)
                     .addRemoteId(financialTransaction.properties[PURCHASE_CODE_PROP])
                     .setProperty(ORIGINAL_QUANTITY_PROP, quantity.toString())
                     .setProperty(GOOD_PURCHASE_COST_PROP, financialAmount.toString())
