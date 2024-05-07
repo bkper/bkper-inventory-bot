@@ -1,5 +1,6 @@
 import { Book, Transaction } from "bkper";
 import { getInventoryBook } from "./BotService";
+import { GOOD_PROP } from "./constants";
 
 export abstract class InterceptorOrderProcessorDelete {
 
@@ -8,18 +9,34 @@ export abstract class InterceptorOrderProcessorDelete {
         return;
       }
       this.cascadeDeleteTransactions(book, transaction, ``);
-      this.cascadeDeleteTransactions(book, transaction, `additional_cost_`);
+      // this.cascadeDeleteTransactions(book, transaction, `additional_cost_`);
       // this.cascadeDeleteTransactions(getBaseBook(book), transaction, `fx_`);
     }
   
     protected async cascadeDeleteTransactions(book: Book, remoteTx: bkper.Transaction, prefix: string) {
-      let iterator = book.getTransactions(`remoteId:${prefix}${remoteTx.id}`);
-      if (await iterator.hasNext()) {
-        let tx = await iterator.next();
-        if (tx.isChecked()) {
-          tx = await tx.uncheck();
+      if (prefix == '') {
+        console.log("BOOK: ", book.getName());
+        console.log("ENTROU")
+        const remoteIds = remoteTx.remoteIds;
+        for (const remoteId of remoteIds) {
+          if (remoteId.startsWith(GOOD_PROP)) {
+            var rootPurchaseTxId = remoteId.split('_')[1];
+            console.log("rootPurchaseTxId: ", rootPurchaseTxId)
+          }
         }
-        await tx.remove();
+        const rootPurchaseTx = await book.getTransaction(rootPurchaseTxId);
+        await rootPurchaseTx.uncheck();
+        rootPurchaseTx.remove();
+      // } else {
+      //   console.log("FINANCIAL BOOK REMOTE IDS: ", `remoteId:${prefix}${remoteTx.id}`)
+      //   let iterator = book.getTransactions(`remoteId:${prefix}${remoteTx.id}`);
+      //   if (await iterator.hasNext()) {
+      //     let tx = await iterator.next();
+      //     if (tx.isChecked()) {
+      //       tx = await tx.uncheck();
+      //     }
+      //     await tx.remove();
+      //   }
       }
     }
 
