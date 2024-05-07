@@ -119,8 +119,6 @@ export class InterceptorOrderProcessor {
             .addRemoteId(`${GOOD_PROP}_${transactionPayload.id}`)
             .post();
 
-        console.log("REMOTE IDS: ", tx.getRemoteIds());
-
         return `${tx.getDate()} ${tx.getAmount()} ${await tx.getCreditAccountName()} ${await tx.getDebitAccountName()} ${tx.getDescription()}`;
     }
 

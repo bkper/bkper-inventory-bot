@@ -102,8 +102,6 @@ export class EventHandlerTransactionChecked extends EventHandlerTransaction {
                     ;
 
                 let record = `${newTransaction.getDate()} ${newTransaction.getAmount()} ${goodBuyAccount.getName()} ${goodAccount.getName()} ${newTransaction.getDescription()}`;
-
-                console.log("connectedTransactionNotFound REMOTE_ID: ", newTransaction.getRemoteIds());
                 return `BUY: ${inventoryBookAnchor}: ${record}`;
             }
         }
