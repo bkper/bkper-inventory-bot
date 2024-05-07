@@ -1,7 +1,7 @@
-import { Account, AccountType, Amount, Book } from "bkper";
+import { Account, AccountType, Amount, Book, Transaction } from "bkper";
 import { Result } from ".";
 import { getQuantity, isInventoryBook } from "./BotService";
-import { ADDITIONAL_COST_PROP, GOOD_PROP, PURCHASE_CODE_PROP, PURCHASE_COST_PROP, PURCHASE_INVOICE_PROP, QUANTITY_PROP } from "./constants";
+import { ADDITIONAL_COST_PROP, ADDITIONAL_COST_TX_IDS, GOOD_PROP, PURCHASE_CODE_PROP, PURCHASE_COST_PROP, PURCHASE_INVOICE_PROP, QUANTITY_PROP } from "./constants";
 
 export class InterceptorOrderProcessor {
 
@@ -76,7 +76,6 @@ export class InterceptorOrderProcessor {
     // post aditional financial transaction from Buyer to Good (asset) in response to good purchase transaction from Supplier to Buyer
     private async processGoodPurchase(baseBook: Book, transactionPayload: bkper.Transaction): Promise<Result> {
         let buyerAccount = transactionPayload.debitAccount;
-        console.log("processGoodPurchase - TRANSACTION_ID: ", transactionPayload.id);
         let responses: string[] = await Promise.all(
             [
                 // this.postFees(baseBook, exchangeAccount, transactionPayload),
@@ -91,7 +90,6 @@ export class InterceptorOrderProcessor {
     // post aditional financial transaction from Buyer to Good (asset) in response to service purchase transaction from Supplier to Buyer
     private async processAdditionalCost(baseBook: Book, transactionPayload: bkper.Transaction): Promise<Result> {
         let buyerAccount = transactionPayload.debitAccount;
-        console.log("processAdditionalCost - TRANSACTION_ID: ", transactionPayload.id);
         let responses: string[] = await Promise.all(
             [
                 // this.postFees(baseBook, exchangeAccount, transactionPayload),
@@ -111,16 +109,18 @@ export class InterceptorOrderProcessor {
             .setAmount(amount)
             .from(buyerAccount)
             .to(goodAccount)
-            .setDescription(transactionPayload.description + " - " + "GOOD_PURCHASE")
+            .setDescription(transactionPayload.description)
             .setDate(transactionPayload.date)
             .setProperty(QUANTITY_PROP, quantity.toString())
             .setProperty(PURCHASE_COST_PROP, amount.toString())
             .setProperty(PURCHASE_INVOICE_PROP, transactionPayload.properties[PURCHASE_INVOICE_PROP])
             .setProperty(PURCHASE_CODE_PROP, transactionPayload.properties[PURCHASE_CODE_PROP])
+            .addRemoteId(`${GOOD_PROP}_${transactionPayload.properties[PURCHASE_CODE_PROP]}`)
             .addRemoteId(`${GOOD_PROP}_${transactionPayload.id}`)
             .post();
 
-        console.log("postGoodTradeOnPurchase REMOTE_ID: ", tx.getRemoteIds());
+        console.log("REMOTE IDS: ", tx.getRemoteIds());
+
         return `${tx.getDate()} ${tx.getAmount()} ${await tx.getCreditAccountName()} ${await tx.getDebitAccountName()} ${tx.getDescription()}`;
     }
 
@@ -131,15 +131,16 @@ export class InterceptorOrderProcessor {
             .setAmount(amount)
             .from(buyerAccount)
             .to(goodAccount)
-            .setDescription(transactionPayload.description + " - " + "ADDITIONAL_COST")
+            .setDescription(transactionPayload.description)
             .setDate(transactionPayload.date)
             .setProperty(ADDITIONAL_COST_PROP, amount.toString())
             .setProperty(PURCHASE_INVOICE_PROP, transactionPayload.properties[PURCHASE_INVOICE_PROP])
             .setProperty(PURCHASE_CODE_PROP, transactionPayload.properties[PURCHASE_CODE_PROP])
             .addRemoteId(`${ADDITIONAL_COST_PROP}_${transactionPayload.id}`)
             .post();
-        
-        console.log("postAdditionalCostOnPurchase REMOTE_ID: ", tx.getRemoteIds());
+
+        this.addAdditionalCostToGoodTx(baseBook, transactionPayload.properties[PURCHASE_CODE_PROP], transactionPayload.id);
+
         return `${tx.getDate()} ${tx.getAmount()} ${await tx.getCreditAccountName()} ${await tx.getDebitAccountName()} ${tx.getDescription()}`;
     }
 
@@ -150,6 +151,36 @@ export class InterceptorOrderProcessor {
             goodAccount = await baseBook.newAccount().setName(good).setType(AccountType.ASSET).create();
         }
         return goodAccount;
+    }
+
+    private async addAdditionalCostToGoodTx(baseBook: Book, purchaseCodeProp: string, additionalCostTxId: string): Promise<void> {
+        // get good purchase transaction from buyer
+        let goodPurchaseTx: Transaction = null;
+        let iterator = baseBook.getTransactions(`remoteId:${GOOD_PROP}_${purchaseCodeProp}`);
+        if (await iterator.hasNext()) {
+            goodPurchaseTx = await iterator.next();
+        }
+        // get root purchase transaction from supplier
+        let goodPurchaseTxRemoteIds: string[] = [];
+        if (goodPurchaseTx) {
+            goodPurchaseTxRemoteIds = goodPurchaseTx.getRemoteIds();
+        }
+        for (const goodPurchaseTxRemoteId of goodPurchaseTxRemoteIds) {
+            if (goodPurchaseTxRemoteId != `${GOOD_PROP}_${purchaseCodeProp}`) {
+                const rootPurchaseTxId = goodPurchaseTxRemoteId.split('_')[1];
+                const rootPurchaseTx = await baseBook.getTransaction(rootPurchaseTxId);
+                // add additional cost transaction ids to root transaction
+                if (rootPurchaseTx) {
+                    let additionalCostTxIds = rootPurchaseTx.getProperty(ADDITIONAL_COST_TX_IDS);
+                    if (additionalCostTxIds) {
+                        additionalCostTxIds = `${additionalCostTxIds}, ${additionalCostTxId}`;
+                    } else {
+                        additionalCostTxIds = `${additionalCostTxId}`;
+                    }
+                    await rootPurchaseTx.setProperty(ADDITIONAL_COST_TX_IDS, additionalCostTxIds).update();
+                }
+            }
+        }
     }
 
 }
