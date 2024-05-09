@@ -20,6 +20,11 @@ export class EventHandlerTransactionChecked extends EventHandlerTransaction {
 
     // add additional cost to inventory purchase transaction total cost property
     protected async connectedTransactionFound(financialBook: Book, inventoryBook: Book, financialTransaction: bkper.Transaction, connectedTransaction: Transaction, goodExcCode: string): Promise<string> {
+        // prevent bot response when checking transactions from inventory book
+        if (financialBook.getId() == inventoryBook.getId()) {
+            return null;
+        }
+
         const additionalCost = new Amount(financialTransaction.amount);
         const currentTotalCost = new Amount(connectedTransaction.getProperty(TOTAL_COST_PROP));
         const newTotalCosts = currentTotalCost.plus(additionalCost);
@@ -39,6 +44,7 @@ export class EventHandlerTransactionChecked extends EventHandlerTransaction {
 
     // create purchase (Buy) or sale (Sell) transactions in the inventory book in response to the financial transactions
     protected async connectedTransactionNotFound(financialBook: Book, inventoryBook: Book, financialTransaction: bkper.Transaction, goodExcCode: string): Promise<string> {
+        // prevent bot response when checking root financial transaction
         const financialTransactionRemoteIds = financialTransaction.remoteIds;
         if (financialTransactionRemoteIds.length == 0) {
             return null;
