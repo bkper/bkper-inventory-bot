@@ -1,6 +1,6 @@
 import { Account, AccountType, Amount, Bkper, Book, Transaction } from 'bkper';
 
-import { EXC_CODE_PROP, GOOD_EXC_CODE_PROP, INVENTORY_BOOK_PROP, QUANTITY_PROP } from './constants';
+import { EXC_CODE_PROP, GOOD_EXC_CODE_PROP, GOOD_PROP, INVENTORY_BOOK_PROP, QUANTITY_PROP } from './constants';
 
 export function isInventoryBook(book: Book): boolean {
     if (book.getProperty(INVENTORY_BOOK_PROP)) {
@@ -110,4 +110,27 @@ export async function isSale(transaction: Transaction): Promise<boolean> {
 
 export async function isPurchase(transaction: Transaction): Promise<boolean> {
     return transaction.isPosted() && (await transaction.getDebitAccount()).getType() == AccountType.INCOMING;
+}
+
+// returns the good purchase root transaction based on the purchase code property
+export async function getGoodPurchaseRootTx(baseBook: Book, purchaseCodeProp: string): Promise<Transaction> {
+    // get good purchase transaction from buyer
+    let goodPurchaseTx: Transaction = null;
+    let iterator = baseBook.getTransactions(`remoteId:${GOOD_PROP}_${purchaseCodeProp}`);
+    if (await iterator.hasNext()) {
+        goodPurchaseTx = await iterator.next();
+    }
+    // get root purchase transaction from supplier
+    let goodPurchaseTxRemoteIds: string[] = [];
+    if (goodPurchaseTx) {
+        goodPurchaseTxRemoteIds = goodPurchaseTx.getRemoteIds();
+    }
+    for (const goodPurchaseTxRemoteId of goodPurchaseTxRemoteIds) {
+        if (goodPurchaseTxRemoteId != `${GOOD_PROP}_${purchaseCodeProp}`) {
+            const rootPurchaseTxId = goodPurchaseTxRemoteId.split('_')[1];
+            const rootPurchaseTx = await baseBook.getTransaction(rootPurchaseTxId);
+            return rootPurchaseTx;
+        }
+    }
+    return null;
 }
