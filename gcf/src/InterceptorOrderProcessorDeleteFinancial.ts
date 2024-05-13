@@ -62,18 +62,13 @@ export class InterceptorOrderProcessorDeleteFinancial extends InterceptorOrderPr
         if (rootPurchaseTx) {
             let additionalCostTxIds = rootPurchaseTx.getProperty(ADDITIONAL_COST_TX_IDS);
             if (additionalCostTxIds) {
-                let remoteIds = JSON.parse(additionalCostTxIds);
+                let remoteIds: string[] = JSON.parse(additionalCostTxIds);
                 const index = remoteIds.indexOf(additionalCostTxId);
                 if (index != -1) {
                     remoteIds.splice(index, 1);
                 }
-
-                if (remoteIds.lenght <= 0) {
-                    await rootPurchaseTx.setProperty(ADDITIONAL_COST_TX_IDS, null).update();
-                } else {
-                    additionalCostTxIds = JSON.stringify(remoteIds);
-                    await rootPurchaseTx.setProperty(ADDITIONAL_COST_TX_IDS, additionalCostTxIds).update();
-                }
+                additionalCostTxIds = remoteIds.length > 0 ? JSON.stringify(remoteIds) : '';
+                await rootPurchaseTx.setProperty(ADDITIONAL_COST_TX_IDS, additionalCostTxIds).update();
             }
         }
     }
