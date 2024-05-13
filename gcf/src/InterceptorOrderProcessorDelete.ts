@@ -9,19 +9,16 @@ export abstract class InterceptorOrderProcessorDelete {
         return;
       }
       this.cascadeDeleteTransactions(book, transaction, ``);
-      // this.cascadeDeleteTransactions(book, transaction, `additional_cost_`);
+      this.cascadeDeleteTransactions(book, transaction, `additional_cost_`);
       // this.cascadeDeleteTransactions(getBaseBook(book), transaction, `fx_`);
     }
   
     protected async cascadeDeleteTransactions(book: Book, remoteTx: bkper.Transaction, prefix: string) {
       if (prefix == '') {
-        console.log("BOOK: ", book.getName());
-        console.log("ENTROU")
         const remoteIds = remoteTx.remoteIds;
         for (const remoteId of remoteIds) {
           if (remoteId.startsWith(GOOD_PROP)) {
             var rootPurchaseTxId = remoteId.split('_')[1];
-            console.log("rootPurchaseTxId: ", rootPurchaseTxId)
           }
         }
         const rootPurchaseTx = await book.getTransaction(rootPurchaseTxId);

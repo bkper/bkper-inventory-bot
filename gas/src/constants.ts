@@ -1,0 +1,1 @@
+export const INVENTORY_BOOK_PROP = 'inventory_book';

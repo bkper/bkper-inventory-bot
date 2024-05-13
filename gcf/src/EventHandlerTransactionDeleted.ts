@@ -4,6 +4,7 @@ import { isInventoryBook } from "./BotService";
 import { EventHandlerTransaction } from "./EventHandlerTransaction";
 import { InterceptorOrderProcessorDeleteFinancial } from "./InterceptorOrderProcessorDeleteFinancial";
 import { InterceptorOrderProcessorDeleteGoods } from "./InterceptorOrderProcessorDeleteGoods";
+import { GOOD_PROP, PURCHASE_CODE_PROP } from "./constants";
 
 export class EventHandlerTransactionDeleted extends EventHandlerTransaction {
 
@@ -18,7 +19,11 @@ export class EventHandlerTransactionDeleted extends EventHandlerTransaction {
     }
 
     protected getTransactionQuery(transaction: bkper.Transaction): string {
-        return `remoteId:${transaction.id}`;
+        if (transaction.properties[GOOD_PROP]) {
+            return `remoteId:${transaction.id}`;
+        }
+        return `remoteId:${transaction.properties[PURCHASE_CODE_PROP]}`;
+
     }
 
     protected connectedTransactionNotFound(financialBook: Book, goodBook: Book, financialTransaction: bkper.Transaction, goodExcCode: string): Promise<string> {

@@ -53,6 +53,7 @@ async function handleEvent(req: Request, res: Response) {
                 break;
             case 'TRANSACTION_DELETED':
                 result = await new EventHandlerTransactionDeleted().handleEvent(event);
+                break;
         }
 
         res.send(response(result));

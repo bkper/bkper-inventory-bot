@@ -1,0 +1,39 @@
+import { Book, Transaction } from "bkper";
+import { EventHandlerTransaction } from "./EventHandlerTransaction";
+import { InterceptorOrderProcessorDeleteFinancial } from "./InterceptorOrderProcessorDeleteFinancial";
+import { InterceptorOrderProcessor } from "./InterceptorOrderProcessor";
+import { Result } from ".";
+
+export class EventHandlerTransactionUpdated extends EventHandlerTransaction {
+
+    async intercept(baseBook: Book, event: bkper.Event): Promise<Result> {
+        if (this.shouldCascadeDeletion(event)) {
+            await new InterceptorOrderProcessorDeleteFinancial().intercept(baseBook, event);
+        }
+        return await new InterceptorOrderProcessor().intercept(baseBook, event);
+    }
+
+    private shouldCascadeDeletion(event: bkper.Event): boolean {
+        // No previousAttributes
+        if (!event.data.previousAttributes) {
+            return false;
+        }
+        // No changes OR changed the description only
+        const keys = Object.keys(event.data.previousAttributes);
+        if (keys.length === 0 || (keys.length === 1 && keys[0] === 'description')) {
+            return false;
+        }
+        return true;
+    }
+
+    protected getTransactionQuery(transaction: bkper.Transaction): string {
+        throw new Error("Method not implemented.");
+    }
+    protected connectedTransactionNotFound(financialBook: Book, inventoryBook: Book, financialTransaction: bkper.Transaction, goodExcCode: string): Promise<string> {
+        throw new Error("Method not implemented.");
+    }
+    protected connectedTransactionFound(baseBook: Book, connectedBook: Book, financialTransaction: bkper.Transaction, goodTransaction: Transaction, goodExcCode: string): Promise<string> {
+        throw new Error("Method not implemented.");
+    }
+
+}
