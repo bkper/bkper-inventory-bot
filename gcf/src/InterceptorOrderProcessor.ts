@@ -158,9 +158,12 @@ export class InterceptorOrderProcessor {
         if (rootPurchaseTx) {
             let additionalCostTxIds = rootPurchaseTx.getProperty(ADDITIONAL_COST_TX_IDS);
             if (additionalCostTxIds) {
-                additionalCostTxIds = `${additionalCostTxIds}, ${additionalCostTxId}`;
+                let remoteIds: string[] = JSON.parse(additionalCostTxIds);
+                remoteIds.push(additionalCostTxId);
+                additionalCostTxIds = JSON.stringify(remoteIds);
             } else {
-                additionalCostTxIds = `${additionalCostTxId}`;
+                let remoteIds: string[] = [`${additionalCostTxId}`];
+                additionalCostTxIds = JSON.stringify(remoteIds);
             }
             await rootPurchaseTx.setProperty(ADDITIONAL_COST_TX_IDS, additionalCostTxIds).update();
         }
