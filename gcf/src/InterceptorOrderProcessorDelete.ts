@@ -41,7 +41,7 @@ export abstract class InterceptorOrderProcessorDelete {
         return `DELETED: ${tx.getDateFormatted()} ${tx.getAmount()} ${await tx.getCreditAccountName()} ${await tx.getDebitAccountName()} ${tx.getDescription()}`
     }
 
-    protected async deleteTransaction(book: Book, remoteId: string): Promise<Transaction> {
+    protected async deleteTransactionByRemoteId(book: Book, remoteId: string): Promise<Transaction> {
         let iterator = book.getTransactions(`remoteId:${remoteId}`);
         if (await iterator.hasNext()) {
             let tx = await iterator.next();
@@ -56,7 +56,7 @@ export abstract class InterceptorOrderProcessorDelete {
 
     protected async deleteOnInventoryBook(financialBook: Book, remoteId: string): Promise<Transaction> {
         let inventoryBook = getInventoryBook(financialBook);
-        const deletedInventoryTx = await this.deleteTransaction(inventoryBook, remoteId);
+        const deletedInventoryTx = await this.deleteTransactionByRemoteId(inventoryBook, remoteId);
         if (deletedInventoryTx) {
             this.cascadeDelete(financialBook, deletedInventoryTx.json());
         }

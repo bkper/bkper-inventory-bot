@@ -23,7 +23,7 @@ export class InterceptorOrderProcessorDeleteFinancial extends InterceptorOrderPr
 
         // Deleted transaction is the additional cost transaction posted by the user (from supplier to buyer)
         // Delete second transaction posted by the bot (from buyer to good account)
-        const response1 = await this.deleteTransaction(financialBook, `${ADDITIONAL_COST_PROP}_${transactionPayload.id}`);
+        const response1 = await this.deleteTransactionByRemoteId(financialBook, `${ADDITIONAL_COST_PROP}_${transactionPayload.id}`);
         if (response1) {
             // Update add_cost_transactions property value
             await this.removeAdditionalCostFromGoodTx(financialBook, transactionPayload.properties[PURCHASE_CODE_PROP], transactionPayload.id);
