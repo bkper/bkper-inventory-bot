@@ -1,7 +1,7 @@
 import { Book } from "bkper";
 import { InterceptorOrderProcessorDelete } from "./InterceptorOrderProcessorDelete";
 import { Result } from ".";
-import { ADDITIONAL_COST_PROP, ADDITIONAL_COST_TX_IDS, GOOD_PROP, PURCHASE_CODE_PROP } from "./constants";
+import { ADDITIONAL_COST_PROP, ADDITIONAL_COST_TX_IDS } from "./constants";
 import { getGoodPurchaseRootTx } from "./BotService";
 
 export class InterceptorOrderProcessorDeleteFinancial extends InterceptorOrderProcessorDelete {
@@ -17,41 +17,27 @@ export class InterceptorOrderProcessorDeleteFinancial extends InterceptorOrderPr
 
         let responses: string[] = [];
 
-        // SE: transação deletada for ADDITIONAL COST FILHA: TEM REMOTEID COMEÇANDO COM additional_cost
-        // 2) Atualiza custo na transacao no livro Inventory -> pelo purchase_code
-        // 1) Deleta transacao raiz -> pelo remoteId removendo "additional_cost"
-
-        // Deleted transaction is the additional cost transaction posted by the user (from supplier to buyer)
-        // Delete second transaction posted by the bot (from buyer to good account)
-        const response1 = await this.deleteTransactionByRemoteId(financialBook, `${ADDITIONAL_COST_PROP}_${transactionPayload.id}`);
-        if (response1) {
-            // Update add_cost_transactions property value
-            await this.removeAdditionalCostFromGoodTx(financialBook, transactionPayload.properties[PURCHASE_CODE_PROP], transactionPayload.id);
-            responses.push(await this.buildDeleteResponse(response1));
+        // Delete additional cost transactions posted by the user
+        const additionalCostTransactionIds = JSON.parse(transactionPayload.properties[ADDITIONAL_COST_TX_IDS]);
+        for (const additionalCostTransactionId of additionalCostTransactionIds) {
+            const addCostTx = await financialBook.getTransaction(additionalCostTransactionId);
+            await addCostTx.uncheck();
+            let response1 = await addCostTx.remove();
+            if (response1) {
+                responses.push(await this.buildDeleteResponse(response1));
+                // Delete additional cost transactions posted by the bot
+                const response2 = await this.deleteTransactionByRemoteId(financialBook, `${ADDITIONAL_COST_PROP}_${additionalCostTransactionId}`);
+                if (response2) {
+                    responses.push(await this.buildDeleteResponse(response2));
+                }
+            }
         }
 
-        // SE: Transação deletada for transacao de COMPRA PRODUTO FILHA: TEM REMOTEID COMEÇANDO COM good_
-        // 1) Deleta transacao raiz
-        // 2) Deleta transações de ADDITIONAL COST vinculadas
-        // 3) Deleta transação compra do livro inventory
-        // 4) Sinaliza recalculo do FIFO
-
-        // SE: Transação deletada for transacao de COMPRA PRODUTO RAIZ: TEM purchase_code == purchase_invoice
-        // 1) Deleta transacao filha (FAZER UNCHECK ANTES)
-        // 2) Deleta transações de ADDITIONAL COST vinculadas
-        // 3) Deleta transação compra do livro inventory
-        // 4) Sinaliza recalculo do FIFO
-
-
-        // let response2 = await this.deleteTransaction(financialBook, `${INTEREST_PROP}_${transactionPayload.id}`);
-        // if (response2) {
-        //     responses.push(await this.buildDeleteResponse(response2));
-        // }
-        // let response3 = await this.deleteTransaction(financialBook, `${GOOD_PROP}_${transactionPayload.id}`);
-        // if (response3) {
-        //     await this.deleteOnInventoryBook(financialBook, response3.getId());
+        // let response = await this.deleteTransactionByRemoteId(financialBook, `${GOOD_PROP}_${transactionPayload.id}`);
+        // if (response) {
+        //     await this.deleteOnInventoryBook(financialBook, response.getId());
         // } else {
-        //     await this.deleteOnInventoryBook(financialBook, transactionPayload.id);
+        //     await this.deleteOnInventoryBook(financialBook, transactionPayload.properties[PURCHASE_CODE_PROP]);
         // }
 
         return { result: responses.length > 0 ? responses : false };
