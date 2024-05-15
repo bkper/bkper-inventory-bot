@@ -38,11 +38,11 @@ export class InterceptorOrderProcessorDeleteFinancial extends InterceptorOrderPr
         // Delete good pucrchase transactions posted by the bot (from buyer to good account)
         const response = await this.deleteTransactionByRemoteId(financialBook, `${GOOD_PROP}_${transactionPayload.id}`);
         if (response) {
+            responses.push(await this.buildDeleteResponse(response));
             await this.deleteOnInventoryBook(financialBook, response.getId());
-        } else {
-            await this.deleteOnInventoryBook(financialBook, transactionPayload.properties[PURCHASE_CODE_PROP]);
         }
 
+        console.log("RESPONSES LENGTH: " + responses.length)
         return { result: responses.length > 0 ? responses : false };
     }
 
