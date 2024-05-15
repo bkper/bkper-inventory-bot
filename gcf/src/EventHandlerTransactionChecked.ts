@@ -24,7 +24,7 @@ export class EventHandlerTransactionChecked extends EventHandlerTransaction {
         if (financialBook.getId() == inventoryBook.getId()) {
             return null;
         }
-
+        // update additional cost and total cost properties in inventory book transaction
         const additionalCost = new Amount(financialTransaction.amount);
         const currentTotalCost = new Amount(connectedTransaction.getProperty(TOTAL_COST_PROP));
         const newTotalCosts = currentTotalCost.plus(additionalCost);
@@ -49,7 +49,7 @@ export class EventHandlerTransactionChecked extends EventHandlerTransaction {
         if (financialTransactionRemoteIds.length == 0) {
             return null;
         }
-        
+
         let financialDebitAccount = financialTransaction.debitAccount;
         let inventoryBookAnchor = super.buildBookAnchor(inventoryBook);
 
@@ -95,19 +95,13 @@ export class EventHandlerTransactionChecked extends EventHandlerTransaction {
                     goodBuyAccount = await inventoryBook.newAccount().setName(GOOD_BUY_ACCOUNT_NAME).setType(AccountType.INCOMING).create();
                 }
 
-                for (const remoteId of financialTransaction.remoteIds) {
-                    if (remoteId.startsWith(GOOD_PROP)) {
-                        var rootPurchaseTxId = remoteId;
-                    }
-                }
-
                 let newTransaction = await inventoryBook.newTransaction()
                     .setDate(financialTransaction.date)
                     .setAmount(quantity)
                     .setCreditAccount(goodBuyAccount)
                     .setDebitAccount(goodAccount)
                     .setDescription(financialTransaction.description)
-                    .addRemoteId(rootPurchaseTxId)
+                    .addRemoteId(financialTransaction.id)
                     .addRemoteId(financialTransaction.properties[PURCHASE_CODE_PROP])
                     .setProperty(ORIGINAL_QUANTITY_PROP, quantity.toString())
                     .setProperty(GOOD_PURCHASE_COST_PROP, financialAmount.toString())

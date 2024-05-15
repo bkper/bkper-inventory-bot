@@ -1,7 +1,7 @@
 import { Book } from "bkper";
 import { InterceptorOrderProcessorDelete } from "./InterceptorOrderProcessorDelete";
 import { Result } from ".";
-import { ADDITIONAL_COST_PROP, ADDITIONAL_COST_TX_IDS } from "./constants";
+import { ADDITIONAL_COST_PROP, ADDITIONAL_COST_TX_IDS, GOOD_PROP, PURCHASE_CODE_PROP } from "./constants";
 import { getGoodPurchaseRootTx } from "./BotService";
 
 export class InterceptorOrderProcessorDeleteFinancial extends InterceptorOrderProcessorDelete {
@@ -18,27 +18,30 @@ export class InterceptorOrderProcessorDeleteFinancial extends InterceptorOrderPr
         let responses: string[] = [];
 
         // Delete additional cost transactions posted by the user
-        const additionalCostTransactionIds = JSON.parse(transactionPayload.properties[ADDITIONAL_COST_TX_IDS]);
-        for (const additionalCostTransactionId of additionalCostTransactionIds) {
-            const addCostTx = await financialBook.getTransaction(additionalCostTransactionId);
-            await addCostTx.uncheck();
-            let response1 = await addCostTx.remove();
-            if (response1) {
-                responses.push(await this.buildDeleteResponse(response1));
-                // Delete additional cost transactions posted by the bot
-                const response2 = await this.deleteTransactionByRemoteId(financialBook, `${ADDITIONAL_COST_PROP}_${additionalCostTransactionId}`);
-                if (response2) {
-                    responses.push(await this.buildDeleteResponse(response2));
+        if (transactionPayload.properties[ADDITIONAL_COST_TX_IDS] != undefined) {
+            const additionalCostTransactionIds = JSON.parse(transactionPayload.properties[ADDITIONAL_COST_TX_IDS]);
+            for (const additionalCostTransactionId of additionalCostTransactionIds) {
+                const addCostTx = await financialBook.getTransaction(additionalCostTransactionId);
+                await addCostTx.uncheck();
+                const response1 = await addCostTx.remove();
+                if (response1) {
+                    responses.push(await this.buildDeleteResponse(response1));
+                    // Delete additional cost transactions posted by the bot
+                    const response2 = await this.deleteTransactionByRemoteId(financialBook, `${ADDITIONAL_COST_PROP}_${additionalCostTransactionId}`);
+                    if (response2) {
+                        responses.push(await this.buildDeleteResponse(response2));
+                    }
                 }
             }
         }
 
-        // let response = await this.deleteTransactionByRemoteId(financialBook, `${GOOD_PROP}_${transactionPayload.id}`);
-        // if (response) {
-        //     await this.deleteOnInventoryBook(financialBook, response.getId());
-        // } else {
-        //     await this.deleteOnInventoryBook(financialBook, transactionPayload.properties[PURCHASE_CODE_PROP]);
-        // }
+        // Delete good pucrchase transactions posted by the bot (from buyer to good account)
+        const response = await this.deleteTransactionByRemoteId(financialBook, `${GOOD_PROP}_${transactionPayload.id}`);
+        if (response) {
+            await this.deleteOnInventoryBook(financialBook, response.getId());
+        } else {
+            await this.deleteOnInventoryBook(financialBook, transactionPayload.properties[PURCHASE_CODE_PROP]);
+        }
 
         return { result: responses.length > 0 ? responses : false };
     }
