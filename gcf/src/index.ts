@@ -43,6 +43,7 @@ async function handleEvent(req: Request, res: Response) {
         let result: Result = { result: false };
 
         console.log("EVENT: Transaction ", event.type);
+        console.log("EVENT AGENT: ", event.book.name);
 
         switch (event.type) {
             case 'TRANSACTION_POSTED':
