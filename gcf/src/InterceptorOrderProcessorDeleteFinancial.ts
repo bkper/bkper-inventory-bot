@@ -1,8 +1,8 @@
-import { Book, Transaction } from "bkper";
+import { Amount, Book, Transaction } from "bkper";
 import { InterceptorOrderProcessorDelete } from "./InterceptorOrderProcessorDelete";
 import { Result } from ".";
-import { ADDITIONAL_COST_PROP, ADDITIONAL_COST_TX_IDS, GOOD_PROP, PURCHASE_CODE_PROP, PURCHASE_INVOICE_PROP } from "./constants";
-import { getGoodPurchaseRootTx } from "./BotService";
+import { ADDITIONAL_COST_PROP, ADDITIONAL_COST_TX_IDS, GOOD_PROP, PURCHASE_CODE_PROP, PURCHASE_INVOICE_PROP, TOTAL_ADDITIONAL_COSTS_PROP, TOTAL_COST_PROP } from "./constants";
+import { buildBookAnchor, getGoodPurchaseRootTx, getInventoryBook } from "./BotService";
 
 export class InterceptorOrderProcessorDeleteFinancial extends InterceptorOrderProcessorDelete {
 
@@ -36,7 +36,7 @@ export class InterceptorOrderProcessorDeleteFinancial extends InterceptorOrderPr
                     }
                 }
             }
-    
+
             // Delete good purchase transactions posted by the bot (from buyer to good account)
             const response = await this.deleteTransactionByRemoteId(financialBook, `${GOOD_PROP}_${transactionPayload.id}`);
             if (response) {
@@ -57,16 +57,17 @@ export class InterceptorOrderProcessorDeleteFinancial extends InterceptorOrderPr
                 if (response2) {
                     console.log("*** TODO: UPDATING GOOD PURCHASE TRANSACTIONS add_cost_transactions PROPERTY ***")
                     responses.push(await this.buildDeleteResponse(response2));
+                    console.log("PURCHASE CODE PROP: ", transactionPayload.properties[PURCHASE_CODE_PROP]);
+                    responses.push(await this.subtractAdditionalCostFromInventoryTx(financialBook, transactionPayload.properties[PURCHASE_CODE_PROP], transactionPayload.amount));
                 }
-                console.log("*** TODO: UPDATE INVENTORY TRANSACTION COSTS ***")
             }
         }
 
         return { result: responses.length > 0 ? responses : false };
     }
 
-    private async removeAdditionalCostFromGoodTx(baseBook: Book, purchaseCodeProp: string, additionalCostTxId: string): Promise<Transaction> {
-        const rootPurchaseTx = await getGoodPurchaseRootTx(baseBook, purchaseCodeProp);
+    private async removeAdditionalCostFromGoodTx(financialBook: Book, purchaseCodeProp: string, additionalCostTxId: string): Promise<Transaction> {
+        const rootPurchaseTx = await getGoodPurchaseRootTx(financialBook, purchaseCodeProp);
         if (rootPurchaseTx) {
             let additionalCostTxIds = rootPurchaseTx.getProperty(ADDITIONAL_COST_TX_IDS);
             if (additionalCostTxIds) {
@@ -80,5 +81,31 @@ export class InterceptorOrderProcessorDeleteFinancial extends InterceptorOrderPr
             }
         }
         return null;
+    }
+
+    private async subtractAdditionalCostFromInventoryTx(financialBook: Book, purchaseCodeProp: string, value: string): Promise<string> {
+        const inventoryBook = getInventoryBook(financialBook);
+        let bookAnchor = buildBookAnchor(inventoryBook);
+
+        const iterator = inventoryBook.getTransactions(`remoteId:${purchaseCodeProp}`);
+        if (await iterator.hasNext()) {
+            let goodTransaction = await iterator.next();
+            // update additional cost and total cost properties in inventory book transaction
+            const currentTotalCost = new Amount(goodTransaction.getProperty(TOTAL_COST_PROP));
+            const currentAdditionalCosts = new Amount(goodTransaction.getProperty(TOTAL_ADDITIONAL_COSTS_PROP));
+
+            const costToSubtract = new Amount(value);
+
+            const newTotalCost = currentTotalCost.minus(costToSubtract);
+            const newAdditionalCosts = currentAdditionalCosts.minus(costToSubtract);
+
+            goodTransaction.setProperty(TOTAL_ADDITIONAL_COSTS_PROP, newAdditionalCosts.toString()).setProperty(TOTAL_COST_PROP, newTotalCost.toString()).update();
+
+            let record = `${goodTransaction.getDate()} ${goodTransaction.getAmount()} ${await goodTransaction.getCreditAccountName()} ${await goodTransaction.getDebitAccountName()} ${goodTransaction.getDescription()}`;
+            return `FOUND: ${bookAnchor}: ${record}`;
+        } else {
+            return `PURCHASE TRANSACTION NOT FOUND IN BOOK ${bookAnchor}`
+        }
+
     }
 }

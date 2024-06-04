@@ -134,3 +134,7 @@ export async function getGoodPurchaseRootTx(baseBook: Book, purchaseCodeProp: st
     }
     return null;
 }
+
+export function buildBookAnchor(book: Book) {
+    return `<a href='https://app.bkper.com/b/#transactions:bookId=${book.getId()}'>${book.getName()}</a>`;
+}
