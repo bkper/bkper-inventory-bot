@@ -1,4 +1,4 @@
-import { Book } from "bkper";
+import { Book, Transaction } from "bkper";
 import { InterceptorOrderProcessorDelete } from "./InterceptorOrderProcessorDelete";
 import { Result } from ".";
 import { ADDITIONAL_COST_PROP, ADDITIONAL_COST_TX_IDS, GOOD_PROP, PURCHASE_CODE_PROP, PURCHASE_INVOICE_PROP } from "./constants";
@@ -53,15 +53,19 @@ export class InterceptorOrderProcessorDeleteFinancial extends InterceptorOrderPr
             const response = await this.deleteTransactionByRemoteId(financialBook, `${ADDITIONAL_COST_PROP}_${transactionPayload.id}`);
             if (response) {
                 responses.push(await this.buildDeleteResponse(response));
+                const response2 = await this.removeAdditionalCostFromGoodTx(financialBook, transactionPayload.properties[PURCHASE_CODE_PROP], transactionPayload.id);
+                if (response2) {
+                    console.log("*** TODO: UPDATING GOOD PURCHASE TRANSACTIONS add_cost_transactions PROPERTY ***")
+                    responses.push(await this.buildDeleteResponse(response2));
+                }
                 console.log("*** TODO: UPDATE INVENTORY TRANSACTION COSTS ***")
-                console.log("*** TODO: UPDATE GOOD PURCHASE TRANSACTIONS add_cost_transactions PROPERTY ***")
             }
         }
 
         return { result: responses.length > 0 ? responses : false };
     }
 
-    private async removeAdditionalCostFromGoodTx(baseBook: Book, purchaseCodeProp: string, additionalCostTxId: string): Promise<void> {
+    private async removeAdditionalCostFromGoodTx(baseBook: Book, purchaseCodeProp: string, additionalCostTxId: string): Promise<Transaction> {
         const rootPurchaseTx = await getGoodPurchaseRootTx(baseBook, purchaseCodeProp);
         if (rootPurchaseTx) {
             let additionalCostTxIds = rootPurchaseTx.getProperty(ADDITIONAL_COST_TX_IDS);
@@ -72,8 +76,9 @@ export class InterceptorOrderProcessorDeleteFinancial extends InterceptorOrderPr
                     remoteIds.splice(index, 1);
                 }
                 additionalCostTxIds = remoteIds.length > 0 ? JSON.stringify(remoteIds) : '';
-                await rootPurchaseTx.setProperty(ADDITIONAL_COST_TX_IDS, additionalCostTxIds).update();
+                return await rootPurchaseTx.setProperty(ADDITIONAL_COST_TX_IDS, additionalCostTxIds).update();
             }
         }
+        return null;
     }
 }
