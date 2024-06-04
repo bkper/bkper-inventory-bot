@@ -54,13 +54,4 @@ export abstract class InterceptorOrderProcessorDelete {
         return null;
     }
 
-    protected async deleteOnInventoryBook(financialBook: Book, remoteId: string): Promise<Transaction> {
-        let inventoryBook = getInventoryBook(financialBook);
-        const deletedInventoryTx = await this.deleteTransactionByRemoteId(inventoryBook, remoteId);
-        if (deletedInventoryTx) {
-            this.cascadeDelete(financialBook, deletedInventoryTx.json());
-        }
-        return deletedInventoryTx;
-    }
-
 }

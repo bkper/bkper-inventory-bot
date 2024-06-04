@@ -106,6 +106,15 @@ export class InterceptorOrderProcessorDeleteFinancial extends InterceptorOrderPr
         } else {
             return `PURCHASE TRANSACTION NOT FOUND IN BOOK ${bookAnchor}`
         }
-
     }
+
+    protected async deleteOnInventoryBook(financialBook: Book, remoteId: string): Promise<Transaction> {
+        let inventoryBook = getInventoryBook(financialBook);
+        const deletedInventoryTx = await this.deleteTransactionByRemoteId(inventoryBook, remoteId);
+        if (deletedInventoryTx) {
+            this.cascadeDelete(financialBook, deletedInventoryTx.json());
+        }
+        return deletedInventoryTx;
+    }
+    
 }
