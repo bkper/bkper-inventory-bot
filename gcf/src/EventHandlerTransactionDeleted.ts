@@ -1,6 +1,6 @@
 import { Book, Transaction } from "bkper";
 import { Result } from ".";
-import { isInventoryBook } from "./BotService";
+import { buildBookAnchor, isInventoryBook } from "./BotService";
 import { EventHandlerTransaction } from "./EventHandlerTransaction";
 import { InterceptorOrderProcessorDeleteFinancial } from "./InterceptorOrderProcessorDeleteFinancial";
 import { InterceptorOrderProcessorDeleteGoods } from "./InterceptorOrderProcessorDeleteGoods";
@@ -31,7 +31,7 @@ export class EventHandlerTransactionDeleted extends EventHandlerTransaction {
     }
 
     protected async connectedTransactionFound(financialBook: Book, goodBook: Book, financialTransaction: bkper.Transaction, goodTransaction: Transaction, goodExcCode: string): Promise<string> {
-        let bookAnchor = super.buildBookAnchor(goodBook);
+        let bookAnchor = buildBookAnchor(goodBook);
 
         if (goodTransaction.isChecked()) {
             goodTransaction.uncheck();

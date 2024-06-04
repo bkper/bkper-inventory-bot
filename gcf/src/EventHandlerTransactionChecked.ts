@@ -1,6 +1,6 @@
 import { Account, AccountType, Amount, Book, Transaction } from "bkper";
 import { EventHandlerTransaction } from "./EventHandlerTransaction";
-import { getGoodExchangeCodeFromAccount, getQuantity } from "./BotService";
+import { buildBookAnchor, getGoodExchangeCodeFromAccount, getQuantity } from "./BotService";
 import { GOOD_BUY_ACCOUNT_NAME, GOOD_EXC_CODE_PROP, GOOD_PROP, GOOD_PURCHASE_COST_PROP, GOOD_SELL_ACCOUNT_NAME, ORIGINAL_QUANTITY_PROP, PURCHASE_CODE_PROP, PURCHASE_INVOICE_PROP, SALE_AMOUNT_PROP, SALE_PRICE_PROP, TOTAL_ADDITIONAL_COSTS_PROP, TOTAL_COST_PROP } from "./constants";
 
 export class EventHandlerTransactionChecked extends EventHandlerTransaction {
@@ -37,7 +37,7 @@ export class EventHandlerTransactionChecked extends EventHandlerTransaction {
 
         connectedTransaction.setProperty(TOTAL_ADDITIONAL_COSTS_PROP, newTotalAdditionalCosts.toString()).setProperty(TOTAL_COST_PROP, newTotalCosts.toString()).update();
 
-        let bookAnchor = super.buildBookAnchor(inventoryBook);
+        let bookAnchor = buildBookAnchor(inventoryBook);
         let record = `${connectedTransaction.getDate()} ${connectedTransaction.getAmount()} ${await connectedTransaction.getCreditAccountName()} ${await connectedTransaction.getDebitAccountName()} ${connectedTransaction.getDescription()}`;
         return `FOUND: ${bookAnchor}: ${record}`;
     }
@@ -51,7 +51,7 @@ export class EventHandlerTransactionChecked extends EventHandlerTransaction {
         }
 
         let financialDebitAccount = financialTransaction.debitAccount;
-        let inventoryBookAnchor = super.buildBookAnchor(inventoryBook);
+        let inventoryBookAnchor = buildBookAnchor(inventoryBook);
 
         let quantity = getQuantity(inventoryBook, financialTransaction);
         if (quantity == null || quantity.eq(0)) {

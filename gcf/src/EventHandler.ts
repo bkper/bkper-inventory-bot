@@ -54,7 +54,4 @@ export abstract class EventHandler {
         return true;
     }
 
-    protected buildBookAnchor(book: Book) {
-        return `<a href='https://app.bkper.com/b/#transactions:bookId=${book.getId()}'>${book.getName()}</a>`;
-    }
 }
