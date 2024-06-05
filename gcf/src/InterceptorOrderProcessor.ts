@@ -118,8 +118,8 @@ export class InterceptorOrderProcessor {
             .addRemoteId(`${GOOD_PROP}_${transactionPayload.properties[PURCHASE_CODE_PROP]}`)
             .addRemoteId(`${GOOD_PROP}_${transactionPayload.id}`)
             .post();
-
-        console.log("GOOD PURCHASE REMOTE ID: ", `${GOOD_PROP}_${transactionPayload.id}`)
+            
+            console.log("GOOD PURCHASE REMOTE ID: ", `${GOOD_PROP}_${transactionPayload.id}`)
 
         return `${tx.getDate()} ${tx.getAmount()} ${await tx.getCreditAccountName()} ${await tx.getDebitAccountName()} ${tx.getDescription()}`;
     }
@@ -154,7 +154,7 @@ export class InterceptorOrderProcessor {
     }
 
     private async addAdditionalCostToGoodTx(baseBook: Book, purchaseCodeProp: string, additionalCostTxId: string): Promise<void> {
-        const rootPurchaseTx = await getGoodPurchaseRootTx(baseBook, purchaseCodeProp);
+        const rootPurchaseTx = await getGoodPurchaseRootTx(baseBook, purchaseCodeProp.toLowerCase());
         if (rootPurchaseTx) {
             let additionalCostTxIds = rootPurchaseTx.getProperty(ADDITIONAL_COST_TX_IDS);
             if (additionalCostTxIds) {

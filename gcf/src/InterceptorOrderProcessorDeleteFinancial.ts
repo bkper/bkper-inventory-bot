@@ -112,7 +112,8 @@ export class InterceptorOrderProcessorDeleteFinancial extends InterceptorOrderPr
         let inventoryBook = getInventoryBook(financialBook);
         const deletedInventoryTx = await this.deleteTransactionByRemoteId(inventoryBook, remoteId);
         if (deletedInventoryTx) {
-            this.cascadeDelete(financialBook, deletedInventoryTx.json());
+            console.log("ENTROU")
+            // this.cascadeDelete(financialBook, deletedInventoryTx.json());
         }
         return deletedInventoryTx;
     }

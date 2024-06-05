@@ -24,8 +24,9 @@ export class EventHandlerTransactionChecked extends EventHandlerTransaction {
         if (financialBook.getId() == inventoryBook.getId()) {
             return null;
         }
-        // prevent bot response when checking financial transactions posted by the user (from Supplier to Buyer)
-        if (financialTransaction.properties[GOOD_PROP] != null) {
+        // prevent bot response when checking root financial transaction
+        const financialTransactionRemoteIds = financialTransaction.remoteIds;
+        if (financialTransactionRemoteIds.length == 0) {
             return null;
         }
 

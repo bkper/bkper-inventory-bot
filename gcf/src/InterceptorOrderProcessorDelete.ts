@@ -8,33 +8,13 @@ export abstract class InterceptorOrderProcessorDelete {
       if (!book) {
         return;
       }
-      this.cascadeDeleteTransactions(book, transaction, ``);
-      this.cascadeDeleteTransactions(book, transaction, `additional_cost_`);
+      // this.cascadeDeleteTransactions(book, transaction, ``);
+      // this.cascadeDeleteTransactions(book, transaction, `additional_cost_`);
       // this.cascadeDeleteTransactions(getBaseBook(book), transaction, `fx_`);
     }
   
     protected async cascadeDeleteTransactions(book: Book, remoteTx: bkper.Transaction, prefix: string) {
-      if (prefix == '') {
-        const remoteIds = remoteTx.remoteIds;
-        for (const remoteId of remoteIds) {
-          if (remoteId.startsWith(GOOD_PROP)) {
-            var rootPurchaseTxId = remoteId.split('_')[1];
-          }
-        }
-        const rootPurchaseTx = await book.getTransaction(rootPurchaseTxId);
-        await rootPurchaseTx.uncheck();
-        rootPurchaseTx.remove();
-      // } else {
-      //   console.log("FINANCIAL BOOK REMOTE IDS: ", `remoteId:${prefix}${remoteTx.id}`)
-      //   let iterator = book.getTransactions(`remoteId:${prefix}${remoteTx.id}`);
-      //   if (await iterator.hasNext()) {
-      //     let tx = await iterator.next();
-      //     if (tx.isChecked()) {
-      //       tx = await tx.uncheck();
-      //     }
-      //     await tx.remove();
-      //   }
-      }
+
     }
 
     protected async buildDeleteResponse(tx: Transaction): Promise<string> {
