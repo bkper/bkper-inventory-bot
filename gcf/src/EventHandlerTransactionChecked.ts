@@ -24,6 +24,11 @@ export class EventHandlerTransactionChecked extends EventHandlerTransaction {
         if (financialBook.getId() == inventoryBook.getId()) {
             return null;
         }
+        // prevent bot response when checking financial transactions posted by the user (from Supplier to Buyer)
+        if (financialTransaction.properties[GOOD_PROP] != null) {
+            return null;
+        }
+
         // update additional cost and total cost properties in inventory book transaction
         const additionalCost = new Amount(financialTransaction.amount);
         const currentTotalCost = new Amount(connectedTransaction.getProperty(TOTAL_COST_PROP));
