@@ -119,7 +119,7 @@ export class InterceptorOrderProcessor {
             .addRemoteId(`${GOOD_PROP}_${transactionPayload.id}`)
             .post();
             
-            console.log("GOOD PURCHASE REMOTE ID: ", `${GOOD_PROP}_${transactionPayload.id}`)
+        console.log("GOOD PURCHASE REMOTE IDs: ", tx.getRemoteIds())
 
         return `${tx.getDate()} ${tx.getAmount()} ${await tx.getCreditAccountName()} ${await tx.getDebitAccountName()} ${tx.getDescription()}`;
     }
