@@ -9,7 +9,6 @@
     "repoUrl": "https://github.com/bkper/inventory-bot",
     "repoPrivate": false,
     "deprecated": false,
-    "scriptId": "1GOxxlrAKjvwVImGXv_F8bNtnwOkFzlMo390H7j5QP_KJhcOmDeWxptkC",
     "menuUrl": "https://script.google.com/macros/s/AKfycbzQEzvupNCQbCDHkN_jLgRoraB1ROZ5gX1W1VQ129Kh3wKvWxA6VmDt7qwy09LGwFBY/exec?bookId=${book.id}&accountId=${account.id}&groupId=${group.id}",
     "menuUrlDev": "https://script.google.com/macros/s/AKfycbz7i2sEi2ftvstt-fy1hRJh8N627meMRj_4l2HQb60/dev?bookId=${book.id}&accountId=${account.id}&groupId=${group.id}",
     "menuText": "Inventory Bot",
@@ -38,6 +37,7 @@
         },
         "group": {
           "keys": [
+            "exc_code",
             "good_exc_code"
           ]
         }
