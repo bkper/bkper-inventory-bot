@@ -20,22 +20,7 @@ export class InterceptorOrderProcessorDeleteFinancial extends InterceptorOrderPr
         // deleted transaction is the root good purchase transaction
         if (transactionPayload.properties[GOOD_PROP] != undefined && (transactionPayload.properties[PURCHASE_CODE_PROP] == transactionPayload.properties[PURCHASE_INVOICE_PROP])) {
             // Delete additional cost transactions posted by the user
-            if (transactionPayload.properties[ADDITIONAL_COST_TX_IDS] != undefined) {
-                const additionalCostTransactionIds = JSON.parse(transactionPayload.properties[ADDITIONAL_COST_TX_IDS]);
-                for (const additionalCostTransactionId of additionalCostTransactionIds) {
-                    const addCostTx = await financialBook.getTransaction(additionalCostTransactionId);
-                    const response1 = await uncheckAndRemove(addCostTx);
-                    if (response1) {
-                        responses.push(await this.buildDeleteResponse(response1));
-                        // Delete additional cost transactions posted by the bot
-                        const response2 = await this.deleteTransactionByRemoteId(financialBook, `${ADDITIONAL_COST_PROP}_${additionalCostTransactionId}`);
-                        if (response2) {
-                            responses.push(await this.buildDeleteResponse(response2));
-                        }
-                    }
-                }
-            }
-
+            responses = responses.concat(await this.deleteAddCostRootTransactions(financialBook, transactionPayload))
             // Delete good purchase transactions posted by the bot (from buyer to good account)
             const response = await this.deleteTransactionByRemoteId(financialBook, `${GOOD_PROP}_${transactionPayload.id}`);
             if (response) {
