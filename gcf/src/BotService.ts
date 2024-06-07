@@ -1,6 +1,6 @@
 import { Account, AccountType, Amount, Bkper, Book, Transaction } from 'bkper';
 
-import { EXC_CODE_PROP, GOOD_EXC_CODE_PROP, GOOD_PROP, INVENTORY_BOOK_PROP, QUANTITY_PROP } from './constants';
+import { EXC_CODE_PROP, GOOD_EXC_CODE_PROP, GOOD_PROP, INVENTORY_BOOK_PROP, PURCHASE_CODE_PROP, QUANTITY_PROP } from './constants';
 
 export function isInventoryBook(book: Book): boolean {
     if (book.getProperty(INVENTORY_BOOK_PROP)) {
@@ -113,28 +113,30 @@ export async function isPurchase(transaction: Transaction): Promise<boolean> {
 }
 
 // returns the good purchase root transaction based on the purchase code property
-export async function getGoodPurchaseRootTx(baseBook: Book, purchaseCodeProp: string): Promise<Transaction> {
+export async function getGoodPurchaseRootTx(book: Book, purchaseCodeProp: string): Promise<Transaction> {
     // get good purchase transaction from buyer
+    const iterator = book.getTransactions(`remoteId:${GOOD_PROP}_${purchaseCodeProp.toLowerCase()}`);
     let goodPurchaseTx: Transaction = null;
-    let iterator = baseBook.getTransactions(`remoteId:${GOOD_PROP}_${purchaseCodeProp.toLowerCase()}`);
     if (await iterator.hasNext()) {
         goodPurchaseTx = await iterator.next();
     }
-
-
     // get root purchase transaction from supplier
-    let goodPurchaseTxRemoteIds: string[] = [];
-    if (goodPurchaseTx) {
-        goodPurchaseTxRemoteIds = goodPurchaseTx.getRemoteIds();
-    }
-    for (const goodPurchaseTxRemoteId of goodPurchaseTxRemoteIds) {
-        if (goodPurchaseTxRemoteId != `${GOOD_PROP}_${purchaseCodeProp.toLowerCase()}`) {
-            const rootPurchaseTxId = goodPurchaseTxRemoteId.split('_')[1];
-            const rootPurchaseTx = await baseBook.getTransaction(rootPurchaseTxId);
-            return rootPurchaseTx;
+    return await getRootTransaction(book, goodPurchaseTx);
+}
+
+export async function getRootTransaction(book: Book, transaction: Transaction): Promise<Transaction> {
+    if (transaction) {
+        const remoteIds = transaction.getRemoteIds();
+        const purchaseCodeProp = transaction.getProperty(PURCHASE_CODE_PROP).toLowerCase();
+    
+        for (const remoteId of remoteIds) {
+            if (remoteId != `${GOOD_PROP}_${purchaseCodeProp}`) {
+                const rootTxId = remoteId.split('_')[1];
+                const rooTx = await book.getTransaction(rootTxId);
+                return rooTx;
+            }
         }
     }
-
     return null;
 }
 
