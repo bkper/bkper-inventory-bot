@@ -153,7 +153,7 @@ export class InterceptorOrderProcessor {
         return goodAccount;
     }
 
-    private async addAdditionalCostToGoodTx(baseBook: Book, purchaseCodeProp: string, additionalCostTxId: string): Promise<void> {
+    private async addAdditionalCostToGoodTx(baseBook: Book, purchaseCodeProp: string, additionalCostTxId: string): Promise<string> {
         const rootPurchaseTx = await getGoodPurchaseRootTx(baseBook, purchaseCodeProp.toLowerCase());
         if (rootPurchaseTx) {
             let additionalCostTxIds = rootPurchaseTx.getProperty(ADDITIONAL_COST_TX_IDS);
@@ -166,6 +166,9 @@ export class InterceptorOrderProcessor {
                 additionalCostTxIds = JSON.stringify(remoteIds);
             }
             await rootPurchaseTx.setProperty(ADDITIONAL_COST_TX_IDS, additionalCostTxIds).update();
+            return `UPDATED: good purchase transaction on ${rootPurchaseTx.getDate()}, purchase_code: ${purchaseCodeProp}, ${rootPurchaseTx.getDescription()}`;
+        } else {
+            return `ERROR: root purchase transaction not found`;
         }
     }
 
