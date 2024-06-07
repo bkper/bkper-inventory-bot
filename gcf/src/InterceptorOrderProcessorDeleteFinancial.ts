@@ -24,8 +24,7 @@ export class InterceptorOrderProcessorDeleteFinancial extends InterceptorOrderPr
                 const additionalCostTransactionIds = JSON.parse(transactionPayload.properties[ADDITIONAL_COST_TX_IDS]);
                 for (const additionalCostTransactionId of additionalCostTransactionIds) {
                     const addCostTx = await financialBook.getTransaction(additionalCostTransactionId);
-                    await addCostTx.uncheck();
-                    const response1 = await addCostTx.remove();
+                    const response1 = await uncheckAndRemove(addCostTx);
                     if (response1) {
                         responses.push(await this.buildDeleteResponse(response1));
                         // Delete additional cost transactions posted by the bot
@@ -92,8 +91,7 @@ export class InterceptorOrderProcessorDeleteFinancial extends InterceptorOrderPr
             const additionalCostTransactionIds = JSON.parse(transaction.properties[ADDITIONAL_COST_TX_IDS]);
             for (const additionalCostTransactionId of additionalCostTransactionIds) {
                 const addCostTx = await financialBook.getTransaction(additionalCostTransactionId);
-                await addCostTx.uncheck();
-                const response = await addCostTx.remove();
+                const response = await uncheckAndRemove(addCostTx);
                 if (response) {
                     responses.push(await this.buildDeleteResponse(response));
                     // Delete additional cost transaction posted by the bot

@@ -116,25 +116,36 @@ export async function isPurchase(transaction: Transaction): Promise<boolean> {
 export async function getGoodPurchaseRootTx(baseBook: Book, purchaseCodeProp: string): Promise<Transaction> {
     // get good purchase transaction from buyer
     let goodPurchaseTx: Transaction = null;
-    let iterator = baseBook.getTransactions(`remoteId:${GOOD_PROP}_${purchaseCodeProp}`);
+    let iterator = baseBook.getTransactions(`remoteId:${GOOD_PROP}_${purchaseCodeProp.toLowerCase()}`);
     if (await iterator.hasNext()) {
         goodPurchaseTx = await iterator.next();
     }
+
+
     // get root purchase transaction from supplier
     let goodPurchaseTxRemoteIds: string[] = [];
     if (goodPurchaseTx) {
         goodPurchaseTxRemoteIds = goodPurchaseTx.getRemoteIds();
     }
     for (const goodPurchaseTxRemoteId of goodPurchaseTxRemoteIds) {
-        if (goodPurchaseTxRemoteId != `${GOOD_PROP}_${purchaseCodeProp}`) {
+        if (goodPurchaseTxRemoteId != `${GOOD_PROP}_${purchaseCodeProp.toLowerCase()}`) {
             const rootPurchaseTxId = goodPurchaseTxRemoteId.split('_')[1];
             const rootPurchaseTx = await baseBook.getTransaction(rootPurchaseTxId);
             return rootPurchaseTx;
         }
     }
+
     return null;
 }
 
 export function buildBookAnchor(book: Book) {
     return `<a href='https://app.bkper.com/b/#transactions:bookId=${book.getId()}'>${book.getName()}</a>`;
+}
+
+export async function uncheckAndRemove(transaction: Transaction): Promise<Transaction> {
+    if (transaction.isChecked()) {
+        transaction = await transaction.uncheck();
+    }
+    transaction = await transaction.remove();
+    return transaction;
 }

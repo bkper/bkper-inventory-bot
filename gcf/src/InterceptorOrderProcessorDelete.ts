@@ -1,6 +1,5 @@
 import { Book, Transaction } from "bkper";
-import { getInventoryBook } from "./BotService";
-import { GOOD_PROP } from "./constants";
+import { uncheckAndRemove } from "./BotService";
 
 export abstract class InterceptorOrderProcessorDelete {
 
@@ -25,10 +24,7 @@ export abstract class InterceptorOrderProcessorDelete {
         let iterator = book.getTransactions(`remoteId:${remoteId}`);
         if (await iterator.hasNext()) {
             let tx = await iterator.next();
-            if (tx.isChecked()) {
-                tx = await tx.uncheck();
-            }
-            tx = await tx.remove();
+            tx = await uncheckAndRemove(tx);
             return tx;
         }
         return null;
