@@ -132,8 +132,8 @@ export async function getRootTransaction(book: Book, transaction: Transaction): 
         for (const remoteId of remoteIds) {
             if (remoteId != `${GOOD_PROP}_${purchaseCodeProp}`) {
                 const rootTxId = remoteId.split('_')[1];
-                const rooTx = await book.getTransaction(rootTxId);
-                return rooTx;
+                const rootTx = await book.getTransaction(rootTxId);
+                return rootTx;
             }
         }
     }
