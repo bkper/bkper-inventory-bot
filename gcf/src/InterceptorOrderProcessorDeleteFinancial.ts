@@ -2,7 +2,7 @@ import { Amount, Book, Transaction } from "bkper";
 import { InterceptorOrderProcessorDelete } from "./InterceptorOrderProcessorDelete";
 import { Result } from ".";
 import { ADDITIONAL_COST_PROP, ADDITIONAL_COST_TX_IDS, GOOD_PROP, PURCHASE_CODE_PROP, PURCHASE_INVOICE_PROP, TOTAL_ADDITIONAL_COSTS_PROP, TOTAL_COST_PROP } from "./constants";
-import { buildBookAnchor, getGoodPurchaseRootTx, getInventoryBook, uncheckAndRemove } from "./BotService";
+import { buildBookAnchor, getGoodPurchaseRootTx, getInventoryBook, getRootTransaction, uncheckAndRemove } from "./BotService";
 
 export class InterceptorOrderProcessorDeleteFinancial extends InterceptorOrderProcessorDelete {
 
@@ -36,13 +36,7 @@ export class InterceptorOrderProcessorDeleteFinancial extends InterceptorOrderPr
         // deleted transaction is the good purchase transactions posted by the bot (from buyer to good account)
         if (transactionPayload.properties[GOOD_PROP] == undefined && (transactionPayload.properties[PURCHASE_CODE_PROP] == transactionPayload.properties[PURCHASE_INVOICE_PROP])) {
             // delete other additional cost transactions
-            let rootPurchaseTx: Transaction
-            for (const goodPurchaseTxRemoteId of transactionPayload.remoteIds) {
-                if (goodPurchaseTxRemoteId != `${GOOD_PROP}_${transactionPayload.properties[PURCHASE_CODE_PROP].toLowerCase()}`) {
-                    const rootPurchaseTxId = goodPurchaseTxRemoteId.split('_')[1];
-                    rootPurchaseTx = await financialBook.getTransaction(rootPurchaseTxId);
-                }
-            }
+            let rootPurchaseTx = await getRootTransaction(financialBook, await financialBook.getTransaction(transactionPayload.id));
             responses = responses.concat(await this.deleteAddCostRootTransactions(financialBook, rootPurchaseTx.json()));
             // delete root purchase transaction
             const response = await uncheckAndRemove(rootPurchaseTx);
