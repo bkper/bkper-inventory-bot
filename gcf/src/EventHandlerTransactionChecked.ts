@@ -51,18 +51,18 @@ export class EventHandlerTransactionChecked extends EventHandlerTransaction {
     // create purchase (Buy) or sale (Sell) transactions in the inventory book in response to the financial transactions
     protected async connectedTransactionNotFound(financialBook: Book, inventoryBook: Book, financialTransaction: bkper.Transaction, goodExcCode: string): Promise<string> {
         // prevent bot response when checking root financial transaction
-        const financialTransactionRemoteIds = financialTransaction.remoteIds;
-        if (financialTransactionRemoteIds.length == 0) {
+        let financialCreditAccount = financialTransaction.creditAccount;
+        if (financialCreditAccount.type == AccountType.LIABILITY) {
             return null;
         }
-
-        let financialDebitAccount = financialTransaction.debitAccount;
-        let inventoryBookAnchor = buildBookAnchor(inventoryBook);
-
+        
         let quantity = getQuantity(inventoryBook, financialTransaction);
         if (quantity == null || quantity.eq(0)) {
             return null;
         }
+        
+        let financialDebitAccount = financialTransaction.debitAccount;
+        let inventoryBookAnchor = buildBookAnchor(inventoryBook);
 
         const financialAmount = new Amount(financialTransaction.amount);
         const price = financialAmount.div(quantity);
