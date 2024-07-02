@@ -23,9 +23,14 @@ function validate(bookId: string): void {
     }
 }
 
-function calculateCostOfSales(bookId: string): void {
+function calculateCostOfSales(bookId: string, accountId: string, toDate: string): Summary {
 
     // Log user inputs
-    console.log(`book id: ${bookId}`);
+    console.log(`book id: ${bookId}, account id: ${accountId}, date input: ${toDate}`);
+
+    if (accountId) {
+        const summary = CostOfSalesService.calculateCostOfSalesForAccount(bookId, accountId, toDate);
+        return summary.json();
+    }
 
 }
