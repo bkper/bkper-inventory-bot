@@ -6,9 +6,11 @@ namespace CostOfSalesService {
             toDate = inventoryBook.formatDate(new Date());
         }
 
-        // let stockAccount = new StockAccount(stockBook.getAccount(stockAccountId));
+        let goodAccount = new GoodAccount(inventoryBook.getAccount(goodAccountId));
 
-        const summary = new Summary(stockAccount.getId());
+        const summary = new Summary(goodAccount.getId());
+
+        return summary;
     }
 
 }
