@@ -93,24 +93,24 @@ class GoodAccount {
         this.account.deleteProperty(NEEDS_REBUILD_PROP);
     }
 
-    // getExchangeCode(): string | null {
-    //     if (this.account.getType() == BkperApp.AccountType.INCOMING || this.account.getType() == BkperApp.AccountType.OUTGOING) {
-    //         return null;
-    //     }
-    //     let groups = this.account.getGroups();
-    //     if (groups != null) {
-    //         for (const group of groups) {
-    //             if (group == null) {
-    //                 continue;
-    //             }
-    //             let exchange = group.getProperty(STOCK_EXC_CODE_PROP);
-    //             if (exchange != null && exchange.trim() != '') {
-    //                 return exchange;
-    //             }
-    //         }
-    //     }
-    //     return null;
-    // }
+    getExchangeCode(): string | null {
+        if (this.account.getType() == BkperApp.AccountType.INCOMING || this.account.getType() == BkperApp.AccountType.OUTGOING) {
+            return null;
+        }
+        const groups = this.account.getGroups();
+        if (groups != null) {
+            for (const group of groups) {
+                if (group == null) {
+                    continue;
+                }
+                const exchange = group.getProperty(GOOD_EXC_CODE_PROP);
+                if (exchange != null && exchange.trim() != '') {
+                    return exchange;
+                }
+            }
+        }
+        return null;
+    }
 
     // setForwardedExcRate(fwdExcRate: Bkper.Amount): StockAccount {
     //     this.account.setProperty(FORWARDED_EXC_RATE_PROP, fwdExcRate?.toString());

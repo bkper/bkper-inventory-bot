@@ -1,5 +1,6 @@
 BkperApp.setApiKey(PropertiesService.getScriptProperties().getProperty('API_KEY'));
 
+const EXC_CODE_PROP = 'exc_code';
 const GOOD_EXC_CODE_PROP = 'good_exc_code';
 const INVENTORY_BOOK_PROP = 'inventory_book';
 const NEEDS_REBUILD_PROP = 'needs_rebuild';
@@ -8,11 +9,11 @@ const NEEDS_REBUILD_PROP = 'needs_rebuild';
 function doGet(e: GoogleAppsScript.Events.AppsScriptHttpRequestEvent) {
 
     // @ts-ignore
-    let bookId = e.parameter.bookId;
+    const bookId = e.parameter.bookId;
     // @ts-ignore
-    let accountId = e.parameter.accountId;
+    const accountId = e.parameter.accountId;
     // @ts-ignore
-    let groupId = e.parameter.groupId;
+    const groupId = e.parameter.groupId;
 
     return BotViewService.getBotViewTemplate(bookId, accountId, groupId);
 }
