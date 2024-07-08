@@ -26,8 +26,27 @@ namespace CostOfSalesService {
         const beforeDate = BotService.getBeforeDateIsoString(inventoryBook, toDate);
         const iterator = inventoryBook.getTransactions(BotService.getAccountQuery(goodAccount, false, beforeDate));
 
-        let stockAccountSaleTransactions: Bkper.Transaction[] = [];
-        let stockAccountPurchaseTransactions: Bkper.Transaction[] = [];
+        let goodAccountSaleTransactions: Bkper.Transaction[] = [];
+        let goodAccountPurchaseTransactions: Bkper.Transaction[] = [];
+
+        while (iterator.hasNext()) {
+            const tx = iterator.next();
+            // Filter only unchecked
+            if (tx.isChecked()) {
+                continue;
+            }
+            if (BotService.isSale(tx)) {
+                goodAccountSaleTransactions.push(tx);
+            }
+            if (BotService.isPurchase(tx)) {
+                goodAccountPurchaseTransactions.push(tx);
+            }
+        }
+
+        goodAccountSaleTransactions = goodAccountSaleTransactions.sort(BotService.compareToFIFO);
+        goodAccountPurchaseTransactions = goodAccountPurchaseTransactions.sort(BotService.compareToFIFO);
+
+        const baseBook = BotService.getBaseBook(financialBook);
 
         return summary;
     }
