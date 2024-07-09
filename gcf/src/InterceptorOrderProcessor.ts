@@ -1,7 +1,7 @@
 import { Account, AccountType, Amount, Book, Transaction } from "bkper";
 import { Result } from ".";
 import { getGoodPurchaseRootTx, getQuantity, isInventoryBook } from "./BotService";
-import { ADDITIONAL_COST_PROP, ADDITIONAL_COST_TX_IDS, GOOD_PROP, PURCHASE_CODE_PROP, PURCHASE_COST_PROP, PURCHASE_INVOICE_PROP, QUANTITY_PROP } from "./constants";
+import { ADDITIONAL_COST_PROP, ADDITIONAL_COST_TX_IDS, GOOD_PROP, ORDER_PROP, PURCHASE_CODE_PROP, PURCHASE_COST_PROP, PURCHASE_INVOICE_PROP, QUANTITY_PROP } from "./constants";
 
 export class InterceptorOrderProcessor {
 
@@ -104,6 +104,7 @@ export class InterceptorOrderProcessor {
     private async postGoodTradeOnPurchase(baseBook: Book, buyerAccount: bkper.Account, transactionPayload: bkper.Transaction): Promise<string> {
         let goodAccount = await this.getGoodAccount(baseBook, transactionPayload);
         let quantity = getQuantity(baseBook, transactionPayload);
+        let order = this.getOrder(baseBook, transactionPayload);
         const amount = new Amount(transactionPayload.amount);
         let tx = await baseBook.newTransaction()
             .setAmount(amount)
@@ -115,12 +116,11 @@ export class InterceptorOrderProcessor {
             .setProperty(PURCHASE_COST_PROP, amount.toString())
             .setProperty(PURCHASE_INVOICE_PROP, transactionPayload.properties[PURCHASE_INVOICE_PROP])
             .setProperty(PURCHASE_CODE_PROP, transactionPayload.properties[PURCHASE_CODE_PROP])
+            .setProperty(ORDER_PROP, order)
             .addRemoteId(`${GOOD_PROP}_${transactionPayload.properties[PURCHASE_CODE_PROP]}`)
             .addRemoteId(`${GOOD_PROP}_${transactionPayload.id}`)
             .post();
             
-        console.log("GOOD PURCHASE REMOTE IDs: ", tx.getRemoteIds())
-
         return `${tx.getDate()} ${tx.getAmount()} ${await tx.getCreditAccountName()} ${await tx.getDebitAccountName()} ${tx.getDescription()}`;
     }
 
@@ -151,6 +151,18 @@ export class InterceptorOrderProcessor {
             goodAccount = await baseBook.newAccount().setName(good).setType(AccountType.ASSET).create();
         }
         return goodAccount;
+    }
+
+    protected getOrder(book: Book, transactionPayload: bkper.Transaction): string {
+        const orderProp = transactionPayload.properties[ORDER_PROP];
+        if (orderProp == null) {
+            return null;
+        }
+        const orderAmount = book.parseValue(orderProp);
+        if (orderAmount == null) {
+            return null;
+        }
+        return orderAmount.round(0).toString();
     }
 
     private async addAdditionalCostToGoodTx(baseBook: Book, purchaseCodeProp: string, additionalCostTxId: string): Promise<string> {
