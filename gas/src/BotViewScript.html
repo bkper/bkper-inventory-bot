@@ -33,12 +33,12 @@
                 showError(error);
                 disableButtons(false);
             })
-            .validate('<?!= book.id ?>')
+            .validate(template.book.id)
             ;
     }
 
     function fireCalculateForAll() {
-        google.script.run.withSuccessHandler(disableButtons(false)).withFailureHandler(showError).calculateCostOfSales('<?!= book.id ?>', '<?!= account.id ?>');
+        google.script.run.withSuccessHandler(disableButtons(false)).withFailureHandler(showError).calculateCostOfSales(template.book.id, template.account.id);
     }
 
     function showError(error) {
