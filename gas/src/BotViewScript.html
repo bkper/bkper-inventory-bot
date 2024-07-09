@@ -11,12 +11,15 @@
 
     function loadTemplate(location) {
         const parameters = location.parameter;
+        disableButtons(true);
         return google.script.run.withSuccessHandler((t) => setTemplate(t)).getTemplate(parameters);
     }
 
     function setTemplate(t) {
         template = t;
-        updateView();
+        if (template) {
+            disableButtons(false);
+        }
     }
 
     async function calculate() {
