@@ -7,7 +7,6 @@ const NEEDS_REBUILD_PROP = 'needs_rebuild';
 const ORDER_PROP = 'order';
 
 function doGet(e: GoogleAppsScript.Events.AppsScriptHttpRequestEvent) {
-
     // @ts-ignore
     const bookId = e.parameter.bookId;
     // @ts-ignore
@@ -16,6 +15,10 @@ function doGet(e: GoogleAppsScript.Events.AppsScriptHttpRequestEvent) {
     const groupId = e.parameter.groupId;
 
     return BotViewService.getBotViewTemplate(bookId, accountId, groupId);
+}
+
+function include(filename: string) {
+    return HtmlService.createHtmlOutputFromFile(filename).getContent();
 }
 
 function validate(bookId: string): void {
@@ -28,7 +31,6 @@ function validate(bookId: string): void {
 }
 
 function calculateCostOfSales(bookId: string, accountId: string, toDate: string): Summary {
-
     // Log user inputs
     console.log(`book id: ${bookId}, account id: ${accountId}, date input: ${toDate}`);
 
