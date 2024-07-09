@@ -3,11 +3,14 @@
 
 <head>
   <link rel="stylesheet" href="https://ssl.gstatic.com/docs/script/css/add-ons1.css">
-  <!-- Include Style.html file -->
+  <!-- Include BotViewStyle.html file -->
   <?!= include('BotViewStyle'); ?>
 </head>
 
 <body>
+
+  <!-- Include BotViewScript.html file -->
+  <?!= include('BotViewScript'); ?>
 
   <div class='header'>
     Cost of goods sold for&nbsp;<strong>
@@ -30,48 +33,4 @@
 
 </html>
 
-<script>
-
-  async function calculate() {
-    disableButtons(true);
-    google.script.run
-      .withSuccessHandler(async () => {
-        await fireCalculateForAll().catch(showError);
-        disableButtons(false);
-      })
-      .withFailureHandler((error) => {
-        showError(error);
-        disableButtons(false);
-      })
-      .validate('<?!= book.id ?>')
-      ;
-  }
-
-  function fireCalculateForAll() {
-    google.script.run.withSuccessHandler(disableButtons(false)).withFailureHandler(showError).calculateCostOfSales('<?!= book.id ?>', '<?!= account.id ?>');
-  }
-
-  function showError(error) {
-    window.alert(error);
-  }
-
-  function disableButtons(disable) {
-    if (disable) {
-      document.getElementById('calculate-button').setAttribute('disabled', true);
-      document.getElementById('close-button').setAttribute('disabled', true);
-    } else {
-      document.getElementById('calculate-button').removeAttribute('disabled');
-      document.getElementById('close-button').removeAttribute('disabled');
-    }
-  }
-
-  function closeWindow() {
-    try {
-      window.top.close();
-    } catch (error) {
-      console.log("Attempt to automatically close window failed: " + error);
-      showError(error);
-    }
-  }
-
-</script>
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.10.2/jquery.min.js"></script>

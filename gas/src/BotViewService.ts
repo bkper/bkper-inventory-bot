@@ -8,31 +8,17 @@ namespace BotViewService {
             throw 'Inventory Book not found in the collection';
         }
 
-        let account = {
-            id: '',
-            name: ''
-        }
-        if (accountId != '${account.id}') {
-            account.id = accountId;
-            account.name = book.getAccount(accountId).getName();
-        }
-
-        let group = {
-            id: '',
-            name: ''
-        }
-        if (groupId != '${group.id}') {
-            group.id = groupId;
-            group.name = book.getGroup(groupId).getName();
-        }
+        // Account, Group
+        const account = book.getAccount(accountId);
+        const group = book.getGroup(groupId);
 
         const template = HtmlService.createTemplateFromFile('BotView');
 
         template.book = { id: inventoryBook.getId(), name: inventoryBook.getName() };
-        template.account = { id: account.id, name: account.name };
-        template.group = { id: group.id, name: group.name };
-        
-        return template.evaluate().setTitle('Inventory Bot');  
+        template.account = account ? { id: account.getId(), name: account.getName() } : undefined;
+        template.group = group ? { id: group.getId(), name: group.getName() } : undefined;
+
+        return template.evaluate().setTitle('Inventory Bot');
     }
 
 }

@@ -6,6 +6,12 @@ const INVENTORY_BOOK_PROP = 'inventory_book';
 const NEEDS_REBUILD_PROP = 'needs_rebuild';
 const ORDER_PROP = 'order';
 
+type Template = {
+    book: { id: string, name: string },
+    account?: { id: string, name: string },
+    group?: { id: string, name: string }
+}
+
 function doGet(e: GoogleAppsScript.Events.AppsScriptHttpRequestEvent) {
     // @ts-ignore
     const bookId = e.parameter.bookId;
@@ -15,6 +21,26 @@ function doGet(e: GoogleAppsScript.Events.AppsScriptHttpRequestEvent) {
     const groupId = e.parameter.groupId;
 
     return BotViewService.getBotViewTemplate(bookId, accountId, groupId);
+}
+
+function getTemplate(parameters: { [key: string]: string }): Template {
+
+    // Params
+    const bookIdParam = parameters.bookId;
+    const accountIdParam = parameters.accountId;
+    const groupIdParam = parameters.groupId;
+
+    // Book, Account, Group
+    const book = BkperApp.getBook(bookIdParam);
+    const account = book.getAccount(accountIdParam);
+    const group = book.getGroup(groupIdParam);
+
+    // Return template object
+    return {
+        book: { id: book.getId(), name: book.getName() },
+        account: account ? { id: account.getId(), name: account.getName() } : undefined,
+        group: group ? { id: group.getId(), name: group.getName() } : undefined
+    }
 }
 
 function include(filename: string) {
