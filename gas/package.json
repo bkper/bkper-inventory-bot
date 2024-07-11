@@ -13,7 +13,7 @@
     "upgrade:gas": "yarn upgrade @types/google-apps-script --latest",
     "watch": "run-p watch:server watch:client",
     "watch:server": "yarn push --watch --force",
-    "watch:client": "watch 'yarn copyfiles -f client/*.html server/' ./client",
+    "watch:client": "watch 'yarn copyfiles -f client/src/*.html server/' ./client/src",
     "patch": "yarn version --patch --no-git-tag-version",
     "minor": "yarn version --minor --no-git-tag-version",
     "major": "yarn version --major --no-git-tag-version",
@@ -25,8 +25,6 @@
     "@bkper/bkper-api-types": "^5.9.0",
     "@bkper/bkper-app-types": "^3.34.2",
     "@google/clasp": "^2.3.0",
-    "npm-run-all": "^4.1.5",
-    "watch": "^1.0.2",
-    "copyfiles": "^2.1.1"
+    "npm-run-all": "^4.1.5"
   }
 }

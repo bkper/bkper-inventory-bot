@@ -1,0 +1,10 @@
+{
+    "name": "inventory-bot-gas-client",
+    "scripts": {
+
+    },
+    "devDependencies": {
+        "watch": "^1.0.2",
+        "copyfiles": "^2.1.1"
+    }
+}
