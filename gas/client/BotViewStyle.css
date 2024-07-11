@@ -1,0 +1,80 @@
+body,
+div {
+    font-family: Arial, sans-serif !important;
+    font-size: 10pt;
+}
+
+.header,
+.body,
+.footer {
+    padding: 20px;
+}
+
+.body {
+    padding-bottom: 0;
+}
+
+.header {
+    font-size: 120%;
+    background-color: #f5f5f5;
+    text-align: center;
+}
+
+.sub-header {
+    display: flex;
+    height: 40px;
+    font-size: 14px;
+    align-items: center;
+    justify-content: center;
+}
+
+#account-list {
+    font-weight: bold;
+    padding-bottom: 10px;
+}
+
+.footer,
+.accounts-panel .account {
+    display: flex;
+    align-items: center;
+}
+
+.account {
+    margin: 5px 0;
+}
+
+.accounts-panel .account div {
+    padding-right: 5px;
+}
+
+.accounts-panel .account div img {
+    height: 12px;
+}
+
+#date-div {
+    display: flex;
+    justify-content: center;
+    padding: 10px;
+    padding-top: 20px;
+}
+
+.footer {
+    justify-content: center;
+}
+
+#footer-panel a {
+    margin-left: 10px;
+    font-size: 12px;
+    color: grey;
+}
+
+#error-panel {
+    display: flex;
+    justify-content: center;
+    color: red;
+}
+
+.success-icon,
+.error-icon {
+    margin-right: 5px;
+}
