@@ -9,7 +9,7 @@
       "typeRoots" : ["node_modules/@bkper", "node_modules/@types" ]    
     },
     "include": [
-      "src/**/*.ts",
+      "server/**/*.ts",
       "test/**/*.ts",
       "@types/**/*.d.ts"
     ],
