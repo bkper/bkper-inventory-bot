@@ -4,6 +4,7 @@
     "license": "MIT",
     "scripts": {
         "login": "clasp login",
+        "biuld": "tsc",
         "open": "clasp open",
         "pull": "clasp pull",
         "push": "clasp push",
@@ -23,6 +24,7 @@
         "@bkper/bkper-app-types": "^3.34.2",
         "@types/google-apps-script": "^1.0.46",
         "@google/clasp": "^2.3.0",
-        "gts": "^3.1.0"
+        "gts": "^3.1.0",
+        "tsc": "^2.0.4"
     }
 }

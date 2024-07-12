@@ -6,10 +6,11 @@
       "target": "ES6",
       "noImplicitAny": true,
       "sourceMap": true,
-      "typeRoots" : ["node_modules/@bkper", "node_modules/@types" ]    
+      "typeRoots" : ["node_modules/@bkper", "node_modules/@types" ],
+      "noEmit": true 
     },
     "include": [
-      "server/**/*.ts",
+      "src/**/*.ts",
       "test/**/*.ts",
       "@types/**/*.d.ts"
     ],

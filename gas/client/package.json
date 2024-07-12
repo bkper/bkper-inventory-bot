@@ -1,8 +1,6 @@
 {
-    "scripts": {
-
-    },
+    "scripts": {},
     "devDependencies": {
-
+        "tsc": "^2.0.4"
     }
 }
