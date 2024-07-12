@@ -46,7 +46,7 @@ namespace CostOfSalesService {
         goodAccountSaleTransactions = goodAccountSaleTransactions.sort(BotService.compareToFIFO);
         goodAccountPurchaseTransactions = goodAccountPurchaseTransactions.sort(BotService.compareToFIFO);
 
-        const baseBook = BotService.getBaseBook(financialBook);
+        // const baseBook = BotService.getBaseBook(financialBook);
 
         return summary;
     }

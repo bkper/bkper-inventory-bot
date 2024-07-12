@@ -7,12 +7,11 @@
     "upgrade": "upgrade:*",
     "upgrade:server": "yarn --cwd ./server/src upgrade",
     "watch": "run-p watch:server watch:client",
-    "watch:server": "yarn --cwd ./server/src push --watch --force",
-    "watch:client": "watch 'yarn copyfiles -f client/src/*.html server/src' ./client/src"
+    "watch:server": "yarn --cwd ./server build && yarn --cwd ./server push --watch --force",
+    "watch:client": "watch 'yarn --cwd  ./client build' ./client/src"
   },
   "devDependencies": {
     "npm-run-all": "^4.1.5",
-    "watch": "^1.0.2",
-    "copyfiles": "^2.1.1"
+    "watch": "^1.0.2"
   }
 }

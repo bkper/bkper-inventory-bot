@@ -1,6 +1,13 @@
 {
-    "scripts": {},
+    "scripts": {
+        "build": "run-s build:*",
+        "build:transpile": "tsc --outDir build",
+        "build:inline": "glob-exec --foreach './src/**/*.html' --  'cat {{file}} | inline-source --root src > ../server/src/{{file.name}}{{file.ext}}'"
+      },
     "devDependencies": {
-        "tsc": "^2.0.4"
+        "@types/jquery": "^3.3.31",
+        "glob-exec": "^0.1.1",
+        "inline-source-cli": "^1.2.0",
+        "typescript": "4.9.4"
     }
 }
