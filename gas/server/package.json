@@ -1,0 +1,28 @@
+{
+    "name": "inventory-bot-gas",
+    "version": "1.0.1",
+    "license": "MIT",
+    "scripts": {
+        "login": "clasp login",
+        "open": "clasp open",
+        "pull": "clasp pull",
+        "push": "clasp push",
+        "upgrade": "upgrade:*",
+        "upgrade:app": "yarn upgrade @bkper/bkper-app-types --latest",
+        "upgrade:api": "yarn upgrade @bkper/bkper-api-types --latest",
+        "upgrade:gas": "yarn upgrade @types/google-apps-script --latest",
+        "predeploy": "yarn push",
+        "patch": "yarn version --patch --no-git-tag-version",
+        "minor": "yarn version --minor --no-git-tag-version",
+        "major": "yarn version --major --no-git-tag-version",
+        "deploy": "clasp deploy --description $npm_package_version --deploymentId AKfycbzQEzvupNCQbCDHkN_jLgRoraB1ROZ5gX1W1VQ129Kh3wKvWxA6VmDt7qwy09LGwFBY",
+        "postversion": "git add -A && git commit -m \"gas-$npm_package_version\" && git push && yarn deploy && echo \"Successfully released version $npm_package_version!\""
+    },
+    "devDependencies": {
+        "@bkper/bkper-api-types": "^5.9.0",
+        "@bkper/bkper-app-types": "^3.34.2",
+        "@types/google-apps-script": "^1.0.46",
+        "@google/clasp": "^2.3.0",
+        "gts": "^3.1.0"
+    }
+}
