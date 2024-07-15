@@ -82,15 +82,15 @@ class GoodAccount {
     // }
 
     needsRebuild(): boolean {
-        return this.account.getProperty(NEEDS_REBUILD_PROP) == 'TRUE' ? true : false;
+        return this.account.getProperty(constants.NEEDS_REBUILD_PROP) == 'TRUE' ? true : false;
     }
 
     flagNeedsRebuild(): void {
-        this.account.setProperty(NEEDS_REBUILD_PROP, 'TRUE');
+        this.account.setProperty(constants.NEEDS_REBUILD_PROP, 'TRUE');
     }
 
     clearNeedsRebuild(): void {
-        this.account.deleteProperty(NEEDS_REBUILD_PROP);
+        this.account.deleteProperty(constants.NEEDS_REBUILD_PROP);
     }
 
     getExchangeCode(): string | null {
@@ -103,7 +103,7 @@ class GoodAccount {
                 if (group == null) {
                     continue;
                 }
-                const exchange = group.getProperty(GOOD_EXC_CODE_PROP);
+                const exchange = group.getProperty(constants.GOOD_EXC_CODE_PROP);
                 if (exchange != null && exchange.trim() != '') {
                     return exchange;
                 }

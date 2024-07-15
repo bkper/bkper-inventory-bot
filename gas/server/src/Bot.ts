@@ -1,12 +1,11 @@
 BkperApp.setApiKey(PropertiesService.getScriptProperties().getProperty('API_KEY'));
 
-const EXC_CODE_PROP = 'exc_code';
-const GOOD_EXC_CODE_PROP = 'good_exc_code';
-const INVENTORY_BOOK_PROP = 'inventory_book';
-const NEEDS_REBUILD_PROP = 'needs_rebuild';
-const ORDER_PROP = 'order';
-
-type Template = {
+/**
+* Template object to pass server parameters to client side
+* 
+* @public
+*/
+interface Template {
     book: { id: string, name: string },
     account?: { id: string, name: string },
     group?: { id: string, name: string }
@@ -23,6 +22,11 @@ function doGet(e: GoogleAppsScript.Events.AppsScriptHttpRequestEvent) {
     return BotViewService.getBotViewTemplate(bookId, accountId, groupId);
 }
 
+/**
+ * Get Template object from server side
+ * 
+ * @public
+ */
 function getTemplate(parameters: { [key: string]: string }): Template {
 
     // Params
@@ -43,12 +47,12 @@ function getTemplate(parameters: { [key: string]: string }): Template {
     }
 }
 
-function include(filename: string) {
-    return HtmlService.createHtmlOutputFromFile(filename).getContent();
-}
-
+/**
+ * Check if Inventory Book has pending tasks
+ * 
+ * @public
+ */
 function validate(bookId: string): void {
-    // Check if Inventory Book has pending tasks
     const book = BkperApp.getBook(bookId);
     const inventoryBook = BotService.getInventoryBook(book);
     if (BotService.hasPendingTasks(inventoryBook)) {
@@ -56,7 +60,12 @@ function validate(bookId: string): void {
     }
 }
 
-function calculateCostOfSales(bookId: string, accountId: string, toDate: string): Summary {
+/**
+ * Calculate cost of sales for goods
+ * 
+ * @public
+ */
+function calculateCostOfSales(bookId: string, accountId: string, toDate?: string): Summary {
     // Log user inputs
     console.log(`book id: ${bookId}, account id: ${accountId}, date input: ${toDate}`);
 

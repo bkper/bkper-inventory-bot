@@ -6,7 +6,7 @@ namespace BotService {
         }
         const connectedBooks = book.getCollection().getBooks();
         for (const connectedBook of connectedBooks) {
-            if (connectedBook.getProperty(INVENTORY_BOOK_PROP)) {
+            if (connectedBook.getProperty(constants.INVENTORY_BOOK_PROP)) {
                 return connectedBook;
             }
             const fractionDigits = connectedBook.getFractionDigits();
@@ -58,7 +58,7 @@ namespace BotService {
     }
 
     export function getExcCode(book: Bkper.Book): string {
-        return book.getProperty(EXC_CODE_PROP, 'exchange_code');
+        return book.getProperty(constants.EXC_CODE_PROP, 'exchange_code');
     }
 
     export function compareToFIFO(tx1: Bkper.Transaction, tx2: Bkper.Transaction): number {
@@ -66,8 +66,8 @@ namespace BotService {
         let ret = tx1.getDateValue() - tx2.getDateValue();
 
         if (ret == 0) {
-            const order1 = tx1.getProperty(ORDER_PROP) ? +tx1.getProperty(ORDER_PROP) : 0;
-            const order2 = tx2.getProperty(ORDER_PROP) ? +tx2.getProperty(ORDER_PROP) : 0;
+            const order1 = tx1.getProperty(constants.ORDER_PROP) ? +tx1.getProperty(constants.ORDER_PROP) : 0;
+            const order2 = tx2.getProperty(constants.ORDER_PROP) ? +tx2.getProperty(constants.ORDER_PROP) : 0;
             ret = order1 - order2;
         }
 

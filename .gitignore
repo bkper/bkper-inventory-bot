@@ -3,3 +3,8 @@ node_modules
 yarn-error.log
 .history
 .env
+tsconfig.tsbuildinfo
+
+/gas/client/@types/
+/gas/client/build/
+/gas/server/src/*.html
