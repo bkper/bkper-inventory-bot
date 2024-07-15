@@ -3,12 +3,14 @@
     "login": "clasp --cwd ./server/src login",
     "open": "clasp --cwd ./server/src open",
     "pull": "clasp --cwd ./server/src pull",
-    "prepush": "yarn --cwd ../../ clasp:activate",
-    "upgrade": "upgrade:*",
-    "upgrade:server": "yarn --cwd ./server/src upgrade",
-    "watch": "run-p watch:server watch:client",
-    "watch:server": "yarn --cwd ./server build && yarn --cwd ./server push --watch --force",
-    "watch:client": "watch 'yarn --cwd  ./client build' ./client/src"
+    "upgrade": "yarn --cwd ./server/src run upgrade",
+    "watch": "run-p prepush watch:server watch:client",
+    "prepush": "yarn --cwd ../ clasp:activate",
+    "watch:server": "yarn --cwd ./server run build && yarn --cwd ./server push --watch --force",
+    "watch:client": "watch 'yarn --cwd  ./client run build' ./client/src",
+    "patch": "yarn --cwd ./server build && yarn --cwd  ./client build && yarn --cwd  ./server patch",
+    "minor": "yarn --cwd ./server build && yarn --cwd  ./client build && yarn --cwd  ./server minor",
+    "major": "yarn --cwd ./server build && yarn --cwd  ./client build && yarn --cwd  ./server major"
   },
   "devDependencies": {
     "npm-run-all": "^4.1.5",
