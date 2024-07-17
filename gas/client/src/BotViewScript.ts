@@ -25,14 +25,12 @@ function calculate() {
         google.script.run.withSuccessHandler(() => {
             try {
                 fireCalculateForAll();
-                disableButtons(false);
             } catch (error) {
                 showError(error);
             }
         })
             .withFailureHandler((error) => {
                 showError(error);
-                disableButtons(false);
             })
             .validate(template.book.id)
             ;
@@ -43,7 +41,7 @@ function fireCalculateForAll() {
     if (template) {
         if (template.account) {
             google.script.run.withSuccessHandler(disableButtons).withFailureHandler(showError).calculateCostOfSales(template.book.id, template.account.id);
-        } 
+        }
     }
 }
 
