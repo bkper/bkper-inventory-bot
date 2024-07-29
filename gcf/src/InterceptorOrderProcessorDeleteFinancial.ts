@@ -17,7 +17,7 @@ export class InterceptorOrderProcessorDeleteFinancial extends InterceptorOrderPr
 
         let responses: string[] = [];
 
-        // deleted transaction is the root good purchase transaction
+        // deleted transaction is the root good purchase/sale transaction
         if (transactionPayload.properties[GOOD_PROP] != undefined && (transactionPayload.properties[PURCHASE_CODE_PROP] == transactionPayload.properties[PURCHASE_INVOICE_PROP])) {
             // Delete additional cost transactions posted by the user
             responses = responses.concat(await this.deleteAddCostRootTransactions(financialBook, transactionPayload))

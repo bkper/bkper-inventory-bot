@@ -27,7 +27,10 @@ export class EventHandlerTransactionDeleted extends EventHandlerTransaction {
     }
 
     protected connectedTransactionNotFound(financialBook: Book, goodBook: Book, financialTransaction: bkper.Transaction, goodExcCode: string): Promise<string> {
-        return null;
+        return new Promise((resolve, reject) => {
+            const result = 'Transaction not found in Inventory book';
+            resolve(result);
+        });
     }
 
     protected async connectedTransactionFound(financialBook: Book, goodBook: Book, financialTransaction: bkper.Transaction, goodTransaction: Transaction, goodExcCode: string): Promise<string> {
