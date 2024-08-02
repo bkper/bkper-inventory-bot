@@ -1,4 +1,4 @@
-import { Amount, Book, Transaction } from "bkper";
+import { AccountType, Amount, Book, Transaction } from "bkper";
 import { InterceptorOrderProcessorDelete } from "./InterceptorOrderProcessorDelete";
 import { Result } from ".";
 import { ADDITIONAL_COST_PROP, ADDITIONAL_COST_TX_IDS, GOOD_PROP, PURCHASE_CODE_PROP, PURCHASE_INVOICE_PROP, TOTAL_ADDITIONAL_COSTS_PROP, TOTAL_COST_PROP } from "./constants";
@@ -17,8 +17,16 @@ export class InterceptorOrderProcessorDeleteFinancial extends InterceptorOrderPr
 
         let responses: string[] = [];
 
-        // deleted transaction is the root good purchase/sale transaction
-        if (transactionPayload.properties[GOOD_PROP] != undefined && (transactionPayload.properties[PURCHASE_CODE_PROP] == transactionPayload.properties[PURCHASE_INVOICE_PROP])) {
+        // deleted transaction is the sale transaction
+        if (transactionPayload.properties[GOOD_PROP] != undefined && transactionPayload.debitAccount.type == AccountType.INCOMING) {
+            const response = await this.deleteOnInventoryBook(financialBook, transactionPayload.id);
+            if (response) {
+                responses.push(await this.buildDeleteResponse(response));
+            }
+        }
+
+        // deleted transaction is the root good purchase transaction
+        else if (transactionPayload.properties[GOOD_PROP] != undefined && (transactionPayload.properties[PURCHASE_CODE_PROP] == transactionPayload.properties[PURCHASE_INVOICE_PROP])) {
             // Delete additional cost transactions posted by the user
             responses = responses.concat(await this.deleteAddCostRootTransactions(financialBook, transactionPayload))
             // Delete good purchase transactions posted by the bot (from buyer to good account)
@@ -34,7 +42,7 @@ export class InterceptorOrderProcessorDeleteFinancial extends InterceptorOrderPr
         }
 
         // deleted transaction is the good purchase transactions posted by the bot (from buyer to good account)
-        if (transactionPayload.properties[GOOD_PROP] == undefined && (transactionPayload.properties[PURCHASE_CODE_PROP] == transactionPayload.properties[PURCHASE_INVOICE_PROP])) {
+        else if (transactionPayload.properties[GOOD_PROP] == undefined && (transactionPayload.properties[PURCHASE_CODE_PROP] == transactionPayload.properties[PURCHASE_INVOICE_PROP])) {
             // delete other additional cost transactions
             let rootPurchaseTx = await getRootTransaction(financialBook, await financialBook.getTransaction(transactionPayload.id));
             responses = responses.concat(await this.deleteAddCostRootTransactions(financialBook, rootPurchaseTx.json()));
@@ -51,7 +59,7 @@ export class InterceptorOrderProcessorDeleteFinancial extends InterceptorOrderPr
         }
 
         // deleted transaction is the root additional cost transaction posted by the user (from supplier to buyer)
-        if (transactionPayload.properties[GOOD_PROP] != undefined && (transactionPayload.properties[PURCHASE_CODE_PROP] != transactionPayload.properties[PURCHASE_INVOICE_PROP])) {
+        else if (transactionPayload.properties[GOOD_PROP] != undefined && (transactionPayload.properties[PURCHASE_CODE_PROP] != transactionPayload.properties[PURCHASE_INVOICE_PROP])) {
             const response = await this.deleteTransactionByRemoteId(financialBook, `${ADDITIONAL_COST_PROP}_${transactionPayload.id}`);
             if (response) {
                 responses.push(await this.buildDeleteResponse(response));
@@ -61,7 +69,7 @@ export class InterceptorOrderProcessorDeleteFinancial extends InterceptorOrderPr
         }
 
         // deleted transaction is the additional cost transaction posted by the bot (from buyer to good account)
-        if (transactionPayload.properties[GOOD_PROP] == undefined && (transactionPayload.properties[PURCHASE_CODE_PROP] != transactionPayload.properties[PURCHASE_INVOICE_PROP])) {
+        else if (transactionPayload.properties[GOOD_PROP] == undefined && (transactionPayload.properties[PURCHASE_CODE_PROP] != transactionPayload.properties[PURCHASE_INVOICE_PROP])) {
             const rootTxId = transactionPayload.remoteIds[0].split('_cost_')[1];
             // update good purchase transactions in the financial and inventory books
             responses.push(await this.removeAdditionalCostFromGoodTx(financialBook, transactionPayload.properties[PURCHASE_CODE_PROP], rootTxId));
@@ -73,7 +81,6 @@ export class InterceptorOrderProcessorDeleteFinancial extends InterceptorOrderPr
                 responses.push(await this.buildDeleteResponse(response));
             }
         }
-
         return { result: responses.length > 0 ? responses : false };
     }
 
