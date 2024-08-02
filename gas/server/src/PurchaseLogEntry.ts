@@ -1,6 +1,6 @@
 type PurchaseLogEntry = {
 	qt: string,
-	pr: string,
+	uc: string,
 	dt: string,
 	rt: string,
 }

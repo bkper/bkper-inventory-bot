@@ -61,6 +61,22 @@ namespace BotService {
         return book.getProperty(constants.EXC_CODE_PROP, 'exchange_code');
     }
 
+    export function getGoodPurchaseCost(purchaseTransaction: Bkper.Transaction): Bkper.Amount {
+        return BkperApp.newAmount(purchaseTransaction.getProperty(constants.GOOD_PURCHASE_COST_PROP));
+    }
+
+    export function getAdditionalPurchaseCosts(purchaseTransaction: Bkper.Transaction): Bkper.Amount {
+        return BkperApp.newAmount(purchaseTransaction.getProperty(constants.ADD_PURCHASE_COSTS_PROP));
+    }
+
+    export function getTotalPurchaseCost(purchaseTransaction: Bkper.Transaction): Bkper.Amount {
+        return BkperApp.newAmount(purchaseTransaction.getProperty(constants.TOTAL_COST_PROP));
+    }
+
+    export function getPurchaseCode(purchaseTransaction: Bkper.Transaction): string {
+        return purchaseTransaction.getProperty(constants.PURCHASE_CODE_PROP);
+    }
+
     export function compareToFIFO(tx1: Bkper.Transaction, tx2: Bkper.Transaction): number {
 
         let ret = tx1.getDateValue() - tx2.getDateValue();
