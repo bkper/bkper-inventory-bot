@@ -61,7 +61,7 @@ function disableButtons(disable: boolean) {
 
 function closeWindow() {
     try {
-        window.close();
+        window.top.close();
     } catch (error) {
         console.log("Attempt to automatically close window failed: " + error);
         showError(error);
