@@ -36,14 +36,25 @@ function getTemplate(parameters: { [key: string]: string }): Template {
 
     // Book, Account, Group
     const book = BkperApp.getBook(bookIdParam);
-    const account = book.getAccount(accountIdParam);
+    if (book.getAccount(accountIdParam) == null) {
+        throw 'Select an account to calculate';
+    }
+    const inventoryBook = BotService.getInventoryBook(book);
+    if (inventoryBook == null) {
+        throw 'Inventory Book not found in the collection';
+    }
+
     const group = book.getGroup(groupIdParam);
+    let groupName = group ? group.getName() : undefined;
+
+    const accountName = book.getAccount(accountIdParam).getName();
+    const account = inventoryBook.getAccount(accountName);
 
     // Return template object
     return {
-        book: { id: book.getId(), name: book.getName() },
+        book: { id: inventoryBook.getId(), name: inventoryBook.getName() },
         account: account ? { id: account.getId(), name: account.getName() } : undefined,
-        group: group ? { id: group.getId(), name: group.getName() } : undefined
+        group: group ? { id: inventoryBook.getGroup(groupName).getId(), name: groupName } : undefined
     }
 }
 
@@ -71,6 +82,7 @@ function calculateCostOfSales(bookId: string, accountId: string, toDate?: string
 
     if (accountId) {
         const summary = CostOfSalesService.calculateCostOfSalesForAccount(bookId, accountId, toDate);
+        console.log("SUMARY: ", summary.json())
         return summary.json();
     }
 
