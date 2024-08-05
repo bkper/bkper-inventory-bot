@@ -94,28 +94,28 @@ namespace CostOfSalesService {
             // Purchase info: quantity, costs, purchase code
             const purchaseQuantity = purchaseTransaction.getAmount();
 
+
+            // Cost of sale
             const goodPurchaseCost = BotService.getGoodPurchaseCost(purchaseTransaction);
             const additionalPurchaseCost = BotService.getAdditionalPurchaseCosts(purchaseTransaction);
+            const unitGoodCost = goodPurchaseCost.div(purchaseQuantity);
+            const unitAdditionalCosts = additionalPurchaseCost.div(purchaseQuantity);
+            const unitTotalCostOfSale = unitGoodCost.plus(unitAdditionalCosts);
 
             const purchaseCode = BotService.getPurchaseCode(purchaseTransaction);
 
             // Sold quantity GTE purchase quantity: update & check purchase transaction
             if (soldQuantity.gte(purchaseQuantity)) {
 
-                // Cost of sale
-                const unitGoodCost = goodPurchaseCost.div(purchaseQuantity);
-                const unitAdditionalCosts = additionalPurchaseCost.div(purchaseQuantity);
-                const unitTotalCostOfSale = unitGoodCost.plus(unitAdditionalCosts);
-
                 saleCost = saleCost.plus(BotService.getTotalPurchaseCost(purchaseTransaction));
-                
+
                 saleLiquidationLog = logLiquidation(saleTransaction, unitTotalCostOfSale);
                 purchaseTransaction.setProperty(constants.LIQUIDATION_LOG_PROP, JSON.stringify(saleLiquidationLog));
-                
+
                 // Store transaction to be updated
                 purchaseTransaction.setChecked(true);
                 processor.setInventoryBookTransactionToUpdate(purchaseTransaction);
-                
+
                 purchaseLogEntries.push(logPurchase(purchaseQuantity, unitTotalCostOfSale, purchaseTransaction));
                 soldQuantity = soldQuantity.minus(purchaseQuantity);
 
@@ -123,49 +123,44 @@ namespace CostOfSalesService {
             } else {
                 const remainingBuyQuantity = purchaseQuantity.minus(soldQuantity);
                 const partialBuyQuantity = purchaseQuantity.minus(remainingBuyQuantity);
-                
-                // Cost of sale
-                const unitGoodCost = goodPurchaseCost.div(purchaseQuantity);
-                const unitAdditionalCosts = additionalPurchaseCost.div(purchaseQuantity);
-                const unitTotalCostOfSale = unitGoodCost.plus(unitAdditionalCosts);
-                
+
                 saleCost = saleCost.plus(partialBuyQuantity.times(unitTotalCostOfSale));
-                
+
                 purchaseTransaction
-                .setAmount(remainingBuyQuantity)
-                .setProperty(constants.GOOD_PURCHASE_COST_PROP, unitGoodCost.times(remainingBuyQuantity).toString())
-                .setProperty(constants.ADD_PURCHASE_COSTS_PROP, unitAdditionalCosts.times(remainingBuyQuantity).toString())
-                .setProperty(constants.TOTAL_COST_PROP, unitTotalCostOfSale.times(remainingBuyQuantity).toString())
-                ;
+                    .setAmount(remainingBuyQuantity)
+                    .setProperty(constants.GOOD_PURCHASE_COST_PROP, unitGoodCost.times(remainingBuyQuantity).toString())
+                    .setProperty(constants.ADD_PURCHASE_COSTS_PROP, unitAdditionalCosts.times(remainingBuyQuantity).toString())
+                    .setProperty(constants.TOTAL_COST_PROP, unitTotalCostOfSale.times(remainingBuyQuantity).toString())
+                    ;
                 // Store transaction to be updated
                 processor.setInventoryBookTransactionToUpdate(purchaseTransaction);
-                
+
                 let splittedPurchaseTransaction = inventoryBook.newTransaction()
-                .setDate(purchaseTransaction.getDate())
-                .setAmount(partialBuyQuantity)
-                .setCreditAccount(purchaseTransaction.getCreditAccount())
-                .setDebitAccount(purchaseTransaction.getDebitAccount())
-                .setDescription(purchaseTransaction.getDescription())
-                .setProperty(constants.ORDER_PROP, purchaseTransaction.getProperty(constants.ORDER_PROP))
-                .setProperty(constants.PARENT_ID, purchaseTransaction.getId())
-                .setProperty(constants.PURCHASE_CODE_PROP, purchaseCode.toString())
-                .setProperty(constants.GOOD_PURCHASE_COST_PROP, unitGoodCost.times(partialBuyQuantity).toString())
-                .setProperty(constants.ADD_PURCHASE_COSTS_PROP, unitAdditionalCosts.times(partialBuyQuantity).toString())
-                .setProperty(constants.TOTAL_COST_PROP, unitTotalCostOfSale.times(partialBuyQuantity).toString())
-                ;
-                
+                    .setDate(purchaseTransaction.getDate())
+                    .setAmount(partialBuyQuantity)
+                    .setCreditAccount(purchaseTransaction.getCreditAccount())
+                    .setDebitAccount(purchaseTransaction.getDebitAccount())
+                    .setDescription(purchaseTransaction.getDescription())
+                    .setProperty(constants.ORDER_PROP, purchaseTransaction.getProperty(constants.ORDER_PROP))
+                    .setProperty(constants.PARENT_ID, purchaseTransaction.getId())
+                    .setProperty(constants.PURCHASE_CODE_PROP, purchaseCode.toString())
+                    .setProperty(constants.GOOD_PURCHASE_COST_PROP, unitGoodCost.times(partialBuyQuantity).toString())
+                    .setProperty(constants.ADD_PURCHASE_COSTS_PROP, unitAdditionalCosts.times(partialBuyQuantity).toString())
+                    .setProperty(constants.TOTAL_COST_PROP, unitTotalCostOfSale.times(partialBuyQuantity).toString())
+                    ;
+
                 saleLiquidationLog = logLiquidation(saleTransaction, unitTotalCostOfSale);
                 splittedPurchaseTransaction.setProperty(constants.LIQUIDATION_LOG_PROP, JSON.stringify(saleLiquidationLog));
-                
+
                 // Store transaction to be created: generate temporaty id in order to wrap up connections later
                 splittedPurchaseTransaction
-                .setChecked(true)
-                .addRemoteId(`${processor.generateTemporaryId()}`)
-                ;
+                    .setChecked(true)
+                    .addRemoteId(`${processor.generateTemporaryId()}`)
+                    ;
                 processor.setInventoryBookTransactionToCreate(splittedPurchaseTransaction);
-                
+
                 purchaseLogEntries.push(logPurchase(partialBuyQuantity, unitTotalCostOfSale, purchaseTransaction));
-                
+
                 soldQuantity = soldQuantity.minus(partialBuyQuantity);
             }
             // Break loop if sale is fully processed, otherwise proceed to next purchase
@@ -230,7 +225,7 @@ namespace CostOfSalesService {
         return {
             qt: quantity.toString(),
             uc: unitTotalCost.toString(),
-            dt: transaction.getDate(),
+            id: transaction.getId(),
             rt: excRate?.toString()
         }
     }
