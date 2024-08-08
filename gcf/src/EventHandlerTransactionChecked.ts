@@ -1,7 +1,7 @@
 import { Account, AccountType, Amount, Book, Transaction } from "bkper";
 import { EventHandlerTransaction } from "./EventHandlerTransaction";
 import { buildBookAnchor, getGoodExchangeCodeFromAccount, getQuantity } from "./BotService";
-import { GOOD_BUY_ACCOUNT_NAME, GOOD_EXC_CODE_PROP, GOOD_PROP, GOOD_PURCHASE_COST_PROP, GOOD_SELL_ACCOUNT_NAME, ORDER_PROP, ORIGINAL_QUANTITY_PROP, PURCHASE_CODE_PROP, PURCHASE_INVOICE_PROP, SALE_AMOUNT_PROP, SALE_PRICE_PROP, TOTAL_ADDITIONAL_COSTS_PROP, TOTAL_COST_PROP } from "./constants";
+import { GOOD_BUY_ACCOUNT_NAME, GOOD_EXC_CODE_PROP, GOOD_PROP, GOOD_PURCHASE_COST_PROP, GOOD_SELL_ACCOUNT_NAME, ORDER_PROP, ORIGINAL_QUANTITY_PROP, PURCHASE_CODE_PROP, PURCHASE_INVOICE_PROP, SALE_AMOUNT_PROP, TOTAL_ADDITIONAL_COSTS_PROP, TOTAL_COST_PROP } from "./constants";
 
 export class EventHandlerTransactionChecked extends EventHandlerTransaction {
 
@@ -82,7 +82,6 @@ export class EventHandlerTransactionChecked extends EventHandlerTransaction {
                 .setDebitAccount(goodSellAccount)
                 .setDescription(financialTransaction.description)
                 .addRemoteId(financialTransaction.id)
-                .setProperty(SALE_PRICE_PROP, price.toString())
                 .setProperty(ORDER_PROP, financialTransaction.properties[ORDER_PROP])
                 .setProperty(ORIGINAL_QUANTITY_PROP, quantity.toString())
                 .setProperty(SALE_AMOUNT_PROP, financialAmount.toString())
