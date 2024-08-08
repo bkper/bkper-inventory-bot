@@ -9,7 +9,6 @@ export const INVENTORY_BOOK_PROP = 'inventory_book';
 export const ORDER_PROP = 'order';
 export const ORIGINAL_QUANTITY_PROP = 'original_quantity';
 export const PURCHASE_CODE_PROP = 'purchase_code';
-export const PURCHASE_COST_PROP = 'purchase_cost';
 export const PURCHASE_INVOICE_PROP = 'purchase_invoice';
 export const QUANTITY_PROP = 'quantity';
 export const SALE_AMOUNT_PROP = 'sale_amount';

@@ -1,7 +1,7 @@
 import { Account, AccountType, Amount, Book, Transaction } from "bkper";
 import { Result } from ".";
 import { getGoodPurchaseRootTx, getQuantity, isInventoryBook } from "./BotService";
-import { ADDITIONAL_COST_PROP, ADDITIONAL_COST_TX_IDS, GOOD_PROP, ORDER_PROP, PURCHASE_CODE_PROP, PURCHASE_COST_PROP, PURCHASE_INVOICE_PROP, QUANTITY_PROP } from "./constants";
+import { ADDITIONAL_COST_PROP, ADDITIONAL_COST_TX_IDS, GOOD_PROP, ORDER_PROP, PURCHASE_CODE_PROP, PURCHASE_INVOICE_PROP, QUANTITY_PROP } from "./constants";
 
 export class InterceptorOrderProcessor {
 
@@ -113,7 +113,6 @@ export class InterceptorOrderProcessor {
             .setDescription(transactionPayload.description)
             .setDate(transactionPayload.date)
             .setProperty(QUANTITY_PROP, quantity.toString())
-            .setProperty(PURCHASE_COST_PROP, amount.toString())
             .setProperty(PURCHASE_INVOICE_PROP, transactionPayload.properties[PURCHASE_INVOICE_PROP])
             .setProperty(PURCHASE_CODE_PROP, transactionPayload.properties[PURCHASE_CODE_PROP])
             .setProperty(ORDER_PROP, order)
