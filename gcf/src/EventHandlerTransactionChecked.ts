@@ -6,11 +6,8 @@ import { GOOD_BUY_ACCOUNT_NAME, GOOD_EXC_CODE_PROP, GOOD_PROP, GOOD_PURCHASE_COS
 export class EventHandlerTransactionChecked extends EventHandlerTransaction {
 
     protected getTransactionQuery(transaction: bkper.Transaction): string {
-        if (transaction.properties[PURCHASE_CODE_PROP] == transaction.properties[PURCHASE_INVOICE_PROP]) {
-            return `remoteId:${transaction.id}`;
-        } else {
-            return `remoteId:${transaction.properties[PURCHASE_CODE_PROP]}`;
-        }
+        console.log(`remoteId:${transaction.properties[PURCHASE_CODE_PROP]}_${transaction.debitAccount.name}`)
+        return `remoteId:${transaction.properties[PURCHASE_CODE_PROP]}_${transaction.debitAccount.name}`;
     }
 
     // add additional cost to inventory purchase transaction total cost property
@@ -57,12 +54,12 @@ export class EventHandlerTransactionChecked extends EventHandlerTransaction {
         if (financialCreditAccount.type == AccountType.LIABILITY) {
             return null;
         }
-        
+
         let quantity = getQuantity(inventoryBook, financialTransaction);
         if (quantity == null || quantity.eq(0)) {
             return null;
         }
-        
+
         let financialDebitAccount = financialTransaction.debitAccount;
         let inventoryBookAnchor = buildBookAnchor(inventoryBook);
 
@@ -89,7 +86,7 @@ export class EventHandlerTransactionChecked extends EventHandlerTransaction {
                 .setProperty(GOOD_EXC_CODE_PROP, goodExcCode)
                 .post()
                 ;
-            
+
             markAsOnceChecked(financialBook, financialTransaction.id);
 
             let record = `${newTransaction.getDate()} ${newTransaction.getAmount()} ${goodAccount.getName()} ${goodSellAccount.getName()} ${newTransaction.getDescription()}`;
@@ -111,7 +108,7 @@ export class EventHandlerTransactionChecked extends EventHandlerTransaction {
                     .setDebitAccount(goodAccount)
                     .setDescription(financialTransaction.description)
                     .addRemoteId(financialTransaction.id)
-                    .addRemoteId(financialTransaction.properties[PURCHASE_CODE_PROP])
+                    .addRemoteId(`${financialTransaction.properties[PURCHASE_CODE_PROP]}_${financialDebitAccount.name}`)
                     .setProperty(ORIGINAL_QUANTITY_PROP, quantity.toString())
                     .setProperty(GOOD_PURCHASE_COST_PROP, financialAmount.toString())
                     .setProperty(ORDER_PROP, financialTransaction.properties[ORDER_PROP])
@@ -122,7 +119,7 @@ export class EventHandlerTransactionChecked extends EventHandlerTransaction {
                     ;
 
                 markAsOnceChecked(financialBook, financialTransaction.id);
-                
+
                 let record = `${newTransaction.getDate()} ${newTransaction.getAmount()} ${goodBuyAccount.getName()} ${goodAccount.getName()} ${newTransaction.getDescription()}`;
                 return `BUY: ${inventoryBookAnchor}: ${record}`;
             }
