@@ -1,7 +1,7 @@
 import { Account, AccountType, Amount, Book, Transaction } from "bkper";
 import { EventHandlerTransaction } from "./EventHandlerTransaction";
-import { buildBookAnchor, getGoodExchangeCodeFromAccount, getQuantity } from "./BotService";
-import { GOOD_BUY_ACCOUNT_NAME, GOOD_EXC_CODE_PROP, GOOD_PROP, GOOD_PURCHASE_COST_PROP, GOOD_SELL_ACCOUNT_NAME, ORDER_PROP, ORIGINAL_QUANTITY_PROP, PURCHASE_CODE_PROP, PURCHASE_INVOICE_PROP, SALE_AMOUNT_PROP, TOTAL_ADDITIONAL_COSTS_PROP, TOTAL_COST_PROP } from "./constants";
+import { buildBookAnchor, getGoodExchangeCodeFromAccount, getQuantity, markAsOnceChecked } from "./BotService";
+import { GOOD_BUY_ACCOUNT_NAME, GOOD_EXC_CODE_PROP, GOOD_PROP, GOOD_PURCHASE_COST_PROP, GOOD_SELL_ACCOUNT_NAME, ONCE_CHECKED, ORDER_PROP, ORIGINAL_QUANTITY_PROP, PURCHASE_CODE_PROP, PURCHASE_INVOICE_PROP, SALE_AMOUNT_PROP, TOTAL_ADDITIONAL_COSTS_PROP, TOTAL_COST_PROP } from "./constants";
 
 export class EventHandlerTransactionChecked extends EventHandlerTransaction {
 
@@ -13,13 +13,13 @@ export class EventHandlerTransactionChecked extends EventHandlerTransaction {
         }
     }
 
-    // async intercept(baseBook: Book, event: bkper.Event): Promise<Result> {
-    //     let response = await new InterceptorFlagRebuild().intercept(baseBook, event);
-    //     return response;
-    // }
-
     // add additional cost to inventory purchase transaction total cost property
     protected async connectedTransactionFound(financialBook: Book, inventoryBook: Book, financialTransaction: bkper.Transaction, connectedTransaction: Transaction, goodExcCode: string): Promise<string> {
+        // prevent bot response when checking more than once the same good purchase transaction
+        if (financialTransaction.properties[ONCE_CHECKED]) {
+            return null;
+        }
+
         // prevent bot response when checking transactions from inventory book
         if (financialBook.getId() == inventoryBook.getId()) {
             return null;
@@ -43,6 +43,8 @@ export class EventHandlerTransactionChecked extends EventHandlerTransaction {
 
         connectedTransaction.setProperty(TOTAL_ADDITIONAL_COSTS_PROP, newTotalAdditionalCosts.toString()).setProperty(TOTAL_COST_PROP, newTotalCosts.toString()).update();
 
+        markAsOnceChecked(financialBook, financialTransaction.id);
+
         let bookAnchor = buildBookAnchor(inventoryBook);
         let record = `${connectedTransaction.getDate()} ${connectedTransaction.getAmount()} ${await connectedTransaction.getCreditAccountName()} ${await connectedTransaction.getDebitAccountName()} ${connectedTransaction.getDescription()}`;
         return `FOUND: ${bookAnchor}: ${record}`;
@@ -65,7 +67,6 @@ export class EventHandlerTransactionChecked extends EventHandlerTransaction {
         let inventoryBookAnchor = buildBookAnchor(inventoryBook);
 
         const financialAmount = new Amount(financialTransaction.amount);
-        const price = financialAmount.div(quantity);
 
         let goodAccount = await inventoryBook.getAccount(financialTransaction.properties[GOOD_PROP]);
         if (goodAccount) {
@@ -88,6 +89,8 @@ export class EventHandlerTransactionChecked extends EventHandlerTransaction {
                 .setProperty(GOOD_EXC_CODE_PROP, goodExcCode)
                 .post()
                 ;
+            
+            markAsOnceChecked(financialBook, financialTransaction.id);
 
             let record = `${newTransaction.getDate()} ${newTransaction.getAmount()} ${goodAccount.getName()} ${goodSellAccount.getName()} ${newTransaction.getDescription()}`;
             return `SELL: ${inventoryBookAnchor}: ${record}`;
@@ -118,6 +121,8 @@ export class EventHandlerTransactionChecked extends EventHandlerTransaction {
                     .post()
                     ;
 
+                markAsOnceChecked(financialBook, financialTransaction.id);
+                
                 let record = `${newTransaction.getDate()} ${newTransaction.getAmount()} ${goodBuyAccount.getName()} ${goodAccount.getName()} ${newTransaction.getDescription()}`;
                 return `BUY: ${inventoryBookAnchor}: ${record}`;
             }

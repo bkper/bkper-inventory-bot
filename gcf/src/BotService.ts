@@ -1,6 +1,6 @@
 import { Account, AccountType, Amount, Bkper, Book, Transaction } from 'bkper';
 
-import { EXC_CODE_PROP, GOOD_EXC_CODE_PROP, GOOD_PROP, INVENTORY_BOOK_PROP, PURCHASE_CODE_PROP, QUANTITY_PROP } from './constants';
+import { EXC_CODE_PROP, GOOD_EXC_CODE_PROP, GOOD_PROP, INVENTORY_BOOK_PROP, ONCE_CHECKED, PURCHASE_CODE_PROP, QUANTITY_PROP } from './constants';
 
 export function isInventoryBook(book: Book): boolean {
     if (book.getProperty(INVENTORY_BOOK_PROP)) {
@@ -150,4 +150,13 @@ export async function uncheckAndRemove(transaction: Transaction): Promise<Transa
     }
     transaction = await transaction.remove();
     return transaction;
+}
+
+export async function markAsOnceChecked(book: Book, transactionId: string): Promise<void> {
+    const toMarkAsChecked = await book.getTransaction(transactionId);
+    if (toMarkAsChecked.isChecked()) {
+        await toMarkAsChecked.uncheck();
+        await toMarkAsChecked.setProperty(ONCE_CHECKED, 'true').update();
+        toMarkAsChecked.check();
+    }
 }
