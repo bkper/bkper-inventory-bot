@@ -160,3 +160,7 @@ export async function markAsOnceChecked(book: Book, transactionId: string): Prom
         toMarkAsChecked.check();
     }
 }
+
+export function getnormalizedAccName(accountName: string): string {
+    return accountName.replace(' ', '_').toLowerCase();
+}
