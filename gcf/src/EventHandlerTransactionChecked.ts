@@ -21,8 +21,7 @@ export class EventHandlerTransactionChecked extends EventHandlerTransaction {
             return null;
         }
         // prevent bot response when checking root financial transaction
-        const financialTransactionRemoteIds = financialTransaction.remoteIds;
-        if (financialTransactionRemoteIds.length == 0) {
+        if (financialTransaction.creditAccount.type == AccountType.LIABILITY) {
             return null;
         }
 
