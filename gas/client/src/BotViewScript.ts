@@ -38,11 +38,7 @@ function calculate() {
 }
 
 function fireCalculateForAll() {
-    if (template) {
-        if (template.account) {
-            google.script.run.withSuccessHandler(() => disableButtons(false)).withFailureHandler(showError).calculateCostOfSales(template.book.id, template.account.id);
-        }
-    }
+    google.script.run.withSuccessHandler(() => disableButtons(false)).withFailureHandler(showError).calculateCostOfSales(template);
 }
 
 function showError(error: any) {

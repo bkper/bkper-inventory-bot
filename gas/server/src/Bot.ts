@@ -36,9 +36,6 @@ function getTemplate(parameters: { [key: string]: string }): Template {
 
     // Book, Account, Group
     const book = BkperApp.getBook(bookIdParam);
-    if (book.getAccount(accountIdParam) == null) {
-        throw 'Select an account to calculate';
-    }
     const inventoryBook = BotService.getInventoryBook(book);
     if (inventoryBook == null) {
         throw 'Inventory Book not found in the collection';
@@ -47,13 +44,16 @@ function getTemplate(parameters: { [key: string]: string }): Template {
     const group = book.getGroup(groupIdParam);
     let groupName = group ? group.getName() : undefined;
 
-    const accountName = book.getAccount(accountIdParam).getName();
-    const account = inventoryBook.getAccount(accountName);
+    const account = book.getAccount(accountIdParam);
+    let inventoryAccount: Bkper.Account | undefined = undefined;
+    if (account) {
+        inventoryAccount = inventoryBook.getAccount(account.getName());
+    }
 
     // Return template object
     return {
         book: { id: inventoryBook.getId(), name: inventoryBook.getName() },
-        account: account ? { id: account.getId(), name: account.getName() } : undefined,
+        account: inventoryAccount ? { id: inventoryAccount.getId(), name: inventoryAccount.getName() } : undefined,
         group: group ? { id: inventoryBook.getGroup(groupName).getId(), name: groupName } : undefined
     }
 }
@@ -76,14 +76,29 @@ function validate(bookId: string): void {
  * 
  * @public
  */
-function calculateCostOfSales(bookId: string, accountId: string, toDate?: string): Summary {
+function calculateCostOfSales(template: Template, toDate?: string): Summary | undefined{
     // Log user inputs
-    console.log(`book id: ${bookId}, account id: ${accountId}, date input: ${toDate}`);
+    console.log(`book id: ${template.book.id}, account id: ${template.account?.id}, date input: ${toDate}`);
 
-    if (accountId) {
-        const summary = CostOfSalesService.calculateCostOfSalesForAccount(bookId, accountId, toDate);
-        console.log("SUMARY: ", summary.json())
-        return summary.json();
+    let accountsToCalculate: string[] = [];
+    if (template.account) {
+        accountsToCalculate.push(template.account.id);
+    } else {
+        const book = BkperApp.getBook(template.book.id);
+        const inventoryBook = BotService.getInventoryBook(book);
+        const accounts = inventoryBook.getAccounts();
+        for (const account of accounts) {
+            if (account.getType() == BkperApp.AccountType.ASSET) {
+                accountsToCalculate.push(account.getId());
+            }
+        }
     }
 
+    for (const accountId of accountsToCalculate) {
+        const summary = CostOfSalesService.calculateCostOfSalesForAccount(template.book.id, accountId, toDate);
+        console.log("SUMARY: ", summary.json())
+        // return summary.json();
+    }
+
+    return undefined;
 }
