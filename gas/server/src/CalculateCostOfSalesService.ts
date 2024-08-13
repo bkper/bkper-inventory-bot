@@ -18,10 +18,13 @@ namespace CostOfSalesService {
         }
 
         const beforeDate = BotService.getBeforeDateIsoString(inventoryBook, toDate);
-        const iterator = inventoryBook.getTransactions(BotService.getAccountQuery(goodAccount, false, beforeDate));
+        const iterator = inventoryBook.getTransactions(BotService.getAccountQuery(goodAccount, beforeDate));
 
         let goodAccountSaleTransactions: Bkper.Transaction[] = [];
         let goodAccountPurchaseTransactions: Bkper.Transaction[] = [];
+
+        let totalSalesQuantity = 0;
+        let totalPurchasedQuantity = 0;
 
         while (iterator.hasNext()) {
             const tx = iterator.next();
@@ -31,15 +34,23 @@ namespace CostOfSalesService {
             }
             if (BotService.isSale(tx)) {
                 goodAccountSaleTransactions.push(tx);
+                totalSalesQuantity += tx.getAmount().toNumber();
             }
             if (BotService.isPurchase(tx)) {
                 goodAccountPurchaseTransactions.push(tx);
+                totalPurchasedQuantity += tx.getAmount().toNumber();
             }
+        }
+
+        if (totalSalesQuantity == 0) {
+            return summary;
+        }
+        if (totalSalesQuantity > totalPurchasedQuantity) {
+            return summary.quantityError();
         }
 
         goodAccountSaleTransactions = goodAccountSaleTransactions.sort(BotService.compareToFIFO);
         goodAccountPurchaseTransactions = goodAccountPurchaseTransactions.sort(BotService.compareToFIFO);
-
 
         // Processor
         const processor = new CalculateCostOfSalesProcessor(inventoryBook, financialBook);
@@ -176,8 +187,6 @@ namespace CostOfSalesService {
             processor.setInventoryBookTransactionToUpdate(saleTransaction);
 
         }
-
-        // ******** O QUE FAZER QUANDO A QUANTIDADE VENDIDA FOR MAIOR QUE O ESTOQUE ? ********
 
         // post cost of sale transaction in financial book
         addCostOfSales(financialBook, saleTransaction, saleCost, processor);

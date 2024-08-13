@@ -42,6 +42,12 @@ class Summary {
         return this;
     }
 
+    quantityError(): this {
+        this.error = true;
+        this.result = 'Cannot proceed: sales quantity is greater than quantity purchased';
+        return this;
+    }
+
     json(): this {
         this.result = JSON.stringify(this.result);
         return this;

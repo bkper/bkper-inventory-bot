@@ -36,12 +36,8 @@ namespace BotService {
         return null;
     }
 
-    export function getAccountQuery(goodAccount: Bkper.Account, full: boolean, beforeDate?: string) {
+    export function getAccountQuery(goodAccount: Bkper.Account, beforeDate?: string) {
         let query = `account:'${goodAccount.getName()}'`;
-
-        // if (!full && goodAccount.getForwardedDate()) {
-        //     query += ` after:${goodAccount.getForwardedDate()}`
-        // }
 
         if (beforeDate) {
             query += ` before:${beforeDate}`
