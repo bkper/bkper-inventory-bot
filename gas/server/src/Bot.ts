@@ -5,7 +5,7 @@ BkperApp.setApiKey(PropertiesService.getScriptProperties().getProperty('API_KEY'
 * 
 * @public
 */
-interface Template {
+interface ContextParams {
     book: { id: string, name: string },
     account?: { id: string, name: string },
     group?: { id: string, name: string }
@@ -27,7 +27,7 @@ function doGet(e: GoogleAppsScript.Events.AppsScriptHttpRequestEvent) {
  * 
  * @public
  */
-function getTemplate(parameters: { [key: string]: string }): Template {
+function getContextParams(parameters: { [key: string]: string }): ContextParams {
 
     // Params
     const bookIdParam = parameters.bookId;
@@ -59,6 +59,28 @@ function getTemplate(parameters: { [key: string]: string }): Template {
 }
 
 /**
+ * Get the accounts to calculate COGS
+ * 
+ * @public
+ */
+function getAccountsToCalculate(contextParams: ContextParams): string[] {
+    let accountsToCalculate: string[] = [];
+    if (contextParams.account) {
+        accountsToCalculate.push(contextParams.account.id);
+    } else {
+        const book = BkperApp.getBook(template.book.id);
+        const inventoryBook = BotService.getInventoryBook(book);
+        const accounts = inventoryBook.getAccounts();
+        for (const account of accounts) {
+            if (account.getType() == BkperApp.AccountType.ASSET) {
+                accountsToCalculate.push(account.getId());
+            }
+        }
+    }
+    
+}
+
+/**
  * Check if Inventory Book has pending tasks
  * 
  * @public
@@ -76,29 +98,13 @@ function validate(bookId: string): void {
  * 
  * @public
  */
-function calculateCostOfSales(template: Template, toDate?: string): Summary | undefined{
+function calculateCostOfSales(bookId: string, accountId: string, toDate?: string): Summary | undefined {
     // Log user inputs
-    console.log(`book id: ${template.book.id}, account id: ${template.account?.id}, date input: ${toDate}`);
+    console.log(`book id: ${bookId}, account id: ${accountId}, date input: ${toDate}`);
 
-    let accountsToCalculate: string[] = [];
-    if (template.account) {
-        accountsToCalculate.push(template.account.id);
-    } else {
-        const book = BkperApp.getBook(template.book.id);
-        const inventoryBook = BotService.getInventoryBook(book);
-        const accounts = inventoryBook.getAccounts();
-        for (const account of accounts) {
-            if (account.getType() == BkperApp.AccountType.ASSET) {
-                accountsToCalculate.push(account.getId());
-            }
-        }
-    }
+    const summary = CostOfSalesService.calculateCostOfSalesForAccount(bookId, accountId, toDate);
+    console.log("SUMARY: ", summary.json())
+    // return summary.json();
 
-    for (const accountId of accountsToCalculate) {
-        const summary = CostOfSalesService.calculateCostOfSalesForAccount(template.book.id, accountId, toDate);
-        console.log("SUMARY: ", summary.json())
-        // return summary.json();
-    }
-
-    return undefined;
+    return summary;
 }

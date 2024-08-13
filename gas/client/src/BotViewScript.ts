@@ -1,4 +1,4 @@
-let template: google.script.Template | undefined = undefined;
+let contextParams: google.script.ContextParams | undefined = undefined;
 
 // Fetch template variables from Server
 init();
@@ -11,17 +11,27 @@ function init() {
 function loadTemplate(location: google.script.IUrlLocation) {
     const parameters = location.parameter;
     disableButtons(true);
-    return google.script.run.withSuccessHandler((t: google.script.Template) => setTemplate(t)).getTemplate(parameters);
+    google.script.run.withSuccessHandler((params: google.script.ContextParams) => setParams(params)).getContextParams(parameters);
 }
 
-function setTemplate(t: google.script.Template) {
-    template = t;
+function setParams(params: google.script.ContextParams) {
+    contextParams = params;
+    google.script.run.withSuccessHandler(listAccounts).getAccountsToCalculate(contextParams);
+}
+
+function listAccounts(accounts: string[]) {
+    const ul = $('#account-list');
+    ul.append($('<li>').html('TESTE 1'));
+    ul.append($('<li>').html('TESTE 2'));
+    ul.append($('<li>').html('TESTE 3'));
+    ul.show();
+
     disableButtons(false);
 }
 
 function calculate() {
     disableButtons(true);
-    if (template) {
+    if (contextParams) {
         google.script.run.withSuccessHandler(() => {
             try {
                 fireCalculateForAll();
@@ -32,13 +42,13 @@ function calculate() {
             .withFailureHandler((error) => {
                 showError(error);
             })
-            .validate(template.book.id)
+            .validate(contextParams.book.id)
             ;
     }
 }
 
 function fireCalculateForAll() {
-    google.script.run.withSuccessHandler(() => disableButtons(false)).withFailureHandler(showError).calculateCostOfSales(template);
+    google.script.run.withSuccessHandler(() => disableButtons(false)).withFailureHandler(showError).calculateCostOfSales(contextParams);
 }
 
 function showError(error: any) {
