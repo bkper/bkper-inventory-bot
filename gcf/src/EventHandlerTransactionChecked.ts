@@ -79,7 +79,6 @@ export class EventHandlerTransactionChecked extends EventHandlerTransaction {
                 .setDescription(financialTransaction.description)
                 .addRemoteId(financialTransaction.id)
                 .setProperty(ORDER_PROP, financialTransaction.properties[ORDER_PROP])
-                .setProperty(ORIGINAL_QUANTITY_PROP, quantity.toString())
                 .setProperty(SALE_AMOUNT_PROP, financialAmount.toString())
                 .setProperty(GOOD_EXC_CODE_PROP, goodExcCode)
                 .post()

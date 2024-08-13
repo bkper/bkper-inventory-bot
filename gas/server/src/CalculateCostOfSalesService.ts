@@ -206,6 +206,7 @@ namespace CostOfSalesService {
             .setDescription(description)
             .from(financialGoodAccount)
             .to('Cost of sales')
+            .setProperty(constants.QUANTITY_SOLD_PROP, `${saleTransaction.getAmount().toNumber()}`)
             .setChecked(true)
             ;
 

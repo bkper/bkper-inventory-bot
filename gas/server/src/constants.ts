@@ -12,6 +12,7 @@ module constants {
     export const PARENT_ID = 'parent_id';
     export const PURCHASE_CODE_PROP = 'purchase_code';
     export const PURCHASE_LOG_PROP = 'purchase_log';
+    export const QUANTITY_SOLD_PROP = 'quantity_sold';
     export const TOTAL_COST_PROP = 'total_cost';
 
 }
