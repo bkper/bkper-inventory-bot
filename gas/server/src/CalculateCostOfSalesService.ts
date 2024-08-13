@@ -6,19 +6,12 @@ namespace CostOfSalesService {
             toDate = inventoryBook.formatDate(new Date());
         }
 
-        // PRECISA???
-        const goodAccount = new GoodAccount(inventoryBook.getAccount(goodAccountId));
+        const goodAccount = inventoryBook.getAccount(goodAccountId);
+        const goodExcCode = BotService.getExchangeCode(goodAccount);
+        const financialBook = BotService.getFinancialBook(inventoryBook, goodExcCode);
 
         const summary = new Summary(goodAccount.getId());
-
-        // if (stockAccount.needsRebuild()) {
-        //     // Fire reset async
-        //     RealizedResultsService.resetRealizedResultsForAccountAsync(stockBook, stockAccount, false);
-        //     return summary.rebuild();
-        // }
-
-        const goodExcCode = goodAccount.getExchangeCode();
-        const financialBook = BotService.getFinancialBook(inventoryBook, goodExcCode);
+        
         // Skip
         if (financialBook == null) {
             return summary;

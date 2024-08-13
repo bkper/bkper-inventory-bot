@@ -36,7 +36,7 @@ namespace BotService {
         return null;
     }
 
-    export function getAccountQuery(goodAccount: GoodAccount, full: boolean, beforeDate?: string) {
+    export function getAccountQuery(goodAccount: Bkper.Account, full: boolean, beforeDate?: string) {
         let query = `account:'${goodAccount.getName()}'`;
 
         // if (!full && goodAccount.getForwardedDate()) {
@@ -59,6 +59,25 @@ namespace BotService {
 
     export function getExcCode(book: Bkper.Book): string {
         return book.getProperty(constants.EXC_CODE_PROP, 'exchange_code');
+    }
+
+    export function getExchangeCode(account: Bkper.Account): string | null {
+        if (account.getType() == BkperApp.AccountType.INCOMING || account.getType() == BkperApp.AccountType.OUTGOING) {
+            return null;
+        }
+        const groups = account.getGroups();
+        if (groups != null) {
+            for (const group of groups) {
+                if (group == null) {
+                    continue;
+                }
+                const exchange = group.getProperty(constants.GOOD_EXC_CODE_PROP);
+                if (exchange != null && exchange.trim() != '') {
+                    return exchange;
+                }
+            }
+        }
+        return null;
     }
 
     export function getGoodPurchaseCost(purchaseTransaction: Bkper.Transaction): Bkper.Amount {
