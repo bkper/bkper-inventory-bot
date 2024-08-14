@@ -19,11 +19,17 @@ function setParams(params: google.script.ContextParams) {
     google.script.run.withSuccessHandler(listAccounts).getAccountsToCalculate(contextParams);
 }
 
-function listAccounts(accounts: string[]) {
+function listAccounts(accountsToCalculate: { accountId: string, accountName: string }[]) {
+    let accountNames: string[] = [];
+    for (const account of accountsToCalculate) {
+        accountNames.push(account.accountName);
+    }
+    accountNames.sort();
+
     const ul = $('#account-list');
-    ul.append($('<li>').html('TESTE 1'));
-    ul.append($('<li>').html('TESTE 2'));
-    ul.append($('<li>').html('TESTE 3'));
+    for (const accountName of accountNames) {
+        ul.append($('<li>').html(`${accountName}`));
+    }
     ul.show();
 
     disableButtons(false);
