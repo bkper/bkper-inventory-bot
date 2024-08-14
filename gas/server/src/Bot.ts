@@ -63,21 +63,22 @@ function getContextParams(parameters: { [key: string]: string }): ContextParams 
  * 
  * @public
  */
-function getAccountsToCalculate(contextParams: ContextParams): string[] {
-    let accountsToCalculate: string[] = [];
+function getAccountsToCalculate(contextParams: ContextParams): { accountId: string, accountName: string }[] {
+    const book = BkperApp.getBook(contextParams.book.id);
+    const inventoryBook = BotService.getInventoryBook(book);
+    let accountsToCalculate: { accountId: string, accountName: string }[] = [];
     if (contextParams.account) {
-        accountsToCalculate.push(contextParams.account.id);
+        const account = inventoryBook.getAccount(contextParams.account.id);
+        accountsToCalculate.push({ accountId: account.getId(), accountName: account.getName() });
     } else {
-        const book = BkperApp.getBook(template.book.id);
-        const inventoryBook = BotService.getInventoryBook(book);
         const accounts = inventoryBook.getAccounts();
         for (const account of accounts) {
             if (account.getType() == BkperApp.AccountType.ASSET) {
-                accountsToCalculate.push(account.getId());
+                accountsToCalculate.push({ accountId: account.getId(), accountName: account.getName() });
             }
         }
     }
-    
+    return accountsToCalculate;
 }
 
 /**
@@ -98,13 +99,17 @@ function validate(bookId: string): void {
  * 
  * @public
  */
-function calculateCostOfSales(bookId: string, accountId: string, toDate?: string): Summary | undefined {
+function calculateCostOfSales(contextParams: ContextParams, toDate?: string): Summary | undefined {
     // Log user inputs
-    console.log(`book id: ${bookId}, account id: ${accountId}, date input: ${toDate}`);
+    console.log(`book id: ${contextParams.book.id}, account id: ${contextParams.account?.id}, date input: ${toDate}`);
 
-    const summary = CostOfSalesService.calculateCostOfSalesForAccount(bookId, accountId, toDate);
-    console.log("SUMARY: ", summary.json())
-    // return summary.json();
+    let accountsToCalculate = getAccountsToCalculate(contextParams)
 
-    return summary;
+    for (const account of accountsToCalculate) {
+        const summary = CostOfSalesService.calculateCostOfSalesForAccount(contextParams.book.id, account.accountId, toDate);
+        console.log("SUMARY: ", summary.json())
+        // return summary.json();
+    }
+
+    return undefined;
 }
