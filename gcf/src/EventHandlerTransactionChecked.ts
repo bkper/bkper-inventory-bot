@@ -1,7 +1,7 @@
 import { Account, AccountType, Amount, Book, Transaction } from "bkper";
 import { EventHandlerTransaction } from "./EventHandlerTransaction";
-import { buildBookAnchor, getGoodExchangeCodeFromAccount, getnormalizedAccName, getQuantity, markAsOnceChecked } from "./BotService";
-import { GOOD_BUY_ACCOUNT_NAME, GOOD_EXC_CODE_PROP, GOOD_PROP, GOOD_PURCHASE_COST_PROP, GOOD_SELL_ACCOUNT_NAME, ONCE_CHECKED, ORDER_PROP, ORIGINAL_QUANTITY_PROP, PURCHASE_CODE_PROP, PURCHASE_INVOICE_PROP, SALE_AMOUNT_PROP, TOTAL_ADDITIONAL_COSTS_PROP, TOTAL_COST_PROP } from "./constants";
+import { buildBookAnchor, getGoodExchangeCodeFromAccount, getnormalizedAccName, getQuantity } from "./BotService";
+import { GOOD_BUY_ACCOUNT_NAME, GOOD_EXC_CODE_PROP, GOOD_PROP, GOOD_PURCHASE_COST_PROP, GOOD_SELL_ACCOUNT_NAME, ORDER_PROP, ORIGINAL_QUANTITY_PROP, PURCHASE_CODE_PROP, PURCHASE_INVOICE_PROP, SALE_AMOUNT_PROP, TOTAL_ADDITIONAL_COSTS_PROP, TOTAL_COST_PROP } from "./constants";
 
 export class EventHandlerTransactionChecked extends EventHandlerTransaction {
 
@@ -12,14 +12,17 @@ export class EventHandlerTransactionChecked extends EventHandlerTransaction {
     // add additional cost to inventory purchase transaction total cost property
     protected async connectedTransactionFound(financialBook: Book, inventoryBook: Book, financialTransaction: bkper.Transaction, connectedTransaction: Transaction, goodExcCode: string): Promise<string> {
         // prevent bot response when checking more than once the same good purchase transaction
-        if (financialTransaction.properties[ONCE_CHECKED]) {
-            return null;
+        for (const remoteId of connectedTransaction.getRemoteIds()) {
+            if (remoteId == financialTransaction.id) {
+                return null;
+            }
         }
 
         // prevent bot response when checking transactions from inventory book
         if (financialBook.getId() == inventoryBook.getId()) {
             return null;
         }
+
         // prevent bot response when checking root financial transaction
         if (financialTransaction.creditAccount.type == AccountType.LIABILITY) {
             return null;
@@ -36,9 +39,11 @@ export class EventHandlerTransactionChecked extends EventHandlerTransaction {
         }
         const newTotalAdditionalCosts = currentTotalAdditionalCosts.plus(additionalCost);
 
-        connectedTransaction.setProperty(TOTAL_ADDITIONAL_COSTS_PROP, newTotalAdditionalCosts.toString()).setProperty(TOTAL_COST_PROP, newTotalCosts.toString()).update();
-
-        markAsOnceChecked(financialBook, financialTransaction.id);
+        connectedTransaction
+            .setProperty(TOTAL_ADDITIONAL_COSTS_PROP, newTotalAdditionalCosts.toString())
+            .setProperty(TOTAL_COST_PROP, newTotalCosts.toString())
+            .addRemoteId(financialTransaction.id)
+            .update();
 
         let bookAnchor = buildBookAnchor(inventoryBook);
         let record = `${connectedTransaction.getDate()} ${connectedTransaction.getAmount()} ${await connectedTransaction.getCreditAccountName()} ${await connectedTransaction.getDebitAccountName()} ${connectedTransaction.getDescription()}`;
@@ -84,8 +89,6 @@ export class EventHandlerTransactionChecked extends EventHandlerTransaction {
                 .post()
                 ;
 
-            markAsOnceChecked(financialBook, financialTransaction.id);
-
             let record = `${newTransaction.getDate()} ${newTransaction.getAmount()} ${goodAccount.getName()} ${goodSellAccount.getName()} ${newTransaction.getDescription()}`;
             return `SELL: ${inventoryBookAnchor}: ${record}`;
 
@@ -114,8 +117,6 @@ export class EventHandlerTransactionChecked extends EventHandlerTransaction {
                     .setProperty(TOTAL_COST_PROP, financialAmount.toString())
                     .post()
                     ;
-
-                markAsOnceChecked(financialBook, financialTransaction.id);
 
                 let record = `${newTransaction.getDate()} ${newTransaction.getAmount()} ${goodBuyAccount.getName()} ${goodAccount.getName()} ${newTransaction.getDescription()}`;
                 return `BUY: ${inventoryBookAnchor}: ${record}`;
