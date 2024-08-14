@@ -1,15 +1,19 @@
 class Summary {
 
     private accountId: string;
-    private result: any = {};
+    private result: string = 'Nothing to calculate';
     private error = false;
 
     constructor(accountId: string) {
         this.accountId = accountId;
     }
 
+    getAccountId(): string {
+        return this.accountId;
+    }
+
     getResult(): string {
-        return JSON.stringify(this.result);
+        return this.result;
     }
 
     done(msg?: string): this {
@@ -22,17 +26,17 @@ class Summary {
     }
 
     rebuild(): this {
-        this.result = 'Account needs rebuild: reseting async...';
+        this.result = 'Account needs rebuild: reseting...';
         return this;
     }
 
     resetingAsync(): this {
-        this.result = 'Reseting async...';
+        this.result = 'Reseting...';
         return this;
     }
 
     calculatingAsync(): this {
-        this.result = 'Calculating async...';
+        this.result = 'Calculating...';
         return this;
     }
 

@@ -1,7 +1,7 @@
 BkperApp.setApiKey(PropertiesService.getScriptProperties().getProperty('API_KEY'));
 
 /**
-* Template object to pass server parameters to client side
+* Object to pass server parameters to client side
 * 
 * @public
 */
@@ -63,20 +63,27 @@ function getContextParams(parameters: { [key: string]: string }): ContextParams 
  * 
  * @public
  */
-function getAccountsToCalculate(contextParams: ContextParams): { accountId: string, accountName: string }[] {
+function getAccountsToCalculate(contextParams: ContextParams): { accountName: string, accountId: string }[] {
     const book = BkperApp.getBook(contextParams.book.id);
     const inventoryBook = BotService.getInventoryBook(book);
-    let accountsToCalculate: { accountId: string, accountName: string }[] = [];
+
+    let accountsMap = new Map<string, string>();
     if (contextParams.account) {
         const account = inventoryBook.getAccount(contextParams.account.id);
-        accountsToCalculate.push({ accountId: account.getId(), accountName: account.getName() });
+        accountsMap.set(account.getName(), account.getId());
     } else {
         const accounts = inventoryBook.getAccounts();
         for (const account of accounts) {
             if (account.getType() == BkperApp.AccountType.ASSET) {
-                accountsToCalculate.push({ accountId: account.getId(), accountName: account.getName() });
+                accountsMap.set(account.getName(), account.getId());
             }
         }
+    }
+    accountsMap = new Map([...accountsMap.entries()].sort());
+
+    let accountsToCalculate: { accountName: string, accountId: string }[] = [];
+    for (const [accountName, accountId] of accountsMap) {
+        accountsToCalculate.push({ accountName: accountName, accountId: accountId });
     }
     return accountsToCalculate;
 }
@@ -99,17 +106,17 @@ function validate(bookId: string): void {
  * 
  * @public
  */
-function calculateCostOfSales(contextParams: ContextParams, toDate?: string): Summary | undefined {
+function calculateCostOfSales(contextParams: ContextParams, toDate?: string): { accountName: string, result: string }[] {
     // Log user inputs
     console.log(`book id: ${contextParams.book.id}, account id: ${contextParams.account?.id}, date input: ${toDate}`);
 
-    let accountsToCalculate = getAccountsToCalculate(contextParams)
+    const accountsToCalculate = getAccountsToCalculate(contextParams);
 
+    let results: { accountName: string, result: string }[] = [];
     for (const account of accountsToCalculate) {
         const summary = CostOfSalesService.calculateCostOfSalesForAccount(contextParams.book.id, account.accountId, toDate);
-        console.log("SUMARY: ", summary.json())
-        // return summary.json();
+        results.push({ accountName: account.accountName, result: summary.getResult() });
     }
 
-    return undefined;
+    return results;
 }

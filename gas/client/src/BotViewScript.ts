@@ -16,19 +16,13 @@ function loadTemplate(location: google.script.IUrlLocation) {
 
 function setParams(params: google.script.ContextParams) {
     contextParams = params;
-    google.script.run.withSuccessHandler(listAccounts).getAccountsToCalculate(contextParams);
+    google.script.run.withSuccessHandler(showAccountsList).getAccountsToCalculate(contextParams);
 }
 
-function listAccounts(accountsToCalculate: { accountId: string, accountName: string }[]) {
-    let accountNames: string[] = [];
-    for (const account of accountsToCalculate) {
-        accountNames.push(account.accountName);
-    }
-    accountNames.sort();
-
+function showAccountsList(accountsToCalculate: { accountName: string, accountId: string }[]) {
     const ul = $('#account-list');
-    for (const accountName of accountNames) {
-        ul.append($('<li>').html(`${accountName}`));
+    for (const account of accountsToCalculate) {
+        ul.append($('<li></li>').html(`<p>${account.accountName}</p>`));
     }
     ul.show();
 
@@ -54,7 +48,17 @@ function calculate() {
 }
 
 function fireCalculateForAll() {
-    google.script.run.withSuccessHandler(() => disableButtons(false)).withFailureHandler(showError).calculateCostOfSales(contextParams);
+    google.script.run.withSuccessHandler(showResults).withFailureHandler(showError).calculateCostOfSales(contextParams);
+}
+
+function showResults(results: { accountName: string, result: string }[]) {
+    const ul = $('#account-list').empty();
+    for (const account of results) {
+        ul.append($('<li></li>').html(`<p>${account.accountName}:  ${account.result}</p>`));
+    }
+    ul.show();
+
+    disableButtons(false);
 }
 
 function showError(error: any) {
