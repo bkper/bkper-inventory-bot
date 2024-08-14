@@ -54,7 +54,7 @@ function fireCalculateForAll() {
 function showResults(results: { accountName: string, result: string }[]) {
     const ul = $('#account-list').empty();
     for (const account of results) {
-        ul.append($('<li></li>').html(`<p>${account.accountName}:  ${account.result}</p>`));
+        ul.append($('<li></li>').html(`<p>${account.accountName}: &nbsp;${account.result}</p>`));
     }
     ul.show();
 
