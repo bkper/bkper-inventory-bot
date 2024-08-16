@@ -31,12 +31,12 @@ class Summary {
     }
 
     resetingAsync(): this {
-        this.result = 'Reseting...';
+        this.result = 'Reseted';
         return this;
     }
 
     calculatingAsync(): this {
-        this.result = 'Calculating...';
+        this.result = 'Calculated';
         return this;
     }
 
