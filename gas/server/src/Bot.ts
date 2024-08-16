@@ -50,7 +50,7 @@ function getContextParams(parameters: { [key: string]: string }): ContextParams 
         inventoryAccount = inventoryBook.getAccount(account.getName());
     }
 
-    // Return template object
+    // Return context params object
     return {
         book: { id: inventoryBook.getId(), name: inventoryBook.getName() },
         account: inventoryAccount ? { id: inventoryAccount.getId(), name: inventoryAccount.getName() } : undefined,
@@ -71,6 +71,14 @@ function getAccountsToCalculate(contextParams: ContextParams): { accountName: st
     if (contextParams.account) {
         const account = inventoryBook.getAccount(contextParams.account.id);
         accountsMap.set(account.getName(), account.getId());
+    } else if (contextParams.group) {
+        const group = inventoryBook.getGroup(contextParams.group.id);
+        const accounts = group.getAccounts();
+        for (const account of accounts) {
+            if (account.getType() == BkperApp.AccountType.ASSET) {
+                accountsMap.set(account.getName(), account.getId());
+            }
+        }
     } else {
         const accounts = inventoryBook.getAccounts();
         for (const account of accounts) {
