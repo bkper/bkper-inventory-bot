@@ -13,6 +13,7 @@ module constants {
     export const PURCHASE_CODE_PROP = 'purchase_code';
     export const PURCHASE_LOG_PROP = 'purchase_log';
     export const QUANTITY_SOLD_PROP = 'quantity_sold';
+    export const SALE_INVOICE_PROP = 'sale_invoice';
     export const TOTAL_COST_PROP = 'total_cost';
 
 }
