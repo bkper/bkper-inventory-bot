@@ -6,7 +6,13 @@ import { GOOD_BUY_ACCOUNT_NAME, GOOD_EXC_CODE_PROP, GOOD_PROP, GOOD_PURCHASE_COS
 export class EventHandlerTransactionChecked extends EventHandlerTransaction {
 
     protected getTransactionQuery(transaction: bkper.Transaction): string {
-        return `remoteId:${transaction.properties[PURCHASE_CODE_PROP]}_${getnormalizedAccName(transaction.debitAccount.name)}`;
+        // checking sale transactions
+        if (transaction.creditAccount.type == AccountType.INCOMING) {
+            return `remoteId:${transaction.id}`;
+        } else {
+        // checking purchase transactions
+            return `remoteId:${transaction.properties[PURCHASE_CODE_PROP]}_${getnormalizedAccName(transaction.debitAccount.name)}`;
+        }
     }
 
     // add additional cost to inventory purchase transaction total cost property
