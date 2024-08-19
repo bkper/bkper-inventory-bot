@@ -96,20 +96,20 @@ export async function getExchangeCodeFromAccount(account: Account): Promise<stri
 // returns the good account (asset account) from the transaction (purchase or sale)
 export async function getGoodAccount(goodTransaction: Transaction): Promise<Account> {
     if (await isSale(goodTransaction)) {
-        return await goodTransaction.getDebitAccount();
+        return await goodTransaction.getCreditAccount();
     }
     if (await isPurchase(goodTransaction)) {
-        return await goodTransaction.getCreditAccount();
+        return await goodTransaction.getDebitAccount();
     }
     return null;
 }
 
 export async function isSale(transaction: Transaction): Promise<boolean> {
-    return transaction.isPosted() && (await transaction.getCreditAccount()).getType() == AccountType.OUTGOING;
+    return transaction.isPosted() && (await transaction.getDebitAccount()).getType() == AccountType.OUTGOING;
 }
 
 export async function isPurchase(transaction: Transaction): Promise<boolean> {
-    return transaction.isPosted() && (await transaction.getDebitAccount()).getType() == AccountType.INCOMING;
+    return transaction.isPosted() && (await transaction.getCreditAccount()).getType() == AccountType.INCOMING;
 }
 
 // returns the good purchase root transaction based on the purchase code property
