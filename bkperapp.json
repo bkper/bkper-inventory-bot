@@ -18,6 +18,7 @@
     "apiVersion": "v5",
     "events": [
         "TRANSACTION_CHECKED",
+        "TRANSACTION_UNCHECKED",
         "TRANSACTION_POSTED",
         "TRANSACTION_DELETED"
     ],

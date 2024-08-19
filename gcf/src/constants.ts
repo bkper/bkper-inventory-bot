@@ -6,6 +6,7 @@ export const GOOD_EXC_CODE_PROP = 'good_exc_code';
 export const GOOD_PROP = 'good';
 export const GOOD_PURCHASE_COST_PROP = 'good_purchase_cost';
 export const INVENTORY_BOOK_PROP = 'inventory_book';
+export const NEEDS_REBUILD_PROP = 'needs_rebuild';
 export const ORDER_PROP = 'order';
 export const ORIGINAL_QUANTITY_PROP = 'original_quantity';
 export const PURCHASE_CODE_PROP = 'purchase_code';

@@ -7,6 +7,7 @@ import { Bkper } from 'bkper';
 import { EventHandlerTransactionPosted } from './EventHandlerTransactionPosted';
 import { EventHandlerTransactionChecked } from './EventHandlerTransactionChecked';
 import { EventHandlerTransactionDeleted } from './EventHandlerTransactionDeleted';
+import { EventHandlerTransactionUnchecked } from './EventHandlerTransactionUnchecked';
 
 require('dotenv').config({ path: `${__dirname}/../../.env` });
 
@@ -52,6 +53,10 @@ async function handleEvent(req: Request, res: Response) {
                 break;
             case 'TRANSACTION_CHECKED':
                 result = await new EventHandlerTransactionChecked().handleEvent(event);
+                // result = { result: false };
+                break;
+            case 'TRANSACTION_UNCHECKED':
+                result = await new EventHandlerTransactionUnchecked().handleEvent(event);
                 // result = { result: false };
                 break;
             case 'TRANSACTION_DELETED':
