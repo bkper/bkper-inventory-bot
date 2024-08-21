@@ -1,7 +1,7 @@
 import { Account, AccountType, Amount, Book, Transaction } from "bkper";
 import { EventHandlerTransaction } from "./EventHandlerTransaction";
-import { buildBookAnchor, getGoodExchangeCodeFromAccount, getnormalizedAccName, getQuantity } from "./BotService";
-import { GOOD_BUY_ACCOUNT_NAME, GOOD_EXC_CODE_PROP, GOOD_PROP, GOOD_PURCHASE_COST_PROP, GOOD_SELL_ACCOUNT_NAME, ORDER_PROP, ORIGINAL_QUANTITY_PROP, PURCHASE_CODE_PROP, PURCHASE_INVOICE_PROP, SALE_AMOUNT_PROP, SALE_INVOICE_PROP, TOTAL_ADDITIONAL_COSTS_PROP, TOTAL_COST_PROP } from "./constants";
+import { buildBookAnchor, getGoodExchangeCodeFromAccount, getQuantity } from "./BotService";
+import { GOOD_BUY_ACCOUNT_NAME, GOOD_EXC_CODE_PROP, GOOD_PROP, GOOD_PURCHASE_COST_PROP, GOOD_SELL_ACCOUNT_NAME, ORDER_PROP, ORIGINAL_QUANTITY_PROP, PURCHASE_CODE_PROP, SALE_AMOUNT_PROP, SALE_INVOICE_PROP, TOTAL_ADDITIONAL_COSTS_PROP, TOTAL_COST_PROP } from "./constants";
 
 export class EventHandlerTransactionChecked extends EventHandlerTransaction {
 
@@ -11,7 +11,7 @@ export class EventHandlerTransactionChecked extends EventHandlerTransaction {
             return `remoteId:${transaction.id}`;
         } else {
         // checking purchase transactions
-            return `remoteId:${transaction.properties[PURCHASE_CODE_PROP]}_${getnormalizedAccName(transaction.debitAccount.name)}`;
+            return `remoteId:${transaction.properties[PURCHASE_CODE_PROP]}_${transaction.debitAccount.normalizedName}`;
         }
     }
 
@@ -115,7 +115,7 @@ export class EventHandlerTransactionChecked extends EventHandlerTransaction {
                     .setDebitAccount(goodAccount)
                     .setDescription(financialTransaction.description)
                     .addRemoteId(financialTransaction.id)
-                    .addRemoteId(`${financialTransaction.properties[PURCHASE_CODE_PROP]}_${getnormalizedAccName(financialDebitAccount.name)}`)
+                    .addRemoteId(`${financialTransaction.properties[PURCHASE_CODE_PROP]}_${financialDebitAccount.normalizedName}`)
                     .setProperty(ORIGINAL_QUANTITY_PROP, quantity.toString())
                     .setProperty(GOOD_PURCHASE_COST_PROP, financialAmount.toString())
                     .setProperty(ORDER_PROP, financialTransaction.properties[ORDER_PROP])

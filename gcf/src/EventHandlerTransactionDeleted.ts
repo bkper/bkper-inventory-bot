@@ -1,6 +1,6 @@
 import { Book, Transaction } from "bkper";
 import { Result } from ".";
-import { buildBookAnchor, getnormalizedAccName, isInventoryBook } from "./BotService";
+import { buildBookAnchor, isInventoryBook } from "./BotService";
 import { EventHandlerTransaction } from "./EventHandlerTransaction";
 import { InterceptorOrderProcessorDeleteFinancial } from "./InterceptorOrderProcessorDeleteFinancial";
 import { InterceptorOrderProcessorDeleteGoods } from "./InterceptorOrderProcessorDeleteGoods";
@@ -22,7 +22,7 @@ export class EventHandlerTransactionDeleted extends EventHandlerTransaction {
         if (transaction.properties[GOOD_PROP]) {
             return `remoteId:${transaction.id}`;
         }
-        return `remoteId:${transaction.properties[PURCHASE_CODE_PROP]}_${getnormalizedAccName(transaction.debitAccount.name)}`;
+        return `remoteId:${transaction.properties[PURCHASE_CODE_PROP]}_${transaction.debitAccount.normalizedName}`;
 
     }
 

@@ -151,7 +151,3 @@ export async function uncheckAndRemove(transaction: Transaction): Promise<Transa
     transaction = await transaction.remove();
     return transaction;
 }
-
-export function getnormalizedAccName(accountName: string): string {
-    return accountName.replace(' ', '_').toLowerCase();
-}
