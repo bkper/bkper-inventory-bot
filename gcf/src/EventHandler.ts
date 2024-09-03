@@ -1,6 +1,6 @@
-import { Book } from "bkper";
-import { Result } from ".";
-import { getInventoryBook } from "./BotService";
+import { Book } from "bkper-js";
+import { Result } from "./index.js";
+import { getInventoryBook } from "./BotService.js";
 
 export abstract class EventHandler {
 

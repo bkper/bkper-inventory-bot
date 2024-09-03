@@ -1,10 +1,10 @@
-import { Book, Transaction } from "bkper";
-import { Result } from ".";
-import { buildBookAnchor, isInventoryBook } from "./BotService";
-import { EventHandlerTransaction } from "./EventHandlerTransaction";
-import { InterceptorOrderProcessorDeleteFinancial } from "./InterceptorOrderProcessorDeleteFinancial";
-import { InterceptorOrderProcessorDeleteGoods } from "./InterceptorOrderProcessorDeleteGoods";
-import { GOOD_PROP, PURCHASE_CODE_PROP } from "./constants";
+import { Book, Transaction } from "bkper-js";
+import { Result } from "./index.js";
+import { buildBookAnchor, isInventoryBook } from "./BotService.js";
+import { EventHandlerTransaction } from "./EventHandlerTransaction.js";
+import { InterceptorOrderProcessorDeleteFinancial } from "./InterceptorOrderProcessorDeleteFinancial.js";
+import { InterceptorOrderProcessorDeleteGoods } from "./InterceptorOrderProcessorDeleteGoods.js";
+import { GOOD_PROP, PURCHASE_CODE_PROP } from "./constants.js";
 
 export class EventHandlerTransactionDeleted extends EventHandlerTransaction {
 

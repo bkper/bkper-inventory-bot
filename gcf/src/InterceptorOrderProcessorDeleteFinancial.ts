@@ -1,8 +1,8 @@
-import { AccountType, Amount, Book, Transaction } from "bkper";
-import { InterceptorOrderProcessorDelete } from "./InterceptorOrderProcessorDelete";
-import { Result } from ".";
-import { ADDITIONAL_COST_PROP, ADDITIONAL_COST_TX_IDS, GOOD_PROP, PURCHASE_CODE_PROP, PURCHASE_INVOICE_PROP, TOTAL_ADDITIONAL_COSTS_PROP, TOTAL_COST_PROP } from "./constants";
-import { buildBookAnchor, getGoodPurchaseRootTx, getInventoryBook, getRootTransaction, uncheckAndRemove } from "./BotService";
+import { AccountType, Amount, Book, Transaction } from "bkper-js";
+import { InterceptorOrderProcessorDelete } from "./InterceptorOrderProcessorDelete.js";
+import { Result } from "./index.js";
+import { ADDITIONAL_COST_PROP, ADDITIONAL_COST_TX_IDS, GOOD_PROP, PURCHASE_CODE_PROP, PURCHASE_INVOICE_PROP, TOTAL_ADDITIONAL_COSTS_PROP, TOTAL_COST_PROP } from "./constants.js";
+import { buildBookAnchor, getGoodPurchaseRootTx, getInventoryBook, getRootTransaction, uncheckAndRemove } from "./BotService.js";
 
 export class InterceptorOrderProcessorDeleteFinancial extends InterceptorOrderProcessorDelete {
 

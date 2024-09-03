@@ -1,5 +1,5 @@
-import { Book, Transaction } from "bkper";
-import { uncheckAndRemove } from "./BotService";
+import { Book, Transaction } from "bkper-js";
+import { uncheckAndRemove } from "./BotService.js";
 
 export abstract class InterceptorOrderProcessorDelete {
 

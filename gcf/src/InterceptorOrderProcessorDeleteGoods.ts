@@ -1,7 +1,7 @@
-import { Book } from "bkper";
-import { Result } from ".";
-import { InterceptorOrderProcessorDelete } from "./InterceptorOrderProcessorDelete";
-import { buildBookAnchor, getExchangeCodeFromAccount, getFinancialBook, getGoodAccount } from "./BotService";
+import { Book } from "bkper-js";
+import { Result } from "./index.js";
+import { InterceptorOrderProcessorDelete } from "./InterceptorOrderProcessorDelete.js";
+import { buildBookAnchor, getExchangeCodeFromAccount, getFinancialBook, getGoodAccount } from "./BotService.js";
 
 export class InterceptorOrderProcessorDeleteGoods extends InterceptorOrderProcessorDelete {
 

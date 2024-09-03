@@ -1,7 +1,7 @@
-import { Book, Transaction } from "bkper";
-import { EventHandler } from "./EventHandler";
-import { getBookExcCode, getExchangeCodeFromAccount, getGoodExchangeCodeFromAccount } from "./BotService";
-import { GOOD_PROP } from "./constants";
+import { Book, Transaction } from "bkper-js";
+import { EventHandler } from "./EventHandler.js";
+import { getBookExcCode, getExchangeCodeFromAccount, getGoodExchangeCodeFromAccount } from "./BotService.js";
+import { GOOD_PROP } from "./constants.js";
 
 export abstract class EventHandlerTransaction extends EventHandler {
 

@@ -1,15 +1,23 @@
-import express = require('express');
-import { Request, Response } from 'express';
-import httpContext = require('express-http-context');
 import { HttpFunction } from '@google-cloud/functions-framework/build/src/functions';
-import { Bkper } from 'bkper';
+import { Bkper } from 'bkper-js';
+import { Request, Response } from 'express';
+import 'source-map-support/register.js';
+import express from 'express';
+import httpContext from 'express-http-context';
 
-import { EventHandlerTransactionPosted } from './EventHandlerTransactionPosted';
-import { EventHandlerTransactionChecked } from './EventHandlerTransactionChecked';
-import { EventHandlerTransactionDeleted } from './EventHandlerTransactionDeleted';
-import { EventHandlerTransactionUnchecked } from './EventHandlerTransactionUnchecked';
+import { EventHandlerTransactionPosted } from './EventHandlerTransactionPosted.js';
+import { EventHandlerTransactionChecked } from './EventHandlerTransactionChecked.js';
+import { EventHandlerTransactionDeleted } from './EventHandlerTransactionDeleted.js';
+import { EventHandlerTransactionUnchecked } from './EventHandlerTransactionUnchecked.js';
 
-require('dotenv').config({ path: `${__dirname}/../../.env` });
+import dotenv from 'dotenv';
+import { fileURLToPath } from 'url';
+import path from 'path';
+
+const __filename = fileURLToPath(import.meta.url); // get the resolved path to the file
+const __dirname = path.dirname(__filename); // get the name of the directory
+
+dotenv.config({ path: `${__dirname}/../../.env` });
 
 const app = express();
 app.use(httpContext.middleware);
