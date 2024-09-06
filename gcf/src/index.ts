@@ -1,5 +1,6 @@
 import { HttpFunction } from '@google-cloud/functions-framework/build/src/functions';
 import { Bkper } from 'bkper-js';
+import { getOAuthToken } from 'bkper';
 import { Request, Response } from 'express';
 import 'source-map-support/register.js';
 import express from 'express';
@@ -33,13 +34,14 @@ export type Result = {
 function init(req: Request, res: Response) {
     res.setHeader('Content-Type', 'application/json');
 
-    //Sets API key from env for development or from headers
-    Bkper.setApiKey(process.env.BKPER_API_KEY ? process.env.BKPER_API_KEY : req.headers['bkper-api-key'] as string);
-
     //Put OAuth token from header in the http context for later use when calling the API. https://julio.li/b/2016/10/29/request-persistence-express/
     const oauthTokenHeader = 'bkper-oauth-token';
     httpContext.set(oauthTokenHeader, req.headers[oauthTokenHeader]);
-    Bkper.setOAuthTokenProvider(async () => httpContext.get(oauthTokenHeader));
+
+    Bkper.setConfig({
+        oauthTokenProvider: async () => httpContext.get(oauthTokenHeader) || getOAuthToken(),
+        apiKeyProvider: async () => process.env.BKPER_API_KEY || req.headers['bkper-api-key'] as string
+    })
 }
 
 async function handleEvent(req: Request, res: Response) {
