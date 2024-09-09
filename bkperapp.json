@@ -33,7 +33,9 @@
             "good",
             "quantity",
             "purchase_code",
-            "purchase_invoice"
+            "purchase_invoice",
+            "sale_invoice",
+            "order"
           ]
         },
         "group": {
