@@ -5,8 +5,7 @@
   "scripts": {
     "bkper:sync": "bkper app -u",
     "clasp:login": "clasp login && bun clasp:store",
-    "clasp:store": "cp ~/.clasprc.json ~/.clasprc-bkper.json",
-    "clasp:activate": "cp ~/.clasprc-bkper.json ~/.clasprc.json"
+    "clasp:store": "cp ~/.clasprc.json ~/.clasprc-bkper.json"
   },
   "devDependencies": {
     "bkper": "^2.5.9",

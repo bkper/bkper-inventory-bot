@@ -6,7 +6,7 @@
     "pull": "bun --cwd ./server pull",
     "upgrade": "bun --cwd ./server/src upgrade",
     "dev": "bun run-s prepush build:server watches",
-    "prepush": "bun --cwd ../ clasp:activate",
+    "prepush": "bun --cwd ../ clasp:store",
     "build:server": "bun --cwd ./server build",
     "watches": "bun run-p watch:client watch:server",
     "watch:client": "watch 'bun --cwd ./client build' ./client/src",
