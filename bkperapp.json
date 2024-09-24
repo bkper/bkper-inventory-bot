@@ -14,7 +14,7 @@
     "menuText": "Inventory Bot",
     "menuPopupWidth": 600,
     "menuPopupHeight": 600,
-    "webhookUrl": "https://us-central1-inventory-bot-405017.cloudfunctions.net/prod",
+    "webhookUrl": "https://us-central1-inventory-bot-405017.cloudfunctions.net/prodGen2",
     "apiVersion": "v5",
     "events": [
         "TRANSACTION_CHECKED",
