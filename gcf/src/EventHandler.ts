@@ -1,11 +1,10 @@
-// @ts-nocheck
 import { Book } from "bkper-js";
 import { Result } from "./index.js";
 import { getInventoryBook } from "./BotService.js";
 
 export abstract class EventHandler {
 
-    protected abstract processObject(baseBook: Book, connectedBook: Book, event: bkper.Event): Promise<string>;
+    protected abstract processObject(baseBook: Book, connectedBook: Book, event: bkper.Event): Promise<string | null>;
 
     protected async intercept(baseBook: Book, event: bkper.Event): Promise<Result> {
         return { result: false };
@@ -23,7 +22,7 @@ export abstract class EventHandler {
         let responses: string[] = [];
         let inventoryBook = getInventoryBook(baseBook);
 
-        const logtag = `Handling ${event.type} event on book ${baseBook.getName()} from user ${event.user.username}`;
+        const logtag = `Handling ${event.type} event on book ${baseBook.getName()} from user ${event.user?.username ?? 'unknown'}`;
         console.time(logtag);
 
         if (inventoryBook) {
@@ -44,7 +43,7 @@ export abstract class EventHandler {
         return { result: responses };
     }
 
-    protected matchGoodExchange(goodExcCode: string, excCode: string): boolean {
+    protected matchGoodExchange(goodExcCode: string | null, excCode: string): boolean {
         if (goodExcCode == null || goodExcCode.trim() == '') {
             return false;
         }
