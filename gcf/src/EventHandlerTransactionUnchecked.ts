@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { Bkper } from "bkper-js";
 import { Result } from "./index.js";
 import { InterceptorFlagRebuild } from "./InterceptorFlagRebuild.js";

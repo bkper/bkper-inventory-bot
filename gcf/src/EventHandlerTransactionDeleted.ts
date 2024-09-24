@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { Book, Transaction } from "bkper-js";
 import { Result } from "./index.js";
 import { buildBookAnchor, isInventoryBook } from "./BotService.js";

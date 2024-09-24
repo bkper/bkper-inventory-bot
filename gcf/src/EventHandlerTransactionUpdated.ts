@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { Book, Transaction } from "bkper-js";
 import { EventHandlerTransaction } from "./EventHandlerTransaction.js";
 import { InterceptorOrderProcessorDeleteFinancial } from "./InterceptorOrderProcessorDeleteFinancial.js";

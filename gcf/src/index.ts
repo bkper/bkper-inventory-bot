@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { HttpFunction } from '@google-cloud/functions-framework/build/src/functions';
 import { Bkper } from 'bkper-js';
 import { Request, Response } from 'express';

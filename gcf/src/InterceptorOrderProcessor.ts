@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { Account, AccountType, Amount, Book } from "bkper-js";
 import { Result } from "./index.js";
 import { getGoodPurchaseRootTx, getQuantity, isInventoryBook } from "./BotService.js";

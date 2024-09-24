@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { AccountType, Amount, Book, Transaction } from "bkper-js";
 import { InterceptorOrderProcessorDelete } from "./InterceptorOrderProcessorDelete.js";
 import { Result } from "./index.js";

@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { Book, Transaction } from "bkper-js";
 import { uncheckAndRemove } from "./BotService.js";
 

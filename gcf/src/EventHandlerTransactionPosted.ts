@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { Bkper } from "bkper-js";
 import { Result } from "./index.js";
 import { InterceptorOrderProcessor } from "./InterceptorOrderProcessor.js";

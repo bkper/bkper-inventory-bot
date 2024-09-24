@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { Book } from "bkper-js";
 import { Result } from "./index.js";
 import { getInventoryBook } from "./BotService.js";

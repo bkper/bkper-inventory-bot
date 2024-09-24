@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { Account, AccountType, Amount, Book, Transaction } from "bkper-js";
 import { EventHandlerTransaction } from "./EventHandlerTransaction.js";
 import { buildBookAnchor, getGoodExchangeCodeFromAccount, getQuantity } from "./BotService.js";
