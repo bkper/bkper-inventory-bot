@@ -1,4 +1,3 @@
-// @ts-nocheck
 import { Book, Transaction } from "bkper-js";
 import { Result } from "./index.js";
 import { buildBookAnchor, isInventoryBook } from "./BotService.js";
@@ -20,10 +19,10 @@ export class EventHandlerTransactionDeleted extends EventHandlerTransaction {
     }
 
     protected getTransactionQuery(transaction: bkper.Transaction): string {
-        if (transaction.properties[GOOD_PROP]) {
+        if (transaction.properties && transaction.properties[GOOD_PROP]) {
             return `remoteId:${transaction.id}`;
         }
-        return `remoteId:${transaction.properties[PURCHASE_CODE_PROP]}_${transaction.debitAccount.normalizedName}`;
+        return `remoteId:${transaction.properties?.[PURCHASE_CODE_PROP] ?? ''}_${transaction.debitAccount?.normalizedName ?? ''}`;
 
     }
 
