@@ -1,4 +1,3 @@
-// @ts-nocheck
 import { Book, Transaction } from "bkper-js";
 import { EventHandlerTransaction } from "./EventHandlerTransaction.js";
 import { InterceptorOrderProcessorDeleteFinancial } from "./InterceptorOrderProcessorDeleteFinancial.js";
@@ -16,7 +15,7 @@ export class EventHandlerTransactionUpdated extends EventHandlerTransaction {
 
     private shouldCascadeDeletion(event: bkper.Event): boolean {
         // No previousAttributes
-        if (!event.data.previousAttributes) {
+        if (!event.data?.previousAttributes) {
             return false;
         }
         // No changes OR changed the description only

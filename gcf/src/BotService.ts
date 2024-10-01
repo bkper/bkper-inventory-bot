@@ -53,8 +53,8 @@ export function getBookExcCode(book: Book): string {
 }
 
 // returns the excCode from an account based on its groups good_exc_code property
-export function getGoodExchangeCodeFromAccount(account: bkper.Account): string {
-    if (account == null || account.type == AccountType.INCOMING || account.type == AccountType.OUTGOING) {
+export function getGoodExchangeCodeFromAccount(account: bkper.Account): string | null{
+    if (account.type == AccountType.INCOMING || account.type == AccountType.OUTGOING) {
         return null;
     }
     let groups = account.groups;
@@ -75,7 +75,7 @@ export function getGoodExchangeCodeFromAccount(account: bkper.Account): string {
 }
 
 // returns the excCode from an account based on its groups good_exc_code property
-export async function getExchangeCodeFromAccount(account: Account): Promise<string> | null {
+export async function getExchangeCodeFromAccount(account: Account): Promise<string | null> {
     if (account.getType() == AccountType.INCOMING || account.getType() == AccountType.OUTGOING) {
         return null;
     }
