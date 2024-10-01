@@ -38,7 +38,10 @@ export abstract class EventHandlerTransaction extends EventHandler {
     }
 
     private async getGoodExcCodeFromTransaction(fiancialTransaction: bkper.Transaction, financialBook: Book): Promise<string | null> {
-        let goodProp = fiancialTransaction.properties![GOOD_PROP];
+        if (!fiancialTransaction.properties) {
+            return null;
+        }
+        let goodProp = fiancialTransaction.properties[GOOD_PROP];
         let goodAccount = await financialBook.getAccount(goodProp);
         if (goodAccount) {
             // sale
