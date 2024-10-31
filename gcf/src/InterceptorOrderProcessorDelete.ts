@@ -11,13 +11,12 @@ export abstract class InterceptorOrderProcessorDelete {
 	}
 
 	protected async cascadeDeleteTransactions(book: Book, remoteTx: bkper.Transaction, prefix: string): Promise<Transaction | undefined> {
-		const iterator = book.getTransactions(`remoteId:${prefix}${remoteTx.id}`);
-		if (await iterator.hasNext()) {
-			let tx = await iterator.next();
-			if (tx?.isChecked()) {
+		let tx = (await book.listTransactions(`remoteId:${prefix}${remoteTx.id}`)).getFirst();
+		if (tx) {
+			if (tx.isChecked()) {
 				tx = await tx.uncheck();
 			}
-			const response = await tx?.remove();
+			const response = await tx.remove();
 			return response;
 		}
 		return undefined;
@@ -28,10 +27,9 @@ export abstract class InterceptorOrderProcessorDelete {
 	}
 
 	protected async deleteTransactionByRemoteId(book: Book, remoteId: string): Promise<Transaction | null> {
-		let iterator = book.getTransactions(`remoteId:${remoteId}`);
-		if (await iterator.hasNext()) {
-			let tx = await iterator.next();
-			tx = await uncheckAndRemove(tx!);
+		let tx = (await book.listTransactions(`remoteId:${remoteId}`)).getFirst();
+		if (tx) {
+			tx = await uncheckAndRemove(tx);
 			return tx;
 		}
 		return null;

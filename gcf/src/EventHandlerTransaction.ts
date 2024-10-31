@@ -21,7 +21,7 @@ export abstract class EventHandlerTransaction extends EventHandler {
             return null;
         }
 
-        let iterator = inventoryBook.getTransactions(this.getTransactionQuery(financialTransaction));
+        let goodTransaction = (await inventoryBook.listTransactions(this.getTransactionQuery(financialTransaction))).getFirst();
 
         let goodExcCode = await this.getGoodExcCodeFromTransaction(financialTransaction, financialBook);
 
@@ -29,8 +29,7 @@ export abstract class EventHandlerTransaction extends EventHandler {
             return null;
         }
 
-        if (await iterator.hasNext()) {
-            let goodTransaction = await iterator.next();
+        if (goodTransaction) {
             return await this.connectedTransactionFound(financialBook, inventoryBook, financialTransaction, goodTransaction, goodExcCode);
         } else {
             return await this.connectedTransactionNotFound(financialBook, inventoryBook, financialTransaction, goodExcCode)
