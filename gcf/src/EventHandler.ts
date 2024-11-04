@@ -43,12 +43,10 @@ export abstract class EventHandler {
         return { result: responses };
     }
 
-    protected matchGoodExchange(goodExcCode: string | null, excCode: string): boolean {
-        if (goodExcCode == null || goodExcCode.trim() == '') {
-            return false;
-        }
+    // (already refatored to ts:strict)
+    protected matchGoodExchange(goodExcCode: string, excCode: string): boolean {
         goodExcCode = goodExcCode.trim();
-        if (excCode != null && goodExcCode != excCode) {
+        if (goodExcCode != excCode) {
             return false;
         }
         return true;
