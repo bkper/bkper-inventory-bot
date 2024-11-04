@@ -1,5 +1,5 @@
 // @ts-nocheck
-import { Account, AccountType, Amount, Book } from "bkper-js";
+import { Account, AccountType, Amount, Book, Transaction } from "bkper-js";
 import { Result } from "./index.js";
 import { getGoodPurchaseRootTx, getQuantity, isInventoryBook } from "./BotService.js";
 import { ADDITIONAL_COST_PROP, ADDITIONAL_COST_TX_IDS, GOOD_PROP, ORDER_PROP, PURCHASE_CODE_PROP, PURCHASE_INVOICE_PROP, QUANTITY_PROP } from "./constants.js";
@@ -107,7 +107,7 @@ export class InterceptorOrderProcessor {
         let quantity = getQuantity(baseBook, transactionPayload);
         let order = this.getOrder(baseBook, transactionPayload);
         const amount = new Amount(transactionPayload.amount);
-        let tx = await baseBook.newTransaction()
+        let tx = await new Transaction(baseBook)
             .setAmount(amount)
             .from(buyerAccount)
             .to(goodAccount)
@@ -127,7 +127,7 @@ export class InterceptorOrderProcessor {
     private async postAdditionalCostOnPurchase(baseBook: Book, buyerAccount: bkper.Account, transactionPayload: bkper.Transaction): Promise<string> {
         let goodAccount = await this.getGoodAccount(baseBook, transactionPayload);
         const amount = new Amount(transactionPayload.amount);
-        let tx = await baseBook.newTransaction()
+        let tx = await new Transaction(baseBook)
             .setAmount(amount)
             .from(buyerAccount)
             .to(goodAccount)
@@ -148,7 +148,7 @@ export class InterceptorOrderProcessor {
         let good = transactionPayload.properties[GOOD_PROP];
         let goodAccount = await baseBook.getAccount(good);
         if (goodAccount == null) {
-            goodAccount = await baseBook.newAccount().setName(good).setType(AccountType.ASSET).create();
+            goodAccount = await new Account(baseBook).setName(good).setType(AccountType.ASSET).create();
         }
         return goodAccount;
     }

@@ -80,10 +80,10 @@ export class EventHandlerTransactionChecked extends EventHandlerTransaction {
             // Selling
             let goodSellAccount = await inventoryBook.getAccount(GOOD_SELL_ACCOUNT_NAME);
             if (goodSellAccount == null) {
-                goodSellAccount = await inventoryBook.newAccount().setName(GOOD_SELL_ACCOUNT_NAME).setType(AccountType.OUTGOING).create();
+                goodSellAccount = await new Account(inventoryBook).setName(GOOD_SELL_ACCOUNT_NAME).setType(AccountType.OUTGOING).create();
             }
 
-            let newTransaction = await inventoryBook.newTransaction()
+            let newTransaction = await new Transaction(inventoryBook)
                 .setDate(financialTransaction.date)
                 .setAmount(quantity)
                 .setCreditAccount(goodAccount)
@@ -106,10 +106,10 @@ export class EventHandlerTransactionChecked extends EventHandlerTransaction {
                 // Buying
                 let goodBuyAccount = await inventoryBook.getAccount(GOOD_BUY_ACCOUNT_NAME);
                 if (goodBuyAccount == null) {
-                    goodBuyAccount = await inventoryBook.newAccount().setName(GOOD_BUY_ACCOUNT_NAME).setType(AccountType.INCOMING).create();
+                    goodBuyAccount = await new Account(inventoryBook).setName(GOOD_BUY_ACCOUNT_NAME).setType(AccountType.INCOMING).create();
                 }
 
-                let newTransaction = await inventoryBook.newTransaction()
+                let newTransaction = await new Transaction(inventoryBook)
                     .setDate(financialTransaction.date)
                     .setAmount(quantity)
                     .setCreditAccount(goodBuyAccount)
@@ -140,7 +140,7 @@ export class EventHandlerTransactionChecked extends EventHandlerTransaction {
         if (goodExchangeCode != null) {
             let goodAccount = await inventoryBook.getAccount(financialAccount.name);
             if (goodAccount == null) {
-                goodAccount = inventoryBook.newAccount()
+                goodAccount = await new Account(inventoryBook)
                     .setName(financialAccount.name)
                     .setType(financialAccount.type as AccountType)
                     .setProperties(financialAccount.properties)
@@ -151,7 +151,7 @@ export class EventHandlerTransactionChecked extends EventHandlerTransaction {
                             let goodGroup = await inventoryBook.getGroup(financialGroup.name);
                             let goodExcCode = financialGroup.properties[GOOD_EXC_CODE_PROP];
                             if (goodGroup == null && goodExcCode != null && goodExcCode.trim() != '') {
-                                goodGroup = await inventoryBook.newGroup()
+                                goodGroup = await new Group(inventoryBook)
                                     .setHidden(financialGroup.hidden)
                                     .setName(financialGroup.name)
                                     .setProperties(financialGroup.properties)
