@@ -3,10 +3,8 @@ import { uncheckAndRemove } from "./BotService.js";
 
 export abstract class InterceptorOrderProcessorDelete {
 
+	// (already refatored to ts:strict)
 	protected async cascadeDelete(book: Book, transaction: bkper.Transaction): Promise<Transaction | undefined> {
-		if (!book) {
-			return undefined;
-		}
 		return await this.cascadeDeleteTransactions(book, transaction, ``);
 	}
 

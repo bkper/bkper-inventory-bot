@@ -6,8 +6,8 @@ import { GOOD_PROP } from "./constants.js";
 export abstract class EventHandlerTransaction extends EventHandler {
 
     protected abstract getTransactionQuery(transaction: bkper.Transaction): string;
-    protected abstract connectedTransactionNotFound(financialBook: Book, inventoryBook: Book, financialTransaction: bkper.Transaction, goodExcCode: string | null): Promise<string>;
-    protected abstract connectedTransactionFound(baseBook: Book, connectedBook: Book, financialTransaction: bkper.Transaction, goodTransaction: Transaction | undefined, goodExcCode: string | null): Promise<string>;
+    protected abstract connectedTransactionNotFound(financialBook: Book, inventoryBook: Book, financialTransaction: bkper.Transaction, goodExcCode: string | undefined): Promise<string>;
+    protected abstract connectedTransactionFound(baseBook: Book, connectedBook: Book, financialTransaction: bkper.Transaction, goodTransaction: Transaction, goodExcCode: string | undefined): Promise<string>;
 
     async processObject(financialBook: Book, inventoryBook: Book, event: bkper.Event): Promise<string | null> {
         if (!event.data) {
@@ -25,7 +25,7 @@ export abstract class EventHandlerTransaction extends EventHandler {
 
         let goodExcCode = await this.getGoodExcCodeFromTransaction(financialTransaction, financialBook);
 
-        if (!this.matchGoodExchange(goodExcCode, excCode)) {
+        if (goodExcCode && excCode&& !this.matchGoodExchange(goodExcCode, excCode)) {
             return null;
         }
 
@@ -36,9 +36,9 @@ export abstract class EventHandlerTransaction extends EventHandler {
         }
     }
 
-    private async getGoodExcCodeFromTransaction(fiancialTransaction: bkper.Transaction, financialBook: Book): Promise<string | null> {
+    private async getGoodExcCodeFromTransaction(fiancialTransaction: bkper.Transaction, financialBook: Book): Promise<string | undefined> {
         if (!fiancialTransaction.properties) {
-            return null;
+            return undefined;
         }
         let goodProp = fiancialTransaction.properties[GOOD_PROP];
         let goodAccount = await financialBook.getAccount(goodProp);
@@ -52,6 +52,6 @@ export abstract class EventHandlerTransaction extends EventHandler {
                 return getGoodExchangeCodeFromAccount(financialDebitAccount);
             }
         }
-        return null;
+        return undefined;
     }
 }
