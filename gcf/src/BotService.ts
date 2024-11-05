@@ -1,4 +1,5 @@
 // @ts-nocheck
+
 import { Account, AccountType, Amount, Bkper, Book, Transaction } from 'bkper-js';
 
 import { EXC_CODE_PROP, GOOD_EXC_CODE_PROP, GOOD_PROP, INVENTORY_BOOK_PROP, PURCHASE_CODE_PROP, QUANTITY_PROP } from './constants.js';
@@ -33,76 +34,74 @@ export function getInventoryBook(book: Book): Book {
     return null;
 }
 
-// returns the financial book in the collection corresponding to the excCode or null if it does not exist
-export async function getFinancialBook(book: Book, excCode?: string): Promise<Book> {
-    if (book.getCollection() == null) {
-        return null;
+// (already refatored to ts:strict)
+// returns the financial book in the collection corresponding to the excCode or undefined if it does not exist (already refactores to ts:strict)
+export async function getFinancialBook(book: Book, excCode?: string): Promise<Book | undefined> {
+    if (book.getCollection() == undefined) {
+        return undefined;
     }
-    let connectedBooks = book.getCollection().getBooks();
+    let connectedBooks = book.getCollection()!.getBooks();
     for (const connectedBook of connectedBooks) {
         let excCodeConnectedBook = getBookExcCode(connectedBook);
         if (excCode == excCodeConnectedBook) {
             return Bkper.getBook(connectedBook.getId());
         }
     }
-    return null;
+    return undefined;
 }
 
-export function getBookExcCode(book: Book): string {
+// (already refatored to ts:strict)
+export function getBookExcCode(book: Book): string | undefined {
     return book.getProperty(EXC_CODE_PROP, 'exchange_code');
 }
 
+// (already refatored to ts:strict)
 // returns the excCode from an account based on its groups good_exc_code property
-export function getGoodExchangeCodeFromAccount(account: bkper.Account): string | null{
+export function getGoodExchangeCodeFromAccount(account: bkper.Account): string | undefined {
     if (account.type == AccountType.INCOMING || account.type == AccountType.OUTGOING) {
-        return null;
+        return undefined;
     }
     let groups = account.groups;
-    if (groups != null) {
+    if (groups != undefined) {
         for (const group of groups) {
-            if (group == null) {
-                continue;
-            }
-
-            let goodExchange = group.properties[GOOD_EXC_CODE_PROP];
-            if (goodExchange != null && goodExchange.trim() != '') {
+            let goodExchange = group.properties?.[EXC_CODE_PROP];
+            if (goodExchange != undefined && goodExchange.trim() != '') {
                 return goodExchange;
             }
         }
     }
 
-    return null;
+    return undefined;
 }
 
+// (already refatored to ts:strict)
 // returns the excCode from an account based on its groups good_exc_code property
-export async function getExchangeCodeFromAccount(account: Account): Promise<string | null> {
+export async function getExchangeCodeFromAccount(account: Account): Promise<string | undefined> {
     if (account.getType() == AccountType.INCOMING || account.getType() == AccountType.OUTGOING) {
-        return null;
+        return undefined;
     }
     let groups = await account.getGroups();
     if (groups != null) {
         for (const group of groups) {
-            if (group == null) {
-                continue;
-            }
-            let excCode = group.getProperty(GOOD_EXC_CODE_PROP);
-            if (excCode != null && excCode.trim() != '') {
+            let excCode = group.getProperty(EXC_CODE_PROP);
+            if (excCode != undefined && excCode.trim() != '') {
                 return excCode;
             }
         }
     }
-    return null;
+    return undefined;
 }
 
+// (already refatored to ts:strict)
 // returns the good account (asset account) from the transaction (purchase or sale)
-export async function getGoodAccount(goodTransaction: Transaction): Promise<Account> {
+export async function getGoodAccount(goodTransaction: Transaction): Promise<Account | undefined> {
     if (await isSale(goodTransaction)) {
         return await goodTransaction.getCreditAccount();
     }
     if (await isPurchase(goodTransaction)) {
         return await goodTransaction.getDebitAccount();
     }
-    return null;
+    return undefined;
 }
 
 export async function isSale(transaction: Transaction): Promise<boolean> {
