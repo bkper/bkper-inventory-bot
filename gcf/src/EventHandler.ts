@@ -22,6 +22,8 @@ export abstract class EventHandler {
         let responses: string[] = [];
         let inventoryBook = getInventoryBook(baseBook);
 
+        console.log("INVENTORY BOOK: ", inventoryBook.getName());
+
         const logtag = `Handling ${event.type} event on book ${baseBook.getName()} from user ${event.user?.username ?? 'unknown'}`;
         console.time(logtag);
 
