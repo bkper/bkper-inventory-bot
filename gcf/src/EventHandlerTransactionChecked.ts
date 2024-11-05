@@ -137,9 +137,9 @@ export class EventHandlerTransactionChecked extends EventHandlerTransaction {
     // returns the good account from the inventory book corresponding to the good account in the financial book
     private async getConnectedGoodAccount(inventoryBook: Book, financialAccount: bkper.Account): Promise<Account> {
         let goodExchangeCode = getGoodExchangeCodeFromAccount(financialAccount);
-        if (goodExchangeCode != null) {
+        if (goodExchangeCode != undefined) {
             let goodAccount = await inventoryBook.getAccount(financialAccount.name);
-            if (goodAccount == null) {
+            if (goodAccount == undefined) {
                 goodAccount = await new Account(inventoryBook)
                     .setName(financialAccount.name)
                     .setType(financialAccount.type as AccountType)
@@ -150,7 +150,7 @@ export class EventHandlerTransactionChecked extends EventHandlerTransaction {
                         if (financialGroup) {
                             let goodGroup = await inventoryBook.getGroup(financialGroup.name);
                             let goodExcCode = financialGroup.properties[GOOD_EXC_CODE_PROP];
-                            if (goodGroup == null && goodExcCode != null && goodExcCode.trim() != '') {
+                            if (goodGroup == undefined && goodExcCode != undefined && goodExcCode.trim() != '') {
                                 goodGroup = await new Group(inventoryBook)
                                     .setHidden(financialGroup.hidden)
                                     .setName(financialGroup.name)
