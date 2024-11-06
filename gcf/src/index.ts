@@ -52,8 +52,9 @@ async function handleEvent(req: Request, res: Response) {
         let event: bkper.Event = req.body
         let result: Result = { result: false };
 
-        console.log("EVENT: Transaction ", event.type);
-        console.log("EVENT AGENT: ", event.book?.name);
+        console.log("EVENT: ", event.type);
+        console.log("EVENT BOOK: ", event.book?.name);
+        console.log("EVENT AGENT: ", event.agent?.id);
 
         switch (event.type) {
             case 'TRANSACTION_POSTED':
