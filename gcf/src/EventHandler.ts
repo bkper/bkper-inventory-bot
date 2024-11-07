@@ -4,7 +4,7 @@ import { getInventoryBook } from "./BotService.js";
 
 export abstract class EventHandler {
 
-    protected abstract processObject(baseBook: Book, connectedBook: Book, event: bkper.Event): Promise<string | null>;
+    protected abstract processObject(baseBook: Book, connectedBook: Book, event: bkper.Event): Promise<string | undefined>;
 
     protected async intercept(baseBook: Book, event: bkper.Event): Promise<Result> {
         return { result: false };
