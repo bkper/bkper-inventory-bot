@@ -105,13 +105,13 @@ export class InterceptorOrderProcessor {
     }
 
     private async postGoodTradeOnPurchase(baseBook: Book, buyerAccount: bkper.Account, transactionPayload: bkper.Transaction): Promise<string> {
-        let good = transactionPayload.properties![GOOD_PROP];
-        let goodAccount = await this.getGoodAccount(baseBook, good);
-        let quantity = getQuantity(baseBook, transactionPayload);
-        let order = this.getOrder(baseBook, transactionPayload);
+        const quantity = getQuantity(baseBook, transactionPayload);
         if (quantity && transactionPayload.amount && transactionPayload.date && transactionPayload.properties) {
+            const good = transactionPayload.properties![GOOD_PROP];
+            const goodAccount = await this.getGoodAccount(baseBook, good);
+            const order = this.getOrder(baseBook, transactionPayload);
             const amount = new Amount(transactionPayload.amount);
-            let tx = await new Transaction(baseBook)
+            const tx = await new Transaction(baseBook)
                 .setAmount(amount)
                 .from(buyerAccount)
                 .to(goodAccount)
@@ -131,9 +131,9 @@ export class InterceptorOrderProcessor {
     }
 
     private async postAdditionalCostOnPurchase(baseBook: Book, buyerAccount: bkper.Account, transactionPayload: bkper.Transaction): Promise<string> {
-        let good = transactionPayload.properties![GOOD_PROP];
-        let goodAccount = await this.getGoodAccount(baseBook, good);
         if (transactionPayload.amount && transactionPayload.date && transactionPayload.properties && transactionPayload.id) {
+            let good = transactionPayload.properties![GOOD_PROP];
+            let goodAccount = await this.getGoodAccount(baseBook, good);
             const amount = new Amount(transactionPayload.amount);
             let tx = await new Transaction(baseBook)
                 .setAmount(amount)
