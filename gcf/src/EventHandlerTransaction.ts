@@ -6,27 +6,27 @@ import { GOOD_PROP } from "./constants.js";
 export abstract class EventHandlerTransaction extends EventHandler {
 
     protected abstract getTransactionQuery(transaction: bkper.Transaction): string;
-    protected abstract connectedTransactionNotFound(financialBook: Book, inventoryBook: Book, financialTransaction: bkper.Transaction, goodExcCode: string | undefined): Promise<string>;
-    protected abstract connectedTransactionFound(baseBook: Book, connectedBook: Book, financialTransaction: bkper.Transaction, goodTransaction: Transaction, goodExcCode: string | undefined): Promise<string>;
+    protected abstract connectedTransactionNotFound(financialBook: Book, inventoryBook: Book, financialTransaction: bkper.Transaction, goodExcCode?: string): Promise<string | undefined>;
+    protected abstract connectedTransactionFound(baseBook: Book, connectedBook: Book, financialTransaction: bkper.Transaction, goodTransaction: Transaction, goodExcCode?: string): Promise<string | undefined>;
 
-    async processObject(financialBook: Book, inventoryBook: Book, event: bkper.Event): Promise<string | null> {
+    async processObject(financialBook: Book, inventoryBook: Book, event: bkper.Event): Promise<string | undefined> {
         if (!event.data) {
-            return null;
+            return undefined;
         }
         let excCode = getBookExcCode(financialBook);
         let operation = event.data.object as bkper.TransactionOperation;
         let financialTransaction = operation.transaction;
 
         if (!financialTransaction || !financialTransaction.posted) {
-            return null;
+            return undefined;
         }
 
         let goodTransaction = (await inventoryBook.listTransactions(this.getTransactionQuery(financialTransaction))).getFirst();
 
         let goodExcCode = await this.getGoodExcCodeFromTransaction(financialTransaction, financialBook);
 
-        if (goodExcCode && excCode&& !this.matchGoodExchange(goodExcCode, excCode)) {
-            return null;
+        if (goodExcCode && excCode && !this.matchGoodExchange(goodExcCode, excCode)) {
+            return undefined;
         }
 
         if (goodTransaction) {
