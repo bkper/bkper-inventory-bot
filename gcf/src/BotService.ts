@@ -1,5 +1,4 @@
 // @ts-nocheck
-
 import { Account, AccountType, Amount, Bkper, Book, Transaction } from 'bkper-js';
 
 import { EXC_CODE_PROP, GOOD_EXC_CODE_PROP, GOOD_PROP, INVENTORY_BOOK_PROP, PURCHASE_CODE_PROP, QUANTITY_PROP } from './constants.js';
@@ -113,13 +112,9 @@ export async function isPurchase(transaction: Transaction): Promise<boolean> {
 }
 
 // returns the good purchase root transaction based on the purchase code property
-export async function getGoodPurchaseRootTx(book: Book, purchaseCodeProp: string): Promise<Transaction> {
+export async function getGoodPurchaseRootTx(book: Book, purchaseCodeProp: string): Promise<Transaction | undefined> {
     // get good purchase transaction from buyer
-    const iterator = book.getTransactions(`remoteId:${GOOD_PROP}_${purchaseCodeProp.toLowerCase()}`);
-    let goodPurchaseTx: Transaction = null;
-    if (await iterator.hasNext()) {
-        goodPurchaseTx = await iterator.next();
-    }
+    const goodPurchaseTx = (await book.listTransactions(`remoteId:${GOOD_PROP}_${purchaseCodeProp.toLowerCase()}`)).getFirst();
     // get root purchase transaction from supplier
     return await getRootTransaction(book, goodPurchaseTx);
 }
