@@ -1,4 +1,3 @@
-// @ts-nocheck
 import { Account, AccountType, Amount, Bkper, Book, Transaction } from 'bkper-js';
 
 import { EXC_CODE_PROP, GOOD_EXC_CODE_PROP, GOOD_PROP, INVENTORY_BOOK_PROP, PURCHASE_CODE_PROP, QUANTITY_PROP } from './constants.js';
@@ -11,30 +10,29 @@ export function isInventoryBook(book: Book): boolean {
 }
 
 // returns the quantity property from a transaction or null if it does not exist
-export function getQuantity(book: Book, transaction: bkper.Transaction): Amount {
-    let quantityStr = transaction.properties[QUANTITY_PROP];
-    if (quantityStr == null || quantityStr.trim() == '') {
-        return null;
+export function getQuantity(book: Book, transaction: bkper.Transaction): Amount | undefined {
+    let quantityStr = transaction.properties?.[QUANTITY_PROP];
+    if (quantityStr == undefined || quantityStr.trim() == '') {
+        return undefined;
     }
-    return book.parseValue(quantityStr).abs();
+    return book.parseValue(quantityStr)?.abs();
 }
 
 // returns the inventory book from a collection or null if it does not exist
-export function getInventoryBook(book: Book): Book {
-    if (book.getCollection() == null) {
-        return null;
+export function getInventoryBook(book: Book): Book | undefined {
+    if (book.getCollection() == undefined) {
+        return undefined;
     }
-    let connectedBooks = book.getCollection().getBooks();
+    let connectedBooks = book.getCollection()!.getBooks();
     for (const connectedBook of connectedBooks) {
         if (connectedBook.getProperty(INVENTORY_BOOK_PROP)) {
             return connectedBook;
         }
     }
-    return null;
+    return undefined;
 }
 
-// (already refatored to ts:strict)
-// returns the financial book in the collection corresponding to the excCode or undefined if it does not exist (already refactores to ts:strict)
+// returns the financial book in the collection corresponding to the excCode or undefined if it does not exist
 export async function getFinancialBook(book: Book, excCode?: string): Promise<Book | undefined> {
     if (book.getCollection() == undefined) {
         return undefined;
@@ -49,12 +47,10 @@ export async function getFinancialBook(book: Book, excCode?: string): Promise<Bo
     return undefined;
 }
 
-// (already refatored to ts:strict)
 export function getBookExcCode(book: Book): string | undefined {
     return book.getProperty(EXC_CODE_PROP, 'exchange_code');
 }
 
-// (already refatored to ts:strict)
 // returns the excCode from an account based on its groups good_exc_code property
 export function getGoodExchangeCodeFromAccount(account: bkper.Account): string | undefined {
     if (account.type == AccountType.INCOMING || account.type == AccountType.OUTGOING) {
@@ -73,7 +69,6 @@ export function getGoodExchangeCodeFromAccount(account: bkper.Account): string |
     return undefined;
 }
 
-// (already refatored to ts:strict)
 // returns the excCode from an account based on its groups good_exc_code property
 export async function getExchangeCodeFromAccount(account: Account): Promise<string | undefined> {
     if (account.getType() == AccountType.INCOMING || account.getType() == AccountType.OUTGOING) {
@@ -91,7 +86,6 @@ export async function getExchangeCodeFromAccount(account: Account): Promise<stri
     return undefined;
 }
 
-// (already refatored to ts:strict)
 // returns the good account (asset account) from the transaction (purchase or sale)
 export async function getGoodAccount(goodTransaction: Transaction): Promise<Account | undefined> {
     if (await isSale(goodTransaction)) {
@@ -104,11 +98,11 @@ export async function getGoodAccount(goodTransaction: Transaction): Promise<Acco
 }
 
 export async function isSale(transaction: Transaction): Promise<boolean> {
-    return transaction.isPosted() && (await transaction.getDebitAccount()).getType() == AccountType.OUTGOING;
+    return (transaction.isPosted() == true) && (await transaction.getDebitAccount())?.getType() == AccountType.OUTGOING;
 }
 
 export async function isPurchase(transaction: Transaction): Promise<boolean> {
-    return transaction.isPosted() && (await transaction.getCreditAccount()).getType() == AccountType.INCOMING;
+    return (transaction.isPosted() == true) && (await transaction.getCreditAccount())?.getType() == AccountType.INCOMING;
 }
 
 // returns the good purchase root transaction based on the purchase code property
@@ -119,11 +113,11 @@ export async function getGoodPurchaseRootTx(book: Book, purchaseCodeProp: string
     return await getRootTransaction(book, goodPurchaseTx);
 }
 
-export async function getRootTransaction(book: Book, transaction: Transaction): Promise<Transaction> {
+export async function getRootTransaction(book: Book, transaction?: Transaction): Promise<Transaction | undefined> {
     if (transaction) {
         const remoteIds = transaction.getRemoteIds();
-        const purchaseCodeProp = transaction.getProperty(PURCHASE_CODE_PROP).toLowerCase();
-    
+        const purchaseCodeProp = transaction.getProperty(PURCHASE_CODE_PROP)?.toLowerCase();
+
         for (const remoteId of remoteIds) {
             if (remoteId != `${GOOD_PROP}_${purchaseCodeProp}`) {
                 const rootTxId = remoteId.split('_')[1];
@@ -132,7 +126,7 @@ export async function getRootTransaction(book: Book, transaction: Transaction): 
             }
         }
     }
-    return null;
+    return undefined;
 }
 
 export function buildBookAnchor(book: Book) {
