@@ -8,7 +8,7 @@ export class EventHandlerTransactionUpdated extends EventHandlerTransaction {
 
     async intercept(baseBook: Book, event: bkper.Event): Promise<Result> {
         if (this.shouldCascadeDeletion(event)) {
-            await new InterceptorOrderProcessorDeleteFinancial().intercept(baseBook, event);
+            return await new InterceptorOrderProcessorDeleteFinancial().intercept(baseBook, event);
         }
         return await new InterceptorOrderProcessor().intercept(baseBook, event);
     }

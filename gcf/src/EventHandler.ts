@@ -43,7 +43,6 @@ export abstract class EventHandler {
         return { result: responses };
     }
 
-    // (already refatored to ts:strict)
     protected matchGoodExchange(goodExcCode: string, excCode: string): boolean {
         goodExcCode = goodExcCode.trim();
         if (goodExcCode != excCode) {

@@ -3,7 +3,6 @@ import { uncheckAndRemove } from "./BotService.js";
 
 export abstract class InterceptorOrderProcessorDelete {
 
-	// (already refatored to ts:strict)
 	protected async cascadeDelete(book: Book, transaction: bkper.Transaction): Promise<Transaction | undefined> {
 		return await this.cascadeDeleteTransactions(book, transaction, ``);
 	}
@@ -24,13 +23,13 @@ export abstract class InterceptorOrderProcessorDelete {
 		return `DELETED: ${tx.getDateFormatted()} ${tx.getAmount()} ${await tx.getCreditAccountName()} ${await tx.getDebitAccountName()} ${tx.getDescription()}`
 	}
 
-	protected async deleteTransactionByRemoteId(book: Book, remoteId: string): Promise<Transaction | null> {
-		let tx = (await book.listTransactions(`remoteId:${remoteId}`)).getFirst();
+	protected async deleteTransactionByRemoteId(book: Book, remoteId?: string): Promise<Transaction | undefined> {
+		let tx = remoteId ? (await book.listTransactions(`remoteId:${remoteId}`)).getFirst() : undefined;
 		if (tx) {
 			tx = await uncheckAndRemove(tx);
 			return tx;
 		}
-		return null;
+		return undefined;
 	}
 
 }
