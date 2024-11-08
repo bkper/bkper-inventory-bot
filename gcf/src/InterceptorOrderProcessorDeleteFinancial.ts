@@ -148,22 +148,27 @@ export class InterceptorOrderProcessorDeleteFinancial extends InterceptorOrderPr
         const inventoryBook = getInventoryBook(financialBook);
         if (inventoryBook) {
             let bookAnchor = buildBookAnchor(inventoryBook);
-            const iterator = inventoryBook.getTransactions(`remoteId:${purchaseCodeProp}`);
-            if (await iterator.hasNext()) {
-                let goodTransaction = await iterator.next();
-                // update additional cost and total cost properties in inventory book transaction
-                const currentTotalCost = new Amount(goodTransaction.getProperty(TOTAL_COST_PROP));
-                const currentAdditionalCosts = new Amount(goodTransaction.getProperty(TOTAL_ADDITIONAL_COSTS_PROP));
-
-                const costToSubtract = new Amount(value);
-
-                const newTotalCost = currentTotalCost.minus(costToSubtract);
-                const newAdditionalCosts = currentAdditionalCosts.minus(costToSubtract);
-
-                goodTransaction.setProperty(TOTAL_ADDITIONAL_COSTS_PROP, newAdditionalCosts.toString()).setProperty(TOTAL_COST_PROP, newTotalCost.toString()).update();
-
-                let record = `${goodTransaction.getDate()} ${goodTransaction.getAmount()} ${await goodTransaction.getCreditAccountName()} ${await goodTransaction.getDebitAccountName()} ${goodTransaction.getDescription()}`;
-                return `UPDATED: ${bookAnchor}: ${record}`;
+            let goodTransaction = (await inventoryBook.listTransactions(`remoteId:${purchaseCodeProp}`)).getFirst();
+            const totalCostProp = goodTransaction?.getProperty(TOTAL_COST_PROP);
+            const totalAdditionalCostsProp = goodTransaction?.getProperty(TOTAL_ADDITIONAL_COSTS_PROP);
+            if (goodTransaction) {
+                if (totalCostProp && totalAdditionalCostsProp) {
+                    // update additional cost and total cost properties in inventory book transaction
+                    const currentTotalCost = new Amount(totalCostProp);
+                    const currentAdditionalCosts = new Amount(totalAdditionalCostsProp);
+    
+                    const costToSubtract = new Amount(value);
+    
+                    const newTotalCost = currentTotalCost.minus(costToSubtract);
+                    const newAdditionalCosts = currentAdditionalCosts.minus(costToSubtract);
+    
+                    goodTransaction.setProperty(TOTAL_ADDITIONAL_COSTS_PROP, newAdditionalCosts.toString()).setProperty(TOTAL_COST_PROP, newTotalCost.toString()).update();
+    
+                    let record = `${goodTransaction.getDate()} ${goodTransaction.getAmount()} ${await goodTransaction.getCreditAccountName()} ${await goodTransaction.getDebitAccountName()} ${goodTransaction.getDescription()}`;
+                    return `UPDATED: ${bookAnchor}: ${record}`;
+                } else {
+                    return 'ERROR (subtractAdditionalCostFromInventoryTx): additional_costs or total_cost properties not found';
+                }
             } else {
                 return `PURCHASE TRANSACTION NOT FOUND IN BOOK ${bookAnchor}`
             }
