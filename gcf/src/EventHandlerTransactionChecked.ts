@@ -26,44 +26,50 @@ export class EventHandlerTransactionChecked extends EventHandlerTransaction {
 
     // add additional cost to inventory purchase transaction total cost property
     protected async connectedTransactionFound(financialBook: Book, inventoryBook: Book, financialTransaction: bkper.Transaction, connectedTransaction: Transaction): Promise<string | undefined> {
-        // prevent bot response when checking more than once the same good purchase transaction
-        for (const remoteId of connectedTransaction.getRemoteIds()) {
-            if (remoteId == financialTransaction.id) {
+        if (financialTransaction.properties && financialTransaction.creditAccount && financialTransaction.debitAccount) {
+            // prevent bot response when checking more than once the same good purchase transaction
+            for (const remoteId of connectedTransaction.getRemoteIds()) {
+                if (remoteId == financialTransaction.id) {
+                    return undefined;
+                }
+            }
+    
+            // prevent bot response when checking transactions from inventory book
+            if (financialBook.getId() == inventoryBook.getId()) {
                 return undefined;
             }
-        }
-
-        // prevent bot response when checking transactions from inventory book
-        if (financialBook.getId() == inventoryBook.getId()) {
-            return undefined;
-        }
-
-        // prevent bot response when checking root financial transaction
-        if (financialTransaction.creditAccount && financialTransaction.creditAccount.type == AccountType.LIABILITY) {
-            return undefined;
-        }
-
-        // update additional cost and total cost properties in inventory book transaction
-        const additionalCost = new Amount(financialTransaction.amount ?? 0);
-        const currentTotalCost = new Amount(connectedTransaction.getProperty(TOTAL_COST_PROP) ?? 0);
-        const newTotalCosts = currentTotalCost.plus(additionalCost);
-
-        let currentTotalAdditionalCosts = new Amount(0);
-        if (connectedTransaction.getProperty(TOTAL_ADDITIONAL_COSTS_PROP)) {
-            currentTotalAdditionalCosts = currentTotalAdditionalCosts.plus(new Amount(connectedTransaction.getProperty(TOTAL_ADDITIONAL_COSTS_PROP) ?? 0));
-        }
-        const newTotalAdditionalCosts = currentTotalAdditionalCosts.plus(additionalCost);
-
-        if (financialTransaction.id) {
-            connectedTransaction
-                .setProperty(TOTAL_ADDITIONAL_COSTS_PROP, newTotalAdditionalCosts.toString())
-                .setProperty(TOTAL_COST_PROP, newTotalCosts.toString())
-                .addRemoteId(financialTransaction.id)
-                .update();
-
-            const bookAnchor = buildBookAnchor(inventoryBook);
-            const record = `${connectedTransaction.getDate()} ${connectedTransaction.getAmount()} ${await connectedTransaction.getCreditAccountName()} ${await connectedTransaction.getDebitAccountName()} ${connectedTransaction.getDescription()}`;
-            return `FOUND: ${bookAnchor}: ${record}`;
+    
+            // prevent bot response when checking root financial transaction
+            if (financialTransaction.creditAccount.type == AccountType.LIABILITY || financialTransaction.debitAccount.type == AccountType.LIABILITY) {
+                return undefined;
+            }
+    
+            if (financialTransaction.properties[CREDIT_NOTE_PROP] == undefined) {
+                // update additional cost and total cost properties on purchase transactions
+                const additionalCost = new Amount(financialTransaction.amount ?? 0);
+                const currentTotalCost = new Amount(connectedTransaction.getProperty(TOTAL_COST_PROP) ?? 0);
+                const newTotalCosts = currentTotalCost.plus(additionalCost);
+    
+                let currentTotalAdditionalCosts = new Amount(0);
+                if (connectedTransaction.getProperty(TOTAL_ADDITIONAL_COSTS_PROP)) {
+                    currentTotalAdditionalCosts = currentTotalAdditionalCosts.plus(new Amount(connectedTransaction.getProperty(TOTAL_ADDITIONAL_COSTS_PROP) ?? 0));
+                }
+                const newTotalAdditionalCosts = currentTotalAdditionalCosts.plus(additionalCost);
+    
+                if (financialTransaction.id) {
+                    connectedTransaction
+                        .setProperty(TOTAL_ADDITIONAL_COSTS_PROP, newTotalAdditionalCosts.toString())
+                        .setProperty(TOTAL_COST_PROP, newTotalCosts.toString())
+                        .addRemoteId(financialTransaction.id)
+                        .update();
+    
+                    const bookAnchor = buildBookAnchor(inventoryBook);
+                    const record = `${connectedTransaction.getDate()} ${connectedTransaction.getAmount()} ${await connectedTransaction.getCreditAccountName()} ${await connectedTransaction.getDebitAccountName()} ${connectedTransaction.getDescription()}`;
+                    return `FOUND: ${bookAnchor}: ${record}`;
+                }
+            } else {
+                // handle credit note transactions with or without quantities
+            }
         }
         return 'ERROR (connectedTransactionFound): financialTransaction is missing required fields';
     }
