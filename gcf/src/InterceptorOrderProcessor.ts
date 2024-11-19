@@ -51,7 +51,10 @@ export class InterceptorOrderProcessor {
             return false;
         }
         if (transactionPayload.properties) {
-            if (transactionPayload.properties[GOOD_PROP] == undefined || transactionPayload.properties[PURCHASE_INVOICE_PROP] == undefined || transactionPayload.properties[PURCHASE_CODE_PROP] == undefined || (transactionPayload.properties[PURCHASE_CODE_PROP] != transactionPayload.properties[PURCHASE_INVOICE_PROP])) {
+            if (transactionPayload.properties[GOOD_PROP] != undefined
+                || transactionPayload.properties[PURCHASE_INVOICE_PROP] == undefined
+                || transactionPayload.properties[PURCHASE_CODE_PROP] == undefined
+                || (transactionPayload.properties[PURCHASE_CODE_PROP] != transactionPayload.properties[PURCHASE_INVOICE_PROP])) {
                 return false;
             }
         }
@@ -63,7 +66,9 @@ export class InterceptorOrderProcessor {
             return false;
         }
         if (transactionPayload.properties) {
-            if (transactionPayload.properties[GOOD_PROP] == undefined || transactionPayload.properties[PURCHASE_CODE_PROP] == undefined || transactionPayload.properties[PURCHASE_INVOICE_PROP] == undefined) {
+            if (transactionPayload.properties[GOOD_PROP] == undefined
+                || transactionPayload.properties[PURCHASE_CODE_PROP] == undefined
+                || transactionPayload.properties[PURCHASE_INVOICE_PROP] == undefined) {
                 return false;
             }
         }
