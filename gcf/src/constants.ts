@@ -2,6 +2,7 @@
 export const ADDITIONAL_COST_PROP = 'additional_cost';
 export const ADDITIONAL_COST_TX_IDS = 'add_cost_transactions';
 export const EXC_CODE_PROP = 'exc_code';
+export const CREDIT_NOTE_PROP = 'credit_note';
 export const GOOD_EXC_CODE_PROP = 'good_exc_code';
 export const GOOD_PROP = 'good';
 export const GOOD_PURCHASE_COST_PROP = 'good_purchase_cost';

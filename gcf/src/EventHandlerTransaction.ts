@@ -21,14 +21,12 @@ export abstract class EventHandlerTransaction extends EventHandler {
             return undefined;
         }
 
-        let goodTransaction = (await inventoryBook.listTransactions(this.getTransactionQuery(financialTransaction))).getFirst();
-
         let goodExcCode = await this.getGoodExcCodeFromTransaction(financialTransaction, financialBook);
-
         if (goodExcCode && excCode && !this.matchGoodExchange(goodExcCode, excCode)) {
             return undefined;
         }
-
+        
+        let goodTransaction = (await inventoryBook.listTransactions(this.getTransactionQuery(financialTransaction))).getFirst();
         if (goodTransaction) {
             return await this.connectedTransactionFound(financialBook, inventoryBook, financialTransaction, goodTransaction, goodExcCode);
         } else {
