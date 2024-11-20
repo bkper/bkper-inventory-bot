@@ -44,22 +44,12 @@ export class EventHandlerTransactionChecked extends EventHandlerTransaction {
                 return undefined;
             }
 
-            if (financialTransaction.properties[CREDIT_NOTE_PROP] == undefined) {
-                // update additional cost and total cost properties on purchase transactions
-                this.updateGoodCosts(financialTransaction, connectedTransaction);
+            // update additional cost and total cost properties on purchase transactions
+            this.updateGoodCosts(financialTransaction, connectedTransaction);
 
-                const bookAnchor = buildBookAnchor(inventoryBook);
-                const record = `${connectedTransaction.getDate()} ${connectedTransaction.getAmount()} ${await connectedTransaction.getCreditAccountName()} ${await connectedTransaction.getDebitAccountName()} ${connectedTransaction.getDescription()}`;
-                return `FOUND: ${bookAnchor}: ${record}`;
-
-            } else {
-                // handle credit note transactions
-                const creditQuantity = (getQuantity(financialBook, financialTransaction) ?? new Amount(0)).toNumber();
-                if (creditQuantity > 0) {
-                    // handle credit note transactions with quantities (credit in quantity)
-
-                }
-            }
+            const bookAnchor = buildBookAnchor(inventoryBook);
+            const record = `${connectedTransaction.getDate()} ${connectedTransaction.getAmount()} ${await connectedTransaction.getCreditAccountName()} ${await connectedTransaction.getDebitAccountName()} ${connectedTransaction.getDescription()}`;
+            return `FOUND: ${bookAnchor}: ${record}`;
         }
         return 'ERROR (connectedTransactionFound): financialTransaction is missing required fields';
     }
@@ -183,13 +173,14 @@ export class EventHandlerTransactionChecked extends EventHandlerTransaction {
     }
 
     private async updateGoodCosts(financialTransaction: bkper.Transaction, connectedTransaction: Transaction): Promise<void> {
-        const additionalCost = new Amount(financialTransaction.amount ?? 0);
+        let additionalCost = new Amount(financialTransaction.amount ?? 0);
+        additionalCost = financialTransaction.properties?.[CREDIT_NOTE_PROP] ? additionalCost.times(-1) : additionalCost;
         const currentTotalCost = new Amount(connectedTransaction.getProperty(TOTAL_COST_PROP) ?? 0);
         const newTotalCosts = currentTotalCost.plus(additionalCost);
 
         let currentTotalAdditionalCosts = new Amount(0);
         if (connectedTransaction.getProperty(TOTAL_ADDITIONAL_COSTS_PROP)) {
-            currentTotalAdditionalCosts = currentTotalAdditionalCosts.plus(new Amount(connectedTransaction.getProperty(TOTAL_ADDITIONAL_COSTS_PROP) ?? 0));
+            currentTotalAdditionalCosts = currentTotalAdditionalCosts.plus(new Amount(connectedTransaction.getProperty(TOTAL_ADDITIONAL_COSTS_PROP)!));
         }
         const newTotalAdditionalCosts = currentTotalAdditionalCosts.plus(additionalCost);
 
