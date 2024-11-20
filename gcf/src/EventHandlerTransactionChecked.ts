@@ -76,7 +76,7 @@ export class EventHandlerTransactionChecked extends EventHandlerTransaction {
 
     // create purchase (Buy) or sale (Sell) transactions in the inventory book in response to the financial transactions
     protected async connectedTransactionNotFound(financialBook: Book, inventoryBook: Book, financialTransaction: bkper.Transaction, goodExcCode: string): Promise<string | undefined> {
-        if (financialTransaction.creditAccount && financialTransaction.debitAccount && financialTransaction.date && financialTransaction.description && financialTransaction.id && financialTransaction.properties) {
+        if (financialTransaction.creditAccount && financialTransaction.debitAccount && financialTransaction.date && financialTransaction.id && financialTransaction.properties) {
 
             // prevent bot response when checking root financial transaction
             const financialCreditAccount = financialTransaction.creditAccount;
@@ -107,7 +107,7 @@ export class EventHandlerTransactionChecked extends EventHandlerTransaction {
                     .setAmount(quantity)
                     .setCreditAccount(goodAccount)
                     .setDebitAccount(goodSellAccount)
-                    .setDescription(financialTransaction.description)
+                    .setDescription(financialTransaction.description ?? '')
                     .addRemoteId(financialTransaction.id)
                     .setProperty(SALE_INVOICE_PROP, financialTransaction.properties[SALE_INVOICE_PROP])
                     .setProperty(ORDER_PROP, financialTransaction.properties[ORDER_PROP])
@@ -134,7 +134,7 @@ export class EventHandlerTransactionChecked extends EventHandlerTransaction {
                         .setAmount(quantity)
                         .setCreditAccount(goodBuyAccount)
                         .setDebitAccount(goodAccount)
-                        .setDescription(financialTransaction.description)
+                        .setDescription(financialTransaction.description ?? '')
                         .addRemoteId(financialTransaction.id)
                         .addRemoteId(`${financialTransaction.properties[PURCHASE_CODE_PROP]}_${financialDebitAccount.normalizedName}`)
                         .setProperty(ORIGINAL_QUANTITY_PROP, quantity.toString())
@@ -157,14 +157,14 @@ export class EventHandlerTransactionChecked extends EventHandlerTransaction {
     // returns the good account from the inventory book corresponding to the good account in the financial book
     private async getConnectedGoodAccount(inventoryBook: Book, financialAccount: bkper.Account): Promise<Account | undefined> {
         const goodExchangeCode = getGoodExchangeCodeFromAccount(financialAccount);
-        if (goodExchangeCode != undefined && financialAccount.name && financialAccount.type && financialAccount.properties && financialAccount.archived) {
+        if (goodExchangeCode != undefined && financialAccount.name && financialAccount.type && financialAccount.properties) {
             let goodAccount = await inventoryBook.getAccount(financialAccount.name);
             if (goodAccount == undefined) {
                 goodAccount = new Account(inventoryBook)
                     .setName(financialAccount.name)
                     .setType(financialAccount.type as AccountType)
                     .setProperties(financialAccount.properties)
-                    .setArchived(financialAccount.archived);
+                    .setArchived(financialAccount.archived ?? false);
                 if (financialAccount.groups) {
                     for (const financialGroup of financialAccount.groups) {
                         if (financialGroup && financialGroup.properties && financialGroup.name && financialGroup.hidden) {
