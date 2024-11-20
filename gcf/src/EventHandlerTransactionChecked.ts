@@ -26,7 +26,7 @@ export class EventHandlerTransactionChecked extends EventHandlerTransaction {
 
     // add additional cost to inventory purchase transaction total cost property
     protected async connectedTransactionFound(financialBook: Book, inventoryBook: Book, financialTransaction: bkper.Transaction, connectedTransaction: Transaction): Promise<string | undefined> {
-        if (financialTransaction.id && financialTransaction.properties && financialTransaction.creditAccount && financialTransaction.debitAccount) {
+        if (financialTransaction.id && financialTransaction.creditAccount && financialTransaction.debitAccount && financialTransaction.properties) {
             // prevent bot response when checking more than once the same good purchase transaction
             for (const remoteId of connectedTransaction.getRemoteIds()) {
                 if (remoteId == financialTransaction.id) {
@@ -44,8 +44,10 @@ export class EventHandlerTransactionChecked extends EventHandlerTransaction {
                 return undefined;
             }
 
-            // update additional cost and total cost properties on purchase transactions
-            this.updateGoodCosts(financialTransaction, connectedTransaction);
+            const creditQuantity = getQuantity(financialBook, financialTransaction)?.toNumber() ?? 0;
+
+            // update additional cost properties and transaction quantities on purchases or credit notes
+            this.updateGoodTransaction(financialTransaction, connectedTransaction, creditQuantity);
 
             const bookAnchor = buildBookAnchor(inventoryBook);
             const record = `${connectedTransaction.getDate()} ${connectedTransaction.getAmount()} ${await connectedTransaction.getCreditAccountName()} ${await connectedTransaction.getDebitAccountName()} ${connectedTransaction.getDescription()}`;
@@ -172,21 +174,43 @@ export class EventHandlerTransactionChecked extends EventHandlerTransaction {
         return undefined;
     }
 
-    private async updateGoodCosts(financialTransaction: bkper.Transaction, connectedTransaction: Transaction): Promise<void> {
-        let additionalCost = new Amount(financialTransaction.amount ?? 0);
-        additionalCost = financialTransaction.properties?.[CREDIT_NOTE_PROP] ? additionalCost.times(-1) : additionalCost;
-        const currentTotalCost = new Amount(connectedTransaction.getProperty(TOTAL_COST_PROP) ?? 0);
-        const newTotalCosts = currentTotalCost.plus(additionalCost);
+    private async updateGoodTransaction(financialTransaction: bkper.Transaction, connectedTransaction: Transaction, creditQuantity: number): Promise<void> {
+        const currentQuantity = connectedTransaction.getAmount()?.toNumber();
+        const currentGoodPurchaseCost = connectedTransaction.getProperty(GOOD_PURCHASE_COST_PROP);
+        const financialTransactionAmount = financialTransaction.amount;
+        const currentTotalCost = connectedTransaction.getProperty(TOTAL_COST_PROP);
 
+        if (currentQuantity == undefined || currentGoodPurchaseCost == undefined || financialTransactionAmount == undefined || currentTotalCost == undefined) {
+            console.log(`ERROR (updateGoodTransaction): connectedTransaction or financialTransaction is missing required data`);
+            return;
+        }
+        
         let currentTotalAdditionalCosts = new Amount(0);
         if (connectedTransaction.getProperty(TOTAL_ADDITIONAL_COSTS_PROP)) {
-            currentTotalAdditionalCosts = currentTotalAdditionalCosts.plus(new Amount(connectedTransaction.getProperty(TOTAL_ADDITIONAL_COSTS_PROP)!));
+            currentTotalAdditionalCosts = new Amount(connectedTransaction.getProperty(TOTAL_ADDITIONAL_COSTS_PROP)!);
         }
+
+        let additionalCost = new Amount(0);
+        let newGoodPurchaseCost = new Amount(0);
+        // update good purchase cost or additional costs depending whether the transaction is a credit note or additional cost
+        if (financialTransaction.properties?.[CREDIT_NOTE_PROP]) {
+            const goodCreditValue = new Amount(financialTransactionAmount!);
+            newGoodPurchaseCost = new Amount(currentGoodPurchaseCost).minus(goodCreditValue);
+        } else {
+            additionalCost = new Amount(financialTransactionAmount!);
+            newGoodPurchaseCost = new Amount(currentGoodPurchaseCost);
+        }
+
+        // update transaction quantity on credit notes involving quantities
+        const newQuantity = (financialTransaction.properties?.[CREDIT_NOTE_PROP]) ? currentQuantity - creditQuantity : currentQuantity;
         const newTotalAdditionalCosts = currentTotalAdditionalCosts.plus(additionalCost);
+        const newTotalCosts = newGoodPurchaseCost.plus(additionalCost);
 
         await connectedTransaction
+            .setAmount(newQuantity)
             .setProperty(TOTAL_ADDITIONAL_COSTS_PROP, newTotalAdditionalCosts.toString())
             .setProperty(TOTAL_COST_PROP, newTotalCosts.toString())
+            .setProperty(GOOD_PURCHASE_COST_PROP, newGoodPurchaseCost.toString())
             .addRemoteId(financialTransaction.id!)
             .update();
     }
