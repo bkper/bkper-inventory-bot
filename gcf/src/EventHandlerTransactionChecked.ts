@@ -208,6 +208,7 @@ export class EventHandlerTransactionChecked extends EventHandlerTransaction {
 
         await connectedTransaction
             .setAmount(newQuantity)
+            .setProperty(ORIGINAL_QUANTITY_PROP, newQuantity.toString())
             .setProperty(TOTAL_ADDITIONAL_COSTS_PROP, newTotalAdditionalCosts.toString())
             .setProperty(TOTAL_COST_PROP, newTotalCosts.toString())
             .setProperty(GOOD_PURCHASE_COST_PROP, newGoodPurchaseCost.toString())
