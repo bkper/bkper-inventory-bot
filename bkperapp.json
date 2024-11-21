@@ -35,6 +35,7 @@
             "purchase_code",
             "purchase_invoice",
             "sale_invoice",
+            "credit_note",
             "order"
           ]
         },
