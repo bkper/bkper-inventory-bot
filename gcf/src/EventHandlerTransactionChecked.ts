@@ -204,7 +204,7 @@ export class EventHandlerTransactionChecked extends EventHandlerTransaction {
         // update transaction quantity on credit notes involving quantities
         const newQuantity = (financialTransaction.properties?.[CREDIT_NOTE_PROP]) ? currentQuantity - creditQuantity : currentQuantity;
         const newTotalAdditionalCosts = currentTotalAdditionalCosts.plus(additionalCost);
-        const newTotalCosts = newGoodPurchaseCost.plus(additionalCost);
+        const newTotalCosts = newGoodPurchaseCost.plus(newTotalAdditionalCosts);
 
         await connectedTransaction
             .setAmount(newQuantity)
