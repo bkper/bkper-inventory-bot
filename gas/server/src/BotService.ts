@@ -1,6 +1,6 @@
 namespace BotService {
 
-    export function getInventoryBook(book: Bkper.Book): Bkper.Book | null{
+    export function getInventoryBook(book: Bkper.Book): Bkper.Book | null {
         if (book.getCollection() == null) {
             return null;
         }
@@ -36,7 +36,7 @@ namespace BotService {
         return null;
     }
 
-    export function getAccountQuery(goodAccount: Bkper.Account, beforeDate?: string) {
+    export function getAccountQuery(goodAccount: Bkper.Account, beforeDate?: string): string {
         let query = `account:'${goodAccount.getName()}'`;
 
         if (beforeDate) {
