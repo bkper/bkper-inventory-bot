@@ -54,7 +54,7 @@ function getContextParams(parameters: { [key: string]: string }): ContextParams 
     return {
         book: { id: inventoryBook.getId(), name: inventoryBook.getName() },
         account: inventoryAccount ? { id: inventoryAccount.getId(), name: inventoryAccount.getName() } : undefined,
-        group: group ? { id: inventoryBook.getGroup(groupName).getId(), name: groupName } : undefined
+        group: group ? { id: inventoryBook.getGroup(groupName!).getId(), name: groupName! } : undefined
     }
 }
 
@@ -66,6 +66,9 @@ function getContextParams(parameters: { [key: string]: string }): ContextParams 
 function getAccountsToCalculate(contextParams: ContextParams): { accountName: string, accountId: string }[] {
     const book = BkperApp.getBook(contextParams.book.id);
     const inventoryBook = BotService.getInventoryBook(book);
+    if (inventoryBook == null) {
+        throw `Inventory Book not found in the collection. Please set the property ${constants.INVENTORY_BOOK_PROP} to the Inventory Book.`;
+    }
 
     let accountsMap = new Map<string, string>();
     if (contextParams.account) {
@@ -104,6 +107,9 @@ function getAccountsToCalculate(contextParams: ContextParams): { accountName: st
 function validate(bookId: string): void {
     const book = BkperApp.getBook(bookId);
     const inventoryBook = BotService.getInventoryBook(book);
+    if (inventoryBook == null) {
+        throw `Inventory Book not found in the collection. Please set the property ${constants.INVENTORY_BOOK_PROP} to the Inventory Book.`;
+    }
     if (BotService.hasPendingTasks(inventoryBook)) {
         throw `Cannot start operation: Inventory Book has pending tasks`;
     }

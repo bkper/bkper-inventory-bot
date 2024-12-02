@@ -22,7 +22,7 @@ namespace BotViewService {
 
         template.book = { id: inventoryBook.getId(), name: inventoryBook.getName() };
         template.account = inventoryAccount ? { id: inventoryAccount.getId(), name: inventoryAccount.getName() } : undefined;
-        template.group = group ? { id: inventoryBook.getGroup(groupName).getId(), name: groupName } : undefined;
+        template.group = group ? { id: inventoryBook.getGroup(groupName!).getId(), name: groupName! } : undefined;
 
         return template.evaluate().setTitle('Inventory Bot');
     }

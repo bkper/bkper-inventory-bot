@@ -1,6 +1,6 @@
 namespace CostOfSalesService {
 
-    export function calculateCostOfSalesForAccount(inventoryBookId: string, goodAccountId: string, toDate: string): Summary {
+    export function calculateCostOfSalesForAccount(inventoryBookId: string, goodAccountId: string, toDate?: string): Summary {
         const inventoryBook = BkperApp.getBook(inventoryBookId);
         if (!toDate) {
             toDate = inventoryBook.formatDate(new Date());
@@ -221,7 +221,7 @@ namespace CostOfSalesService {
             dt: transaction.getDate(),
             qt: transaction.getAmount().toString(),
             uc: unitTotalCost.toString(),
-            rt: excRate?.toString()
+            rt: excRate?.toString() || ''
         }
     }
 
@@ -230,7 +230,7 @@ namespace CostOfSalesService {
             qt: quantity.toString(),
             uc: unitTotalCost.toString(),
             id: transaction.getId(),
-            rt: excRate?.toString()
+            rt: excRate?.toString() || ''
         }
     }
 }

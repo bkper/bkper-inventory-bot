@@ -1,6 +1,6 @@
 namespace BotService {
 
-    export function getInventoryBook(book: Bkper.Book): Bkper.Book {
+    export function getInventoryBook(book: Bkper.Book): Bkper.Book | null{
         if (book.getCollection() == null) {
             return null;
         }
@@ -21,8 +21,8 @@ namespace BotService {
         return (book.getBacklog().getCount() > 0) ? true : false;
     }
 
-    export function getFinancialBook(book: Bkper.Book, excCode?: string): Bkper.Book {
-        if (book.getCollection() == null) {
+    export function getFinancialBook(book: Bkper.Book, excCode: string | null): Bkper.Book | null {
+        if (book.getCollection() == null || excCode == null) {
             return null;
         }
         const connectedBooks = book.getCollection().getBooks();
