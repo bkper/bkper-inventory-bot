@@ -5,6 +5,8 @@
     "scripts": {
         "login": "clasp login",
         "build": "bun run-s build:*",
+        "postbuild": "bun tests",
+        "tests": "bun test",
         "build:tsc": "tsc",
         "build:types": "clasp-types --root ./ --client --src ./src --out ../client/",
         "open": "clasp open",
@@ -25,8 +27,11 @@
         "@bkper/bkper-api-types": "^5.9.0",
         "@bkper/bkper-app-types": "^3.34.2",
         "@google/clasp": "^2.3.0",
+        "@types/chai": "^5.0.1",
         "@types/google-apps-script": "^1.0.46",
+        "@types/mocha": "^10.0.10",
         "@types/node": "20.0.0",
+        "chai": "^5.1.2",
         "clasp-types": "^1.3.1",
         "npm-run-all": "^4.1.5"
     }
