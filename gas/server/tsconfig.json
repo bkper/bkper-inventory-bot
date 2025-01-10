@@ -6,8 +6,7 @@
       "target": "ES6",
       "strict": true,
       "sourceMap": true,
-      "typeRoots" : ["node_modules/@bkper", "node_modules/@types" ],
-      "noEmit": true 
+      "typeRoots" : ["node_modules/@bkper", "node_modules/@types" ]
     },
     "include": [
       "src/**/*.ts",
