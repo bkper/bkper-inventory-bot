@@ -36,15 +36,6 @@ namespace BotService {
         return null;
     }
 
-    export function getAccountQuery(goodAccount: Bkper.Account, beforeDate?: string): string {
-        let query = `account:'${goodAccount.getName()}'`;
-
-        if (beforeDate) {
-            query += ` before:${beforeDate}`
-        }
-        return query;
-    }
-
     export function isSale(transaction: Bkper.Transaction): boolean {
         return transaction.isPosted() && transaction.getDebitAccount().getType() == BkperApp.AccountType.OUTGOING;
     }

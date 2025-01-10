@@ -18,7 +18,7 @@ namespace CostOfSalesService {
         }
 
         const beforeDate = BotService.getBeforeDateIsoString(inventoryBook, toDate);
-        const iterator = inventoryBook.getTransactions(BotService.getAccountQuery(goodAccount, beforeDate));
+        const iterator = inventoryBook.getTransactions(helper.getAccountQuery(goodAccount.getName(), beforeDate));
 
         let goodAccountSaleTransactions: Bkper.Transaction[] = [];
         let goodAccountPurchaseTransactions: Bkper.Transaction[] = [];
