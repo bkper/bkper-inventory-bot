@@ -59,6 +59,42 @@ function getContextParams(parameters: { [key: string]: string }): ContextParams 
 }
 
 /**
+ * Check if Inventory Book has pending tasks
+ * 
+ * @public
+ */
+function validate(bookId: string): void {
+    const book = BkperApp.getBook(bookId);
+    const inventoryBook = BotService.getInventoryBook(book);
+    if (inventoryBook == null) {
+        throw `Inventory Book not found in the collection. Please set the property ${constants.INVENTORY_BOOK_PROP} to the Inventory Book.`;
+    }
+    if (BotService.hasPendingTasks(inventoryBook)) {
+        throw `Cannot start operation: Inventory Book has pending tasks`;
+    }
+}
+
+/**
+ * Calculate cost of sales for goods
+ * 
+ * @public
+ */
+function calculateCostOfSales(contextParams: ContextParams, toDate?: string): { accountName: string, result: string }[] {
+    // Log user inputs
+    console.log(`book id: ${contextParams.book.id}, account id: ${contextParams.account?.id}, date input: ${toDate}`);
+
+    const accountsToCalculate = getAccountsToCalculate(contextParams);
+
+    let results: { accountName: string, result: string }[] = [];
+    for (const account of accountsToCalculate) {
+        const summary = CostOfSalesService.calculateCostOfSalesForAccount(contextParams.book.id, account.accountId, toDate);
+        results.push({ accountName: account.accountName, result: summary.getResult() });
+    }
+
+    return results;
+}
+
+/**
  * Get the accounts to calculate COGS
  * 
  * @public
@@ -100,37 +136,45 @@ function getAccountsToCalculate(contextParams: ContextParams): { accountName: st
 }
 
 /**
- * Check if Inventory Book has pending tasks
+ * Reset cost of sales for goods
  * 
  * @public
  */
-function validate(bookId: string): void {
-    const book = BkperApp.getBook(bookId);
+function resetCostOfSales(contextParams: ContextParams): { accountName: string, result: string }[] {
+    let results: { accountName: string, result: string }[] = [];
+
+    // Log user inputs
+    console.log(`book id: ${contextParams.book.id}, account id: ${contextParams.account?.id}`);
+
+    const accountsToReset = getAccountsToReset(contextParams).sort((a, b) => a.getName().localeCompare(b.getName()));
+    for (const account of accountsToReset) {
+        const summary = CostOfSalesService.resetCostOfSalesForAccount(contextParams.book.id, account.getId());
+        results.push({ accountName: account.getName(), result: summary.getResult() });
+    }
+    
+    return results;
+}
+
+/**
+ * Get the accounts to reset COGS
+ * 
+ * @public
+ */
+function getAccountsToReset(contextParams: ContextParams): Bkper.Account[] {
+    let accountsToReset: Bkper.Account[] = [];
+
+    const book = BkperApp.getBook(contextParams.book.id);
     const inventoryBook = BotService.getInventoryBook(book);
     if (inventoryBook == null) {
         throw `Inventory Book not found in the collection. Please set the property ${constants.INVENTORY_BOOK_PROP} to the Inventory Book.`;
     }
-    if (BotService.hasPendingTasks(inventoryBook)) {
-        throw `Cannot start operation: Inventory Book has pending tasks`;
-    }
-}
 
-/**
- * Calculate cost of sales for goods
- * 
- * @public
- */
-function calculateCostOfSales(contextParams: ContextParams, toDate?: string): { accountName: string, result: string }[] {
-    // Log user inputs
-    console.log(`book id: ${contextParams.book.id}, account id: ${contextParams.account?.id}, date input: ${toDate}`);
-
-    const accountsToCalculate = getAccountsToCalculate(contextParams);
-
-    let results: { accountName: string, result: string }[] = [];
-    for (const account of accountsToCalculate) {
-        const summary = CostOfSalesService.calculateCostOfSalesForAccount(contextParams.book.id, account.accountId, toDate);
-        results.push({ accountName: account.accountName, result: summary.getResult() });
+    const accounts = inventoryBook.getAccounts();
+    for (const account of accounts) {
+        if (account.getType() == BkperApp.AccountType.ASSET) {
+            accountsToReset.push(account);
+        }
     }
 
-    return results;
+    return accountsToReset;
 }
