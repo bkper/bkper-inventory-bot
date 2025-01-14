@@ -51,6 +51,28 @@ function fireCalculateForAll() {
     google.script.run.withSuccessHandler(showResults).withFailureHandler(showError).calculateCostOfSales(contextParams);
 }
 
+function reset() {
+    disableButtons(true);
+    if (contextParams) {
+        google.script.run.withSuccessHandler(() => {
+            try {
+                fireResetForAll();
+            } catch (error) {
+                showError(error);
+            }
+        })
+            .withFailureHandler((error) => {
+                showError(error);
+            })
+            .validate(contextParams.book.id)
+            ;
+    }
+}
+
+function fireResetForAll() {
+    google.script.run.withSuccessHandler(showResults).withFailureHandler(showError).resetCostOfSales(contextParams);
+}
+
 function showResults(results: { accountName: string, result: string }[]) {
     const ul = $('#account-list').empty();
     for (const account of results) {
