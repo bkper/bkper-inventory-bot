@@ -91,9 +91,11 @@ function disableButtons(disable: boolean) {
     if (disable) {
         $('#calculate-button').prop('disabled', true);
         $('#close-button').prop('disabled', true);
+        $('#reset-button').prop('disabled', true);
     } else {
         $('#calculate-button').prop('disabled', false);
         $('#close-button').prop('disabled', false);
+        $('#reset-button').prop('disabled', false);
     }
 }
 
