@@ -14,7 +14,29 @@ namespace CostOfSalesService {
 
         let iterator = inventoryBook.getTransactions(helper.getAccountQuery(goodAccount.getName()));
 
-        return summary;
+        const transactions: Bkper.Transaction[] = [];
+        while (iterator.hasNext()) {
+            let tx = iterator.next();
+            transactions.push(tx);
+        }
+
+        // Processor
+        const processor = new ResetCostOfSalesProcessor(inventoryBook, financialBook);
+
+        for (let tx of transactions) {
+
+            // Log operation status
+            console.log(`processing transaction: ${tx.getId()}`);
+
+            if (tx.isChecked()) {
+                tx.setChecked(false);
+            }
+
+            if (tx.getAgentId() == 'inventory-bot') { }
+
+        }
+
+        return summary.resetingAsync();
     }
 
 }

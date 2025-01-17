@@ -10,7 +10,7 @@ namespace CostOfSalesService {
         const goodExcCode = BotService.getExchangeCode(goodAccount);
         const financialBook = BotService.getFinancialBook(inventoryBook, goodExcCode);
 
-        const summary = new Summary(goodAccount.getId());
+        const summary = new Summary(goodAccountId);
         
         // Skip
         if (financialBook == null) {
