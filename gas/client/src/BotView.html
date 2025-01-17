@@ -2,7 +2,11 @@
 <html>
 
 <head>
-  <link rel="stylesheet" href="https://ssl.gstatic.com/docs/script/css/add-ons1.css">
+  	<!-- Shoelace -->
+	<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@shoelace-style/shoelace@2.14.0/cdn/themes/light.css" />
+	<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@shoelace-style/shoelace@2.14.0/cdn/themes/dark.css" />
+
+	<script type="module" src="https://cdn.jsdelivr.net/npm/@shoelace-style/shoelace@2.14.0/cdn/shoelace-autoloader.js"></script>
 
   <link inline href="BotViewStyle.css" rel="stylesheet">
 
@@ -27,13 +31,13 @@
 
   </div>
 
-  <div class="footer" id='footer-panel'>
-    <button id="calculate-button" onclick="calculate()">Calculate</button>
-    <button id="close-button" onclick="closeWindow()">Close</button>
+  <div class="footer">
+    <sl-button id="calculate-button" variant="default" onclick="calculate()">Calculate</sl-button>
+    <sl-button id="close-button" variant="default" onclick="closeWindow()">Close</sl-button>
   </div>
 
   <div class="footer">
-    <button id="reset-button" onclick='reset()'>Reset FIFO</button>
+    <sl-button id="reset-button" variant="default" outline size="small" onclick="reset()">Reset</sl-button>
   </div>
 
   <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.10.2/jquery.min.js"></script>
