@@ -32,9 +32,64 @@ namespace CostOfSalesService {
                 tx.setChecked(false);
             }
 
-            if (tx.getAgentId() == 'inventory-bot') { }
+            // Reset sale transactions
+            if (tx.getAgentId() == 'inventory-bot') {
+                if (tx.getProperty(constants.PURCHASE_LOG_PROP)) {
+                    // Trash COGs transactions connected to liquidations
+                    let transactionIterator = financialBook.getTransactions(`remoteId:${tx.getId()}`);
+                    if (transactionIterator.hasNext()) {
+                        let COGsTransaction = transactionIterator.next();
+                        if (COGsTransaction.isChecked()) {
+                            COGsTransaction.setChecked(false);
+                        }
+                        // Store transaction to be trashed
+                        processor.setFinancialBookTransactionToTrash(COGsTransaction);
+                    }
 
+                    // Remove liquidation properties: purchase_log, total_cost
+                    tx.deleteProperty(constants.PURCHASE_LOG_PROP).deleteProperty(constants.TOTAL_COST_PROP);
+                    // Store transaction to be updated
+                    processor.setInventoryBookTransactionToUpdate(tx);
+                }
+
+                // Reset purchase transactions
+                if (!tx.getProperty(constants.ORIGINAL_QUANTITY_PROP)) {
+                    // Trash splitted transaction
+                    processor.setInventoryBookTransactionToTrash(tx);
+                } else {
+                    // Reset parent transaction
+                    const txAmount = tx.getAmount();
+                    const txGoodPurchaseCost = BkperApp.newAmount(tx.getProperty(constants.GOOD_PURCHASE_COST_PROP));
+                    const txAdditionalCosts = BkperApp.newAmount(tx.getProperty(constants.ADDITIONAL_COST_PROP));
+
+                    const unitGoodPurchaseCost = txGoodPurchaseCost.div(txAmount);
+                    const unitAdditionalCosts = txAdditionalCosts.div(txAmount);
+
+                    const originalAmount = BkperApp.newAmount(tx.getProperty(constants.ORIGINAL_QUANTITY_PROP));
+                    const originalGoodPurchaseCost = originalAmount.times(unitGoodPurchaseCost);
+                    const originalAdditionalCosts = originalAmount.times(unitAdditionalCosts);
+
+                    tx.setAmount(originalAmount);
+                    tx.setProperty(constants.GOOD_PURCHASE_COST_PROP, originalGoodPurchaseCost.toString());
+                    tx.setProperty(constants.ADDITIONAL_COST_PROP, originalAdditionalCosts.toString());
+                    tx.setProperty(constants.TOTAL_COST_PROP, originalGoodPurchaseCost.plus(originalAdditionalCosts).toString());
+
+                    // Store transaction to be updated
+                    processor.setInventoryBookTransactionToUpdate(tx);
+                }
+            }
         }
+
+        // Abort if any transaction is locked
+        if (processor.hasLockedTransaction()) {
+            return summary.lockError();
+        }
+
+        // Fire batch operations
+        processor.fireBatchOperations();
+
+        // Update account
+        goodAccount.deleteProperty(constants.NEEDS_REBUILD_PROP).update();
 
         return summary.resetingAsync();
     }
