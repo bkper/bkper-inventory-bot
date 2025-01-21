@@ -1,22 +1,16 @@
-module constants {
-
-    export const ADD_COSTS_PROP = 'additional_costs';
-    export const COST_OF_SALE_PROP = 'cost_of_sale';
-    export const EXC_CODE_PROP = 'exc_code';
-    export const GOOD_EXC_CODE_PROP = 'good_exc_code';
-    export const GOOD_PURCHASE_COST_PROP = 'good_purchase_cost';
-    export const INVENTORY_BOOK_PROP = 'inventory_book';
-    export const LIQUIDATION_LOG_PROP = 'liquidation_log';
-    export const NEEDS_REBUILD_PROP = 'needs_rebuild';
-    export const ORDER_PROP = 'order';
-    export const ORIGINAL_QUANTITY_PROP = 'original_quantity';
-    export const PARENT_ID = 'parent_id';
-    export const PURCHASE_CODE_PROP = 'purchase_code';
-    export const PURCHASE_LOG_PROP = 'purchase_log';
-    export const QUANTITY_SOLD_PROP = 'quantity_sold';
-    export const SALE_INVOICE_PROP = 'sale_invoice';
-    export const TOTAL_COST_PROP = 'total_cost';
-
-    // TODO: test remove module declaration
-
-}
+    const ADD_COSTS_PROP = 'additional_costs';
+    const COST_OF_SALE_PROP = 'cost_of_sale';
+    const EXC_CODE_PROP = 'exc_code';
+    const GOOD_EXC_CODE_PROP = 'good_exc_code';
+    const GOOD_PURCHASE_COST_PROP = 'good_purchase_cost';
+    const INVENTORY_BOOK_PROP = 'inventory_book';
+    const LIQUIDATION_LOG_PROP = 'liquidation_log';
+    const NEEDS_REBUILD_PROP = 'needs_rebuild';
+    const ORDER_PROP = 'order';
+    const ORIGINAL_QUANTITY_PROP = 'original_quantity';
+    const PARENT_ID = 'parent_id';
+    const PURCHASE_CODE_PROP = 'purchase_code';
+    const PURCHASE_LOG_PROP = 'purchase_log';
+    const QUANTITY_SOLD_PROP = 'quantity_sold';
+    const SALE_INVOICE_PROP = 'sale_invoice';
+    const TOTAL_COST_PROP = 'total_cost';

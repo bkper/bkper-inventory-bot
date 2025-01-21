@@ -114,7 +114,7 @@ namespace CostOfSalesService {
                 saleCost = saleCost.plus(BotService.getTotalPurchaseCost(purchaseTransaction));
 
                 saleLiquidationLog = logLiquidation(saleTransaction, unitTotalCostOfSale);
-                purchaseTransaction.setProperty(constants.LIQUIDATION_LOG_PROP, JSON.stringify(saleLiquidationLog));
+                purchaseTransaction.setProperty(LIQUIDATION_LOG_PROP, JSON.stringify(saleLiquidationLog));
 
                 // Store transaction to be updated
                 purchaseTransaction.setChecked(true);
@@ -132,9 +132,9 @@ namespace CostOfSalesService {
 
                 purchaseTransaction
                     .setAmount(remainingBuyQuantity)
-                    .setProperty(constants.GOOD_PURCHASE_COST_PROP, unitGoodCost.times(remainingBuyQuantity).toString())
-                    .setProperty(constants.ADD_COSTS_PROP, unitAdditionalCosts.times(remainingBuyQuantity).toString())
-                    .setProperty(constants.TOTAL_COST_PROP, unitTotalCostOfSale.times(remainingBuyQuantity).toString())
+                    .setProperty(GOOD_PURCHASE_COST_PROP, unitGoodCost.times(remainingBuyQuantity).toString())
+                    .setProperty(ADD_COSTS_PROP, unitAdditionalCosts.times(remainingBuyQuantity).toString())
+                    .setProperty(TOTAL_COST_PROP, unitTotalCostOfSale.times(remainingBuyQuantity).toString())
                     ;
                 // Store transaction to be updated
                 processor.setInventoryBookTransactionToUpdate(purchaseTransaction);
@@ -145,16 +145,16 @@ namespace CostOfSalesService {
                     .setCreditAccount(purchaseTransaction.getCreditAccount())
                     .setDebitAccount(purchaseTransaction.getDebitAccount())
                     .setDescription(purchaseTransaction.getDescription())
-                    .setProperty(constants.ORDER_PROP, purchaseTransaction.getProperty(constants.ORDER_PROP))
-                    .setProperty(constants.PARENT_ID, purchaseTransaction.getId())
-                    .setProperty(constants.PURCHASE_CODE_PROP, purchaseCode.toString())
-                    .setProperty(constants.GOOD_PURCHASE_COST_PROP, unitGoodCost.times(partialBuyQuantity).toString())
-                    .setProperty(constants.ADD_COSTS_PROP, unitAdditionalCosts.times(partialBuyQuantity).toString())
-                    .setProperty(constants.TOTAL_COST_PROP, unitTotalCostOfSale.times(partialBuyQuantity).toString())
+                    .setProperty(ORDER_PROP, purchaseTransaction.getProperty(ORDER_PROP))
+                    .setProperty(PARENT_ID, purchaseTransaction.getId())
+                    .setProperty(PURCHASE_CODE_PROP, purchaseCode.toString())
+                    .setProperty(GOOD_PURCHASE_COST_PROP, unitGoodCost.times(partialBuyQuantity).toString())
+                    .setProperty(ADD_COSTS_PROP, unitAdditionalCosts.times(partialBuyQuantity).toString())
+                    .setProperty(TOTAL_COST_PROP, unitTotalCostOfSale.times(partialBuyQuantity).toString())
                     ;
 
                 saleLiquidationLog = logLiquidation(saleTransaction, unitTotalCostOfSale);
-                splittedPurchaseTransaction.setProperty(constants.LIQUIDATION_LOG_PROP, JSON.stringify(saleLiquidationLog));
+                splittedPurchaseTransaction.setProperty(LIQUIDATION_LOG_PROP, JSON.stringify(saleLiquidationLog));
 
                 // Store transaction to be created: generate temporaty id in order to wrap up connections later
                 splittedPurchaseTransaction
@@ -177,8 +177,8 @@ namespace CostOfSalesService {
         if (soldQuantity.round(inventoryBook.getFractionDigits()).eq(0)) {
             if (purchaseLogEntries.length > 0) {
                 saleTransaction
-                    .setProperty(constants.TOTAL_COST_PROP, saleCost.toString())
-                    .setProperty(constants.PURCHASE_LOG_PROP, JSON.stringify(purchaseLogEntries))
+                    .setProperty(TOTAL_COST_PROP, saleCost.toString())
+                    .setProperty(PURCHASE_LOG_PROP, JSON.stringify(purchaseLogEntries))
                     ;
             }
 
@@ -206,8 +206,8 @@ namespace CostOfSalesService {
             .setDescription(description)
             .from(financialGoodAccount)
             .to('Cost of sales')
-            .setProperty(constants.QUANTITY_SOLD_PROP, `${saleTransaction.getAmount().toNumber()}`)
-            .setProperty(constants.SALE_INVOICE_PROP, `${saleTransaction.getProperty(constants.SALE_INVOICE_PROP)}`)
+            .setProperty(QUANTITY_SOLD_PROP, `${saleTransaction.getAmount().toNumber()}`)
+            .setProperty(SALE_INVOICE_PROP, `${saleTransaction.getProperty(SALE_INVOICE_PROP)}`)
             .setChecked(true)
             ;
 

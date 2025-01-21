@@ -34,7 +34,7 @@ namespace CostOfSalesService {
 
             if (tx.getAgentId() == 'inventory-bot') {
                 // Reset sale transactions
-                if (tx.getProperty(constants.PURCHASE_LOG_PROP)) {
+                if (tx.getProperty(PURCHASE_LOG_PROP)) {
                     // Trash COGs transactions connected to liquidations
                     let transactionIterator = financialBook.getTransactions(`remoteId:${tx.getId()}`);
                     if (transactionIterator.hasNext()) {
@@ -47,33 +47,33 @@ namespace CostOfSalesService {
                     }
 
                     // Remove liquidation properties: purchase_log, total_cost
-                    tx.deleteProperty(constants.PURCHASE_LOG_PROP).deleteProperty(constants.TOTAL_COST_PROP);
+                    tx.deleteProperty(PURCHASE_LOG_PROP).deleteProperty(TOTAL_COST_PROP);
                     // Store transaction to be updated
                     processor.setInventoryBookTransactionToUpdate(tx);
                     continue;
                 }
 
                 // Reset purchase transactions
-                if (!tx.getProperty(constants.ORIGINAL_QUANTITY_PROP)) {
+                if (!tx.getProperty(ORIGINAL_QUANTITY_PROP)) {
                     // Trash splitted transaction
                     processor.setInventoryBookTransactionToTrash(tx);
                 } else {
                     // Reset parent transaction
                     const txAmount = tx.getAmount();
-                    const txGoodPurchaseCost = BkperApp.newAmount(tx.getProperty(constants.GOOD_PURCHASE_COST_PROP));
-                    const txAdditionalCosts = BkperApp.newAmount(tx.getProperty(constants.ADD_COSTS_PROP));
+                    const txGoodPurchaseCost = BkperApp.newAmount(tx.getProperty(GOOD_PURCHASE_COST_PROP));
+                    const txAdditionalCosts = BkperApp.newAmount(tx.getProperty(ADD_COSTS_PROP));
 
                     const unitGoodPurchaseCost = txGoodPurchaseCost.div(txAmount);
                     const unitAdditionalCosts = txAdditionalCosts.div(txAmount);
 
-                    const originalAmount = BkperApp.newAmount(tx.getProperty(constants.ORIGINAL_QUANTITY_PROP));
+                    const originalAmount = BkperApp.newAmount(tx.getProperty(ORIGINAL_QUANTITY_PROP));
                     const originalGoodPurchaseCost = originalAmount.times(unitGoodPurchaseCost);
                     const originalAdditionalCosts = originalAmount.times(unitAdditionalCosts);
 
                     tx.setAmount(originalAmount);
-                    tx.setProperty(constants.GOOD_PURCHASE_COST_PROP, originalGoodPurchaseCost.toString());
-                    tx.setProperty(constants.ADD_COSTS_PROP, originalAdditionalCosts.toString());
-                    tx.setProperty(constants.TOTAL_COST_PROP, originalGoodPurchaseCost.plus(originalAdditionalCosts).toString());
+                    tx.setProperty(GOOD_PURCHASE_COST_PROP, originalGoodPurchaseCost.toString());
+                    tx.setProperty(ADD_COSTS_PROP, originalAdditionalCosts.toString());
+                    tx.setProperty(TOTAL_COST_PROP, originalGoodPurchaseCost.plus(originalAdditionalCosts).toString());
 
                     // Store transaction to be updated
                     processor.setInventoryBookTransactionToUpdate(tx);
@@ -90,7 +90,7 @@ namespace CostOfSalesService {
         processor.fireBatchOperations();
 
         // Update account
-        goodAccount.deleteProperty(constants.NEEDS_REBUILD_PROP).update();
+        goodAccount.deleteProperty(NEEDS_REBUILD_PROP).update();
 
         return summary.resetingAsync();
     }

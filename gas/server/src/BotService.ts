@@ -6,7 +6,7 @@ namespace BotService {
         }
         const connectedBooks = book.getCollection().getBooks();
         for (const connectedBook of connectedBooks) {
-            if (connectedBook.getProperty(constants.INVENTORY_BOOK_PROP)) {
+            if (connectedBook.getProperty(INVENTORY_BOOK_PROP)) {
                 return connectedBook;
             }
             const fractionDigits = connectedBook.getFractionDigits();
@@ -45,7 +45,7 @@ namespace BotService {
     }
 
     export function getExcCode(book: Bkper.Book): string {
-        return book.getProperty(constants.EXC_CODE_PROP, 'exchange_code');
+        return book.getProperty(EXC_CODE_PROP, 'exchange_code');
     }
 
     export function getExchangeCode(account: Bkper.Account): string | null {
@@ -58,7 +58,7 @@ namespace BotService {
                 if (group == null) {
                     continue;
                 }
-                const exchange = group.getProperty(constants.GOOD_EXC_CODE_PROP);
+                const exchange = group.getProperty(GOOD_EXC_CODE_PROP);
                 if (exchange != null && exchange.trim() != '') {
                     return exchange;
                 }
@@ -68,24 +68,24 @@ namespace BotService {
     }
 
     export function getGoodPurchaseCost(purchaseTransaction: Bkper.Transaction): Bkper.Amount {
-        return BkperApp.newAmount(purchaseTransaction.getProperty(constants.GOOD_PURCHASE_COST_PROP));
+        return BkperApp.newAmount(purchaseTransaction.getProperty(GOOD_PURCHASE_COST_PROP));
     }
 
     export function getAdditionalPurchaseCosts(purchaseTransaction: Bkper.Transaction): Bkper.Amount {
-        const addCosts = purchaseTransaction.getProperty(constants.ADD_COSTS_PROP);
+        const addCosts = purchaseTransaction.getProperty(ADD_COSTS_PROP);
         if (addCosts) {
-            return BkperApp.newAmount(purchaseTransaction.getProperty(constants.ADD_COSTS_PROP));
+            return BkperApp.newAmount(purchaseTransaction.getProperty(ADD_COSTS_PROP));
         } else {
             return BkperApp.newAmount(0);
         }
     }
 
     export function getTotalPurchaseCost(purchaseTransaction: Bkper.Transaction): Bkper.Amount {
-        return BkperApp.newAmount(purchaseTransaction.getProperty(constants.TOTAL_COST_PROP));
+        return BkperApp.newAmount(purchaseTransaction.getProperty(TOTAL_COST_PROP));
     }
 
     export function getPurchaseCode(purchaseTransaction: Bkper.Transaction): string {
-        return purchaseTransaction.getProperty(constants.PURCHASE_CODE_PROP);
+        return purchaseTransaction.getProperty(PURCHASE_CODE_PROP);
     }
 
     export function compareToFIFO(tx1: Bkper.Transaction, tx2: Bkper.Transaction): number {
@@ -93,8 +93,8 @@ namespace BotService {
         let ret = tx1.getDateValue() - tx2.getDateValue();
 
         if (ret == 0) {
-            const order1 = tx1.getProperty(constants.ORDER_PROP) ? +tx1.getProperty(constants.ORDER_PROP) : 0;
-            const order2 = tx2.getProperty(constants.ORDER_PROP) ? +tx2.getProperty(constants.ORDER_PROP) : 0;
+            const order1 = tx1.getProperty(ORDER_PROP) ? +tx1.getProperty(ORDER_PROP) : 0;
+            const order2 = tx2.getProperty(ORDER_PROP) ? +tx2.getProperty(ORDER_PROP) : 0;
             ret = order1 - order2;
         }
 

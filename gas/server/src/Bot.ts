@@ -67,7 +67,7 @@ function validate(bookId: string): void {
     const book = BkperApp.getBook(bookId);
     const inventoryBook = BotService.getInventoryBook(book);
     if (inventoryBook == null) {
-        throw `Inventory Book not found in the collection. Please set the property ${constants.INVENTORY_BOOK_PROP} to the Inventory Book.`;
+        throw `Inventory Book not found in the collection. Please set the property ${INVENTORY_BOOK_PROP} to the Inventory Book.`;
     }
     if (BotService.hasPendingTasks(inventoryBook)) {
         throw `Cannot start operation: Inventory Book has pending tasks`;
@@ -103,7 +103,7 @@ function getAccountsToCalculate(contextParams: ContextParams): { accountName: st
     const book = BkperApp.getBook(contextParams.book.id);
     const inventoryBook = BotService.getInventoryBook(book);
     if (inventoryBook == null) {
-        throw `Inventory Book not found in the collection. Please set the property ${constants.INVENTORY_BOOK_PROP} to the Inventory Book.`;
+        throw `Inventory Book not found in the collection. Please set the property ${INVENTORY_BOOK_PROP} to the Inventory Book.`;
     }
 
     let accountsMap = new Map<string, string>();
@@ -166,7 +166,7 @@ function getAccountsToReset(contextParams: ContextParams): Bkper.Account[] {
     const book = BkperApp.getBook(contextParams.book.id);
     const inventoryBook = BotService.getInventoryBook(book);
     if (inventoryBook == null) {
-        throw `Inventory Book not found in the collection. Please set the property ${constants.INVENTORY_BOOK_PROP} to the Inventory Book.`;
+        throw `Inventory Book not found in the collection. Please set the property ${INVENTORY_BOOK_PROP} to the Inventory Book.`;
     }
 
     const accounts = inventoryBook.getAccounts();
