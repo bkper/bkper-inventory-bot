@@ -32,8 +32,8 @@ namespace CostOfSalesService {
                 tx.setChecked(false);
             }
 
-            // Reset sale transactions
             if (tx.getAgentId() == 'inventory-bot') {
+                // Reset sale transactions
                 if (tx.getProperty(constants.PURCHASE_LOG_PROP)) {
                     // Trash COGs transactions connected to liquidations
                     let transactionIterator = financialBook.getTransactions(`remoteId:${tx.getId()}`);
@@ -50,6 +50,7 @@ namespace CostOfSalesService {
                     tx.deleteProperty(constants.PURCHASE_LOG_PROP).deleteProperty(constants.TOTAL_COST_PROP);
                     // Store transaction to be updated
                     processor.setInventoryBookTransactionToUpdate(tx);
+                    continue;
                 }
 
                 // Reset purchase transactions
