@@ -72,9 +72,9 @@ namespace BotService {
     }
 
     export function getAdditionalPurchaseCosts(purchaseTransaction: Bkper.Transaction): Bkper.Amount {
-        const addCosts = purchaseTransaction.getProperty(constants.ADD_PURCHASE_COSTS_PROP);
+        const addCosts = purchaseTransaction.getProperty(constants.ADD_COSTS_PROP);
         if (addCosts) {
-            return BkperApp.newAmount(purchaseTransaction.getProperty(constants.ADD_PURCHASE_COSTS_PROP));
+            return BkperApp.newAmount(purchaseTransaction.getProperty(constants.ADD_COSTS_PROP));
         } else {
             return BkperApp.newAmount(0);
         }

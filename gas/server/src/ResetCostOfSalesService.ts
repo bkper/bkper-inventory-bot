@@ -60,7 +60,7 @@ namespace CostOfSalesService {
                     // Reset parent transaction
                     const txAmount = tx.getAmount();
                     const txGoodPurchaseCost = BkperApp.newAmount(tx.getProperty(constants.GOOD_PURCHASE_COST_PROP));
-                    const txAdditionalCosts = BkperApp.newAmount(tx.getProperty(constants.ADDITIONAL_COST_PROP));
+                    const txAdditionalCosts = BkperApp.newAmount(tx.getProperty(constants.ADD_COSTS_PROP));
 
                     const unitGoodPurchaseCost = txGoodPurchaseCost.div(txAmount);
                     const unitAdditionalCosts = txAdditionalCosts.div(txAmount);
@@ -71,7 +71,7 @@ namespace CostOfSalesService {
 
                     tx.setAmount(originalAmount);
                     tx.setProperty(constants.GOOD_PURCHASE_COST_PROP, originalGoodPurchaseCost.toString());
-                    tx.setProperty(constants.ADDITIONAL_COST_PROP, originalAdditionalCosts.toString());
+                    tx.setProperty(constants.ADD_COSTS_PROP, originalAdditionalCosts.toString());
                     tx.setProperty(constants.TOTAL_COST_PROP, originalGoodPurchaseCost.plus(originalAdditionalCosts).toString());
 
                     // Store transaction to be updated

@@ -133,7 +133,7 @@ namespace CostOfSalesService {
                 purchaseTransaction
                     .setAmount(remainingBuyQuantity)
                     .setProperty(constants.GOOD_PURCHASE_COST_PROP, unitGoodCost.times(remainingBuyQuantity).toString())
-                    .setProperty(constants.ADD_PURCHASE_COSTS_PROP, unitAdditionalCosts.times(remainingBuyQuantity).toString())
+                    .setProperty(constants.ADD_COSTS_PROP, unitAdditionalCosts.times(remainingBuyQuantity).toString())
                     .setProperty(constants.TOTAL_COST_PROP, unitTotalCostOfSale.times(remainingBuyQuantity).toString())
                     ;
                 // Store transaction to be updated
@@ -149,7 +149,7 @@ namespace CostOfSalesService {
                     .setProperty(constants.PARENT_ID, purchaseTransaction.getId())
                     .setProperty(constants.PURCHASE_CODE_PROP, purchaseCode.toString())
                     .setProperty(constants.GOOD_PURCHASE_COST_PROP, unitGoodCost.times(partialBuyQuantity).toString())
-                    .setProperty(constants.ADD_PURCHASE_COSTS_PROP, unitAdditionalCosts.times(partialBuyQuantity).toString())
+                    .setProperty(constants.ADD_COSTS_PROP, unitAdditionalCosts.times(partialBuyQuantity).toString())
                     .setProperty(constants.TOTAL_COST_PROP, unitTotalCostOfSale.times(partialBuyQuantity).toString())
                     ;
 

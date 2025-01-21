@@ -1,7 +1,6 @@
 module constants {
 
-    export const ADDITIONAL_COST_PROP = 'additional_cost';
-    export const ADD_PURCHASE_COSTS_PROP = 'additional_costs';
+    export const ADD_COSTS_PROP = 'additional_costs';
     export const COST_OF_SALE_PROP = 'cost_of_sale';
     export const EXC_CODE_PROP = 'exc_code';
     export const GOOD_EXC_CODE_PROP = 'good_exc_code';
@@ -17,5 +16,7 @@ module constants {
     export const QUANTITY_SOLD_PROP = 'quantity_sold';
     export const SALE_INVOICE_PROP = 'sale_invoice';
     export const TOTAL_COST_PROP = 'total_cost';
+
+    // TODO: test remove module declaration
 
 }
