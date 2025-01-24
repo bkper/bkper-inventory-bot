@@ -1,7 +1,7 @@
 import { Account, AccountType, Amount, Book, Group, Transaction } from "bkper-js";
 import { EventHandlerTransaction } from "./EventHandlerTransaction.js";
-import { buildBookAnchor, getGoodExchangeCodeFromAccount, getQuantity } from "./BotService.js";
-import { CREDIT_NOTE_PROP, GOOD_BUY_ACCOUNT_NAME, GOOD_EXC_CODE_PROP, GOOD_PROP, GOOD_PURCHASE_COST_PROP, GOOD_SELL_ACCOUNT_NAME, ORDER_PROP, ORIGINAL_QUANTITY_PROP, PURCHASE_CODE_PROP, SALE_AMOUNT_PROP, SALE_INVOICE_PROP, TOTAL_ADDITIONAL_COSTS_PROP, TOTAL_COST_PROP } from "./constants.js";
+import { buildBookAnchor, getCOGSCalculationDateValue, getGoodExchangeCodeFromAccount, getQuantity } from "./BotService.js";
+import { CREDIT_NOTE_PROP, GOOD_BUY_ACCOUNT_NAME, GOOD_EXC_CODE_PROP, GOOD_PROP, GOOD_PURCHASE_COST_PROP, GOOD_SELL_ACCOUNT_NAME, NEEDS_REBUILD_PROP, ORDER_PROP, ORIGINAL_QUANTITY_PROP, PURCHASE_CODE_PROP, SALE_AMOUNT_PROP, SALE_INVOICE_PROP, TOTAL_ADDITIONAL_COSTS_PROP, TOTAL_COST_PROP } from "./constants.js";
 
 export class EventHandlerTransactionChecked extends EventHandlerTransaction {
 
@@ -78,7 +78,6 @@ export class EventHandlerTransactionChecked extends EventHandlerTransaction {
             let goodAccount = await inventoryBook.getAccount(financialTransaction.properties?.[GOOD_PROP]);
             if (goodAccount) {
                 // Selling
-
                 let goodSellAccount = await inventoryBook.getAccount(GOOD_SELL_ACCOUNT_NAME);
                 if (goodSellAccount == undefined) {
                     goodSellAccount = await new Account(inventoryBook).setName(GOOD_SELL_ACCOUNT_NAME).setType(AccountType.OUTGOING).create();
@@ -97,6 +96,8 @@ export class EventHandlerTransactionChecked extends EventHandlerTransaction {
                     .setProperty(GOOD_EXC_CODE_PROP, goodExcCode)
                     .post()
                     ;
+
+                this.checkLastTxDate(goodAccount, financialTransaction);
 
                 const record = `${newTransaction.getDate()} ${newTransaction.getAmount()} ${goodAccount.getName()} ${goodSellAccount.getName()} ${newTransaction.getDescription()}`;
                 return `SELL: ${inventoryBookAnchor}: ${record}`;
@@ -128,12 +129,21 @@ export class EventHandlerTransactionChecked extends EventHandlerTransaction {
                         .post()
                         ;
 
+                    this.checkLastTxDate(goodAccount, financialTransaction);
+
                     const record = `${newTransaction.getDate()} ${newTransaction.getAmount()} ${goodBuyAccount.getName()} ${goodAccount.getName()} ${newTransaction.getDescription()}`;
                     return `BUY: ${inventoryBookAnchor}: ${record}`;
                 }
             }
         }
         return 'ERROR (connectedTransactionNotFound): financialTransaction is missing required fields';
+    }
+
+    private checkLastTxDate(goodAccount: Account, transaction: bkper.Transaction) {
+        let lastTxDate = getCOGSCalculationDateValue(goodAccount);
+        if (lastTxDate != null && (transaction.dateValue != undefined && transaction.dateValue <= +lastTxDate)) {
+            goodAccount.setProperty(NEEDS_REBUILD_PROP, 'TRUE').update();
+        }
     }
 
     // returns the good account from the inventory book corresponding to the good account in the financial book
@@ -184,7 +194,7 @@ export class EventHandlerTransactionChecked extends EventHandlerTransaction {
             console.log(`ERROR (updateGoodTransaction): connectedTransaction or financialTransaction is missing required data`);
             return;
         }
-        
+
         let currentTotalAdditionalCosts = new Amount(0);
         if (connectedTransaction.getProperty(TOTAL_ADDITIONAL_COSTS_PROP)) {
             currentTotalAdditionalCosts = new Amount(connectedTransaction.getProperty(TOTAL_ADDITIONAL_COSTS_PROP)!);

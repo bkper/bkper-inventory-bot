@@ -21,6 +21,8 @@ export abstract class EventHandlerTransaction extends EventHandler {
             return undefined;
         }
 
+        // Get the good exchange code from transaction and verify if it matches the book's exchange code
+        // If they don't match, skip processing the transaction
         let goodExcCode = await this.getGoodExcCodeFromTransaction(financialTransaction, financialBook);
         if (goodExcCode && excCode && !this.matchGoodExchange(goodExcCode, excCode)) {
             return undefined;

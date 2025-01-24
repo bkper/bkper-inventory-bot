@@ -1,6 +1,6 @@
 import { Account, AccountType, Amount, Bkper, Book, Transaction } from 'bkper-js';
 
-import { EXC_CODE_PROP, GOOD_EXC_CODE_PROP, GOOD_PROP, INVENTORY_BOOK_PROP, PURCHASE_CODE_PROP, QUANTITY_PROP } from './constants.js';
+import { COGS_CALC_DATE_PROP, EXC_CODE_PROP, GOOD_EXC_CODE_PROP, GOOD_PROP, INVENTORY_BOOK_PROP, PURCHASE_CODE_PROP, QUANTITY_PROP } from './constants.js';
 
 export function isInventoryBook(book: Book): boolean {
     if (book.getProperty(INVENTORY_BOOK_PROP)) {
@@ -139,4 +139,12 @@ export async function uncheckAndRemove(transaction: Transaction): Promise<Transa
     }
     transaction = await transaction.remove();
     return transaction;
+}
+
+export function getCOGSCalculationDateValue(account: Account): number | null {
+    const cogsCalcDate = account.getProperty(COGS_CALC_DATE_PROP);
+    if (cogsCalcDate) {
+        return +(cogsCalcDate.replace(/-/g, ""));
+    }
+    return null
 }
