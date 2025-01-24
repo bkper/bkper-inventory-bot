@@ -1,4 +1,5 @@
     const ADD_COSTS_PROP = 'additional_costs';
+    const COGS_CALC_DATE_PROP = 'cogs_calc_date';
     const COST_OF_SALE_PROP = 'cost_of_sale';
     const EXC_CODE_PROP = 'exc_code';
     const GOOD_EXC_CODE_PROP = 'good_exc_code';

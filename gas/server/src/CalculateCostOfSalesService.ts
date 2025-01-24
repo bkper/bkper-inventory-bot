@@ -6,8 +6,9 @@ namespace CostOfSalesService {
             toDate = inventoryBook.formatDate(new Date());
         }
 
-        const goodAccount = inventoryBook.getAccount(goodAccountId);
-        const goodExcCode = BotService.getExchangeCode(goodAccount);
+        let goodAccount = new GoodAccount(inventoryBook.getAccount(goodAccountId));
+
+        const goodExcCode = BotService.getExchangeCode(goodAccount.getAccount());
         const financialBook = BotService.getFinancialBook(inventoryBook, goodExcCode);
 
         const summary = new Summary(goodAccountId);
@@ -69,7 +70,21 @@ namespace CostOfSalesService {
         // Fire batch operations
         processor.fireBatchOperations();
 
+        storeLastCalcTxDate(goodAccount, goodAccountSaleTransactions);
+
         return summary.calculatingAsync();
+    }
+
+    function storeLastCalcTxDate(goodAccount: GoodAccount, goodAccountSaleTransactions: Bkper.Transaction[]) {
+        let lastSaleTx = goodAccountSaleTransactions.length > 0 ? goodAccountSaleTransactions[goodAccountSaleTransactions.length - 1] : null;
+
+        let lastTxDateValue = lastSaleTx != null ? lastSaleTx.getDateValue() : null;
+        let lastTxDate = lastSaleTx != null ? lastSaleTx.getDate() : null;
+
+        let goodAccountLastTxDateValue = goodAccount.getCOGSCalculationDateValue();
+        if (lastTxDateValue != null && (goodAccountLastTxDateValue == null || lastTxDateValue > goodAccountLastTxDateValue)) {
+            goodAccount.setCOGSCalculationDate(lastTxDate || '').update();
+        }
     }
 
     function processSale(financialBook: Bkper.Book, inventoryBook: Bkper.Book, saleTransaction: Bkper.Transaction, purchaseTransactions: Bkper.Transaction[], summary: Summary, processor: CalculateCostOfSalesProcessor): void {
