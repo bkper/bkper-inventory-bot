@@ -68,6 +68,10 @@ export class EventHandlerTransactionChecked extends EventHandlerTransaction {
 
             const quantity = getQuantity(inventoryBook, financialTransaction);
             if (quantity == undefined || quantity.eq(0)) {
+                // communicate to the user that he must first check the good purchase transaction before checking additional costs or credit note transactions
+                if (financialTransaction.properties[PURCHASE_CODE_PROP]) {
+                    throw new Error(`ERROR: you must first check the good purchase transaction (purchase_code: ${financialTransaction.properties[PURCHASE_CODE_PROP]}) before checking additional costs or credit note transactions.`);
+                }
                 return undefined;
             }
 

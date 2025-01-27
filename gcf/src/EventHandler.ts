@@ -26,9 +26,15 @@ export abstract class EventHandler {
         console.time(logtag);
 
         if (inventoryBook) {
-            let response = await this.processObject(baseBook, inventoryBook, event);
-            if (response) {
-                responses.push(response);
+            try {
+                let response = await this.processObject(baseBook, inventoryBook, event);
+                if (response) {
+                    responses.push(response);
+                }
+            } catch (error) {
+                const errorMessage = error instanceof Error ? error.message : String(error);
+                console.timeEnd(logtag);
+                return { error: errorMessage };
             }
         } else {
             return { result: 'Inventory book not found in the collection (property inventory_book = true)' };
