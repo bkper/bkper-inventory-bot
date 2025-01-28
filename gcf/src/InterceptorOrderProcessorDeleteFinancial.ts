@@ -2,7 +2,7 @@ import { AccountType, Amount, Book, Transaction } from "bkper-js";
 import { InterceptorOrderProcessorDelete } from "./InterceptorOrderProcessorDelete.js";
 import { Result } from "./index.js";
 import { ADDITIONAL_COST_PROP, ADDITIONAL_COST_TX_IDS, GOOD_PROP, PURCHASE_CODE_PROP, PURCHASE_INVOICE_PROP, TOTAL_ADDITIONAL_COSTS_PROP, TOTAL_COST_PROP } from "./constants.js";
-import { buildBookAnchor, getGoodPurchaseRootTx, getInventoryBook, getRootTransaction, uncheckAndRemove } from "./BotService.js";
+import { buildBookAnchor, flagInventoryAccountForRebuildIfNeeded, getGoodPurchaseRootTx, getInventoryBook, getRootTransaction, uncheckAndRemove } from "./BotService.js";
 
 export class InterceptorOrderProcessorDeleteFinancial extends InterceptorOrderProcessorDelete {
 
@@ -180,7 +180,7 @@ export class InterceptorOrderProcessorDeleteFinancial extends InterceptorOrderPr
         let inventoryBook = getInventoryBook(financialBook);
         const deletedInventoryTx = inventoryBook ? await this.deleteTransactionByRemoteId(inventoryBook, remoteId) : undefined;
         if (deletedInventoryTx) {
-            // console.log("ENTROU")
+            // await flagInventoryAccountForRebuildIfNeeded(deletedInventoryTx);
             // this.cascadeDelete(financialBook, deletedInventoryTx.json());
         }
         return deletedInventoryTx;

@@ -1,6 +1,6 @@
 import { Account, AccountType, Amount, Bkper, Book, Transaction } from 'bkper-js';
 
-import { COGS_CALC_DATE_PROP, EXC_CODE_PROP, GOOD_EXC_CODE_PROP, GOOD_PROP, INVENTORY_BOOK_PROP, PURCHASE_CODE_PROP, QUANTITY_PROP } from './constants.js';
+import { COGS_CALC_DATE_PROP, EXC_CODE_PROP, GOOD_PROP, INVENTORY_BOOK_PROP, NEEDS_REBUILD_PROP, PURCHASE_CODE_PROP, QUANTITY_PROP } from './constants.js';
 
 export function isInventoryBook(book: Book): boolean {
     if (book.getProperty(INVENTORY_BOOK_PROP)) {
@@ -113,6 +113,12 @@ export async function getGoodPurchaseRootTx(book: Book, purchaseCodeProp: string
     return await getRootTransaction(book, goodPurchaseTx);
 }
 
+/**
+ * Gets the root transaction from a given transaction by looking at its remote IDs.
+ * The root transaction is the original transaction posted by the user (from supplier to buyer),
+ * while the given transaction is typically a transaction from the buyer account to the good account.
+ * Returns undefined if no root transaction is found.
+ */
 export async function getRootTransaction(book: Book, transaction?: Transaction): Promise<Transaction | undefined> {
     if (transaction) {
         const remoteIds = transaction.getRemoteIds();
@@ -147,4 +153,14 @@ export function getCOGSCalculationDateValue(account: Account): number | null {
         return +(cogsCalcDate.replace(/-/g, ""));
     }
     return null
+}
+
+export async function flagInventoryAccountForRebuildIfNeeded(inventoryTransaction: Transaction) {
+    let inventoryAccount = await getGoodAccount(inventoryTransaction);
+    if (inventoryAccount) {
+        let lastTxDate = getCOGSCalculationDateValue(inventoryAccount);
+        if (lastTxDate != null && inventoryTransaction.getDateValue() != undefined && inventoryTransaction.getDateValue()! <= +lastTxDate) {
+            await inventoryAccount.setProperty(NEEDS_REBUILD_PROP, 'TRUE').update();
+        }
+    }
 }
