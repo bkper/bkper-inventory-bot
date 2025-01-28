@@ -1,11 +1,9 @@
 namespace CostOfSalesService {
 
-    export function resetCostOfSalesForAccount(inventoryBookId: string, goodAccountId: string): Summary {
-        let summary = new Summary(goodAccountId);
+    export function resetCostOfSalesForAccount(inventoryBook: Bkper.Book, goodAccount: GoodAccount): Summary {
+        let summary = new Summary(goodAccount.getId());
 
-        let inventoryBook = BkperApp.getBook(inventoryBookId);
-        let goodAccount = inventoryBook.getAccount(goodAccountId);
-        let goodExcCode = BotService.getExchangeCode(goodAccount);
+        let goodExcCode = BotService.getExchangeCode(goodAccount.getAccount());
 
         let financialBook = BotService.getFinancialBook(inventoryBook, goodExcCode);
         if (financialBook == null) {
@@ -90,7 +88,8 @@ namespace CostOfSalesService {
         processor.fireBatchOperations();
 
         // Update account
-        goodAccount.deleteProperty(NEEDS_REBUILD_PROP).update();
+        goodAccount.clearNeedsRebuild();
+        goodAccount.update();
 
         return summary.resetingAsync();
     }

@@ -8,10 +8,17 @@ namespace CostOfSalesService {
 
         let goodAccount = new GoodAccount(inventoryBook.getAccount(goodAccountId));
 
+        const summary = new Summary(goodAccountId);
+
+        if (goodAccount.needsRebuild()) {
+            // Fire reset async
+            CostOfSalesService.resetCostOfSalesForAccount(inventoryBook, goodAccount);
+            return summary.rebuild();
+        }
+
         const goodExcCode = BotService.getExchangeCode(goodAccount.getAccount());
         const financialBook = BotService.getFinancialBook(inventoryBook, goodExcCode);
 
-        const summary = new Summary(goodAccountId);
         
         // Skip
         if (financialBook == null) {
