@@ -7,10 +7,10 @@ export class EventHandlerTransactionUnchecked {
   async handleEvent(event: bkper.Event): Promise<Result> {
     let baseBook = await Bkper.getBook(event.bookId!);
     const response = await new InterceptorFlagRebuild().intercept(baseBook, event);
-    if (response) {
+    if (response.result) {
       return response;
     }
-    return {result: false};
+    return { result: false };
   }
 
 }
