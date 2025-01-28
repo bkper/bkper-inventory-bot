@@ -94,6 +94,21 @@ export class InterceptorOrderProcessorDeleteFinancial extends InterceptorOrderPr
                     }
                 }
             }
+
+            // deleted transaction is the COGS calculated transaction
+            if (transactionPayload.agentId == 'inventory-bot' && transactionPayload.description?.includes('#cost_of_sale')) {
+                const inventoryBook = getInventoryBook(financialBook);
+                if (inventoryBook && transactionPayload.remoteIds) {
+                    for (const remoteId of transactionPayload.remoteIds) {
+                        let inventoryBookTransaction = await inventoryBook.getTransaction(remoteId);
+                        if (inventoryBookTransaction) {
+                            await flagInventoryAccountForRebuildIfNeeded(inventoryBookTransaction);
+                            break;
+                        }
+                    }
+                }
+            }
+            
             return { result: responses.length > 0 ? responses : false };
         }
         return { result: false };

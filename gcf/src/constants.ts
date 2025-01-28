@@ -3,6 +3,7 @@ export const ADDITIONAL_COST_PROP = 'additional_cost';
 export const ADDITIONAL_COST_TX_IDS = 'add_cost_transactions';
 export const EXC_CODE_PROP = 'exc_code';
 export const COGS_CALC_DATE_PROP = 'cogs_calc_date';
+export const COGS_HASHTAG = '#cost_of_sale';
 export const CREDIT_NOTE_PROP = 'credit_note';
 export const GOOD_EXC_CODE_PROP = 'good_exc_code';
 export const GOOD_PROP = 'good';
