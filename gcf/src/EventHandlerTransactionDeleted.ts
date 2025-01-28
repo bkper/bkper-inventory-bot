@@ -26,15 +26,15 @@ export class EventHandlerTransactionDeleted extends EventHandlerTransaction {
 
     }
 
-    protected connectedTransactionNotFound(financialBook: Book, goodBook: Book, financialTransaction: bkper.Transaction, goodExcCode: string): Promise<string> {
+    protected connectedTransactionNotFound(financialBook: Book, inventoryBook: Book, financialTransaction: bkper.Transaction, goodExcCode: string): Promise<string> {
         return new Promise((resolve, reject) => {
             const result = 'Transaction not found in Inventory book';
             resolve(result);
         });
     }
 
-    protected async connectedTransactionFound(financialBook: Book, goodBook: Book, financialTransaction: bkper.Transaction, goodTransaction: Transaction, goodExcCode: string): Promise<string> {
-        let bookAnchor = buildBookAnchor(goodBook);
+    protected async connectedTransactionFound(financialBook: Book, inventoryBook: Book, financialTransaction: bkper.Transaction, goodTransaction: Transaction, goodExcCode: string): Promise<string> {
+        let bookAnchor = buildBookAnchor(inventoryBook);
 
         if (goodTransaction.isChecked()) {
             goodTransaction.uncheck();
@@ -44,7 +44,7 @@ export class EventHandlerTransactionDeleted extends EventHandlerTransaction {
 
         await goodTransaction.remove();
 
-        let amountFormatted = goodBook.formatValue(goodTransaction.getAmount())
+        let amountFormatted = inventoryBook.formatValue(goodTransaction.getAmount())
 
         let record = `DELETED: ${goodTransaction.getDateFormatted()} ${amountFormatted} ${await goodTransaction.getCreditAccountName()} ${await goodTransaction.getDebitAccountName()} ${goodTransaction.getDescription()}`;
 
