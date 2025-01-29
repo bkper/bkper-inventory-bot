@@ -108,10 +108,14 @@ export class EventHandlerTransactionChecked extends EventHandlerTransaction {
                     .post()
                     ;
 
-                this.checkLastTxDate(goodAccount, financialTransaction);
-
                 const record = `${newTransaction.getDate()} ${newTransaction.getAmount()} ${goodAccount.getName()} ${goodSellAccount.getName()} ${newTransaction.getDescription()}`;
-                return `SELL: ${inventoryBookAnchor}: ${record}`;
+                const needsRebuild = this.checkLastTxDate(goodAccount, financialTransaction);
+
+                if (needsRebuild) {
+                    return `SELL: ${inventoryBookAnchor}: ${record} / WARNING: Transaction date is before the last COGS calculation date. Flagging account ${goodAccount.getName()} for rebuild`;
+                } else {
+                    return `SELL: ${inventoryBookAnchor}: ${record}`;
+                }
 
             } else {
                 const financialDebitAccount = financialTransaction.debitAccount;
@@ -140,21 +144,27 @@ export class EventHandlerTransactionChecked extends EventHandlerTransaction {
                         .post()
                         ;
 
-                    this.checkLastTxDate(goodAccount, financialTransaction);
-
                     const record = `${newTransaction.getDate()} ${newTransaction.getAmount()} ${goodBuyAccount.getName()} ${goodAccount.getName()} ${newTransaction.getDescription()}`;
-                    return `BUY: ${inventoryBookAnchor}: ${record}`;
+                    const needsRebuild = this.checkLastTxDate(goodAccount, financialTransaction);
+                    
+                    if (needsRebuild) {
+                        return `BUY: ${inventoryBookAnchor}: ${record} / WARNING: Transaction date is before the last COGS calculation date. Flagging account ${goodAccount.getName()} for rebuild`;
+                    } else {
+                        return `BUY: ${inventoryBookAnchor}: ${record}`;
+                    }
                 }
             }
         }
         return 'ERROR (connectedTransactionNotFound): financialTransaction is missing required fields';
     }
 
-    private checkLastTxDate(goodAccount: Account, transaction: bkper.Transaction) {
+    private checkLastTxDate(goodAccount: Account, transaction: bkper.Transaction): boolean {
         let lastTxDate = getCOGSCalculationDateValue(goodAccount);
         if (lastTxDate != null && (transaction.dateValue != undefined && transaction.dateValue <= +lastTxDate)) {
             goodAccount.setProperty(NEEDS_REBUILD_PROP, 'TRUE').update();
+            return true;
         }
+        return false;
     }
 
     // returns the good account from the inventory book corresponding to the good account in the financial book

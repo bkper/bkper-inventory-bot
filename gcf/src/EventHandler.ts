@@ -20,6 +20,8 @@ export abstract class EventHandler {
         }
 
         let responses: string[] = [];
+        let warningMsg: string | undefined = undefined;
+
         let inventoryBook = getInventoryBook(baseBook);
 
         const logtag = `Handling ${event.type} event on book ${baseBook.getName()} from user ${event.user?.username ?? 'unknown'}`;
@@ -29,6 +31,10 @@ export abstract class EventHandler {
             try {
                 let response = await this.processObject(baseBook, inventoryBook, event);
                 if (response) {
+                    if (response.includes('WARNING')) {
+                        warningMsg = response.split(' / ')[1];
+                        response = response.split(' / ')[0];
+                    }
                     responses.push(response);
                 }
             } catch (error) {
@@ -46,7 +52,7 @@ export abstract class EventHandler {
             return { result: false };
         }
 
-        return { result: responses };
+        return { result: responses, warning: warningMsg };
     }
 
     protected matchGoodExchange(goodExcCode: string, excCode: string): boolean {
