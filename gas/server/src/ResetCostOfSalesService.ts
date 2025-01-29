@@ -1,28 +1,29 @@
 namespace CostOfSalesService {
 
-    export function resetCostOfSalesForAccount(inventoryBook: Bkper.Book, goodAccount: GoodAccount): Summary {
-        let summary = new Summary(goodAccount.getId());
+    export function resetCostOfSalesForAccount(inventoryBookId: string, goodAccountId: string): Summary {
+        const summary = new Summary(goodAccountId);
 
-        let goodExcCode = BotService.getExchangeCode(goodAccount.getAccount());
+        const inventoryBook = BkperApp.getBook(inventoryBookId);
+        const goodAccount = new GoodAccount(inventoryBook.getAccount(goodAccountId));
 
-        let financialBook = BotService.getFinancialBook(inventoryBook, goodExcCode);
+        const goodExcCode = BotService.getExchangeCode(goodAccount.getAccount());
+        const financialBook = BotService.getFinancialBook(inventoryBook, goodExcCode);
         if (financialBook == null) {
             return summary;
         }
 
-        let iterator = inventoryBook.getTransactions(helper.getAccountQuery(goodAccount.getName()));
+        const iterator = inventoryBook.getTransactions(helper.getAccountQuery(goodAccount.getName()));
 
         const transactions: Bkper.Transaction[] = [];
         while (iterator.hasNext()) {
-            let tx = iterator.next();
+            const tx = iterator.next();
             transactions.push(tx);
         }
 
         // Processor
         const processor = new ResetCostOfSalesProcessor(inventoryBook, financialBook);
 
-        for (let tx of transactions) {
-
+        for (const tx of transactions) {
             // Log operation status
             console.log(`processing transaction: ${tx.getId()}`);
 
@@ -34,9 +35,9 @@ namespace CostOfSalesService {
                 // Reset sale transactions
                 if (tx.getProperty(PURCHASE_LOG_PROP)) {
                     // Trash COGs transactions connected to liquidations
-                    let transactionIterator = financialBook.getTransactions(`remoteId:${tx.getId()}`);
+                    const transactionIterator = financialBook.getTransactions(`remoteId:${tx.getId()}`);
                     if (transactionIterator.hasNext()) {
-                        let COGsTransaction = transactionIterator.next();
+                        const COGsTransaction = transactionIterator.next();
                         if (COGsTransaction.isChecked()) {
                             COGsTransaction.setChecked(false);
                         }
@@ -59,7 +60,7 @@ namespace CostOfSalesService {
                     // Reset parent transaction
                     const txAmount = tx.getAmount();
                     const txGoodPurchaseCost = BkperApp.newAmount(tx.getProperty(GOOD_PURCHASE_COST_PROP));
-                    const txAdditionalCosts = BkperApp.newAmount(tx.getProperty(ADD_COSTS_PROP));
+                    const txAdditionalCosts = tx.getProperty(ADD_COSTS_PROP)? BkperApp.newAmount(tx.getProperty(ADD_COSTS_PROP)) : BkperApp.newAmount(0);
 
                     const unitGoodPurchaseCost = txGoodPurchaseCost.div(txAmount);
                     const unitAdditionalCosts = txAdditionalCosts.div(txAmount);
@@ -72,6 +73,9 @@ namespace CostOfSalesService {
                     tx.setProperty(GOOD_PURCHASE_COST_PROP, originalGoodPurchaseCost.toString());
                     tx.setProperty(ADD_COSTS_PROP, originalAdditionalCosts.toString());
                     tx.setProperty(TOTAL_COST_PROP, originalGoodPurchaseCost.plus(originalAdditionalCosts).toString());
+
+                    // remove liquidation log
+                    tx.deleteProperty(LIQUIDATION_LOG_PROP);
 
                     // Store transaction to be updated
                     processor.setInventoryBookTransactionToUpdate(tx);

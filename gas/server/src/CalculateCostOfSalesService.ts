@@ -12,7 +12,7 @@ namespace CostOfSalesService {
 
         if (goodAccount.needsRebuild()) {
             // Fire reset async
-            CostOfSalesService.resetCostOfSalesForAccount(inventoryBook, goodAccount);
+            CostOfSalesService.resetCostOfSalesForAccount(inventoryBookId, goodAccountId);
             return summary.rebuild();
         }
 
