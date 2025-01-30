@@ -1,21 +1,31 @@
 import { Book, Transaction } from "bkper-js";
 import { uncheckAndRemove } from "./BotService.js";
+import { ORIGINAL_QUANTITY_PROP } from "./constants.js";
 
 export abstract class InterceptorOrderProcessorDelete {
 
-	protected async cascadeDelete(book: Book, transaction: bkper.Transaction): Promise<Transaction | undefined> {
-		return await this.cascadeDeleteTransactions(book, transaction, ``);
-	}
+	protected async cascadeDeleteTransactions(book: Book, remoteTx: bkper.Transaction): Promise<Transaction[] | undefined> {
+		let responses: Transaction[] = [];
+		// splitted purchase transactions in inventory book
+		if (remoteTx.properties?.[ORIGINAL_QUANTITY_PROP]) {
+			const splittedTransactions = (await book.listTransactions(`parent_id:'${remoteTx.id}'`)).getItems();
+			for (const splittedTransaction of splittedTransactions) {
+				await splittedTransaction.uncheck();
+				responses.push(await splittedTransaction.trash());
+			}
+			return responses;
+		}
 
-	protected async cascadeDeleteTransactions(book: Book, remoteTx: bkper.Transaction, prefix: string): Promise<Transaction | undefined> {
-		let tx = (await book.listTransactions(`remoteId:${prefix}${remoteTx.id}`)).getFirst();
+		// COGS transaction in financial book
+		let tx = (await book.listTransactions(`remoteId:${remoteTx.id}`)).getFirst();
 		if (tx) {
 			if (tx.isChecked()) {
 				tx = await tx.uncheck();
 			}
-			const response = await tx.remove();
-			return response;
+			responses.push(await tx.trash());
+			return responses;
 		}
+		
 		return undefined;
 	}
 

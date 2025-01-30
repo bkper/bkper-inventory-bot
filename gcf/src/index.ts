@@ -52,10 +52,6 @@ async function handleEvent(req: Request, res: Response) {
         let event: bkper.Event = req.body
         let result: Result = { result: false };
 
-        console.log("EVENT: ", event.type);
-        console.log("EVENT BOOK: ", event.book?.name);
-        console.log("EVENT AGENT: ", event.agent?.id);
-
         switch (event.type) {
             case 'TRANSACTION_POSTED':
                 // result = await new EventHandlerTransactionPosted().handleEvent(event);
@@ -63,15 +59,12 @@ async function handleEvent(req: Request, res: Response) {
                 break;
             case 'TRANSACTION_CHECKED':
                 result = await new EventHandlerTransactionChecked().handleEvent(event);
-                // result = { result: false };
                 break;
             case 'TRANSACTION_UNCHECKED':
                 result = await new EventHandlerTransactionUnchecked().handleEvent(event);
-                // result = { result: false };
                 break;
             case 'TRANSACTION_DELETED':
-                // result = await new EventHandlerTransactionDeleted().handleEvent(event);
-                result = { result: false };
+                result = await new EventHandlerTransactionDeleted().handleEvent(event);
                 break;
         }
 

@@ -16,7 +16,7 @@ class CalculateCostOfSalesProcessor {
 
     private getRemoteId(transaction: Bkper.Transaction): string {
         const remoteIds = transaction.getRemoteIds();
-        return remoteIds.length > 0 ? remoteIds[0] : '';
+        return remoteIds?.length > 0 ? remoteIds[0] : '';
     }
 
     private checkTransactionLocked(transaction: Bkper.Transaction): void {

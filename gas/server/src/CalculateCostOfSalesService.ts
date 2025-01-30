@@ -19,7 +19,6 @@ namespace CostOfSalesService {
         const goodExcCode = BotService.getExchangeCode(goodAccount.getAccount());
         const financialBook = BotService.getFinancialBook(inventoryBook, goodExcCode);
 
-        
         // Skip
         if (financialBook == null) {
             return summary;
@@ -145,7 +144,7 @@ namespace CostOfSalesService {
                 purchaseLogEntries.push(logPurchase(purchaseQuantity, unitTotalCostOfSale, purchaseTransaction));
                 soldQuantity = soldQuantity.minus(purchaseQuantity);
 
-            // Sold quantity LT purchase quantity: update purchase + update & check splitted purchase transaction
+                // Sold quantity LT purchase quantity: update purchase + update & check splitted purchase transaction
             } else {
                 const remainingBuyQuantity = purchaseQuantity.minus(soldQuantity);
                 const partialBuyQuantity = purchaseQuantity.minus(remainingBuyQuantity);
@@ -178,7 +177,7 @@ namespace CostOfSalesService {
                 saleLiquidationLog = logLiquidation(saleTransaction, unitTotalCostOfSale);
                 splittedPurchaseTransaction.setProperty(LIQUIDATION_LOG_PROP, JSON.stringify(saleLiquidationLog));
                 splittedPurchaseTransaction.setChecked(true);
-                
+
                 processor.setInventoryBookTransactionToCreate(splittedPurchaseTransaction);
 
                 purchaseLogEntries.push(logPurchase(partialBuyQuantity, unitTotalCostOfSale, purchaseTransaction));

@@ -12,6 +12,7 @@ export class EventHandlerTransactionDeleted extends EventHandlerTransaction {
         let result: Result;
         if (isInventoryBook(book)) {
             result = await new InterceptorOrderProcessorDeleteGoods().intercept(book, event);
+            console.log("RESULT: ", result);
         } else {
             result = await new InterceptorOrderProcessorDeleteFinancial().intercept(book, event);
         }
