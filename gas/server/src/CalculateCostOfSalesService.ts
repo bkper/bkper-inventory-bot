@@ -177,12 +177,8 @@ namespace CostOfSalesService {
 
                 saleLiquidationLog = logLiquidation(saleTransaction, unitTotalCostOfSale);
                 splittedPurchaseTransaction.setProperty(LIQUIDATION_LOG_PROP, JSON.stringify(saleLiquidationLog));
-
-                // Store transaction to be created: generate temporaty id in order to wrap up connections later
-                splittedPurchaseTransaction
-                    .setChecked(true)
-                    .addRemoteId(`${processor.generateTemporaryId()}`)
-                    ;
+                splittedPurchaseTransaction.setChecked(true);
+                
                 processor.setInventoryBookTransactionToCreate(splittedPurchaseTransaction);
 
                 purchaseLogEntries.push(logPurchase(partialBuyQuantity, unitTotalCostOfSale, purchaseTransaction));
@@ -217,7 +213,7 @@ namespace CostOfSalesService {
     function addCostOfSales(financialBook: Bkper.Book, saleTransaction: Bkper.Transaction, saleCost: Bkper.Amount, processor: CalculateCostOfSalesProcessor) {
         let financialGoodAccount: Bkper.Account = financialBook.getAccount(saleTransaction.getCreditAccountName());
 
-        // link cost transaction in fanancial book to sale transaction in inventory book
+        // link COGS transaction in fanancial book to sale transaction in inventory book
         const remoteId = saleTransaction.getId();
         const description = `#cost_of_sale ${saleTransaction.getDescription()}`;
 

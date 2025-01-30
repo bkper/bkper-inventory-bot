@@ -14,19 +14,6 @@ class CalculateCostOfSalesProcessor {
         this.financialBook = financialBook;
     }
 
-    generateTemporaryId(): string {
-        return `ccsp_id_${Utilities.getUuid()}`;
-    }
-
-    getTemporaryId(transaction: Bkper.Transaction): string {
-        for (const remoteId of transaction.getRemoteIds()) {
-            if (remoteId.startsWith('ccsp_id_')) {
-                return remoteId;
-            }
-        }
-        return '';
-    }
-
     private getRemoteId(transaction: Bkper.Transaction): string {
         const remoteIds = transaction.getRemoteIds();
         return remoteIds.length > 0 ? remoteIds[0] : '';
@@ -60,22 +47,7 @@ class CalculateCostOfSalesProcessor {
     }
 
     fireBatchOperations(): void {
-        // Fire batch creation of inventory book transactions first in order to get new ids
-        const newInventoryBookTransactions = this.fireBatchCreateInventoryBookTransactions();
-
-        // Fix remoteIds references on COGS
-        for (const newInventoryBookTx of newInventoryBookTransactions) {
-
-            const oldId = this.getTemporaryId(newInventoryBookTx);
-            const newId = newInventoryBookTx.getId();
-
-            const connectedRrTx = this.financialBookTransactionsToCreateMap.get(`${oldId}`);
-            if (connectedRrTx) {
-                connectedRrTx.addRemoteId(`${newId}`);
-            }
-        }
-
-        // Fire other batch operations
+        this.fireBatchCreateInventoryBookTransactions();
         this.fireBatchUpdateInventoryBookTransactions();
         this.fireBatchCreateFinancialBookTransactions();
     }
