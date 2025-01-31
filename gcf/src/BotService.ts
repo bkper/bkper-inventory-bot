@@ -155,12 +155,14 @@ export function getCOGSCalculationDateValue(account: Account): number | null {
     return null
 }
 
-export async function flagInventoryAccountForRebuildIfNeeded(inventoryTransaction: Transaction) {
+export async function flagInventoryAccountForRebuildIfNeeded(inventoryTransaction: Transaction): Promise<string | undefined> {
     let inventoryAccount = await getGoodAccount(inventoryTransaction);
     if (inventoryAccount) {
         let lastTxDate = getCOGSCalculationDateValue(inventoryAccount);
         if (lastTxDate != null && inventoryTransaction.getDateValue() != undefined && inventoryTransaction.getDateValue()! <= +lastTxDate) {
             await inventoryAccount.setProperty(NEEDS_REBUILD_PROP, 'TRUE').update();
+            return `Flagging account '${inventoryAccount.getName()}' for rebuild`;
         }
     }
+    return undefined;
 }
