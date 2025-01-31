@@ -28,7 +28,9 @@ export class InterceptorOrderProcessorDeleteGoods extends InterceptorOrderProces
             if (responses) {
                 goodAccount.setProperty(NEEDS_REBUILD_PROP, 'TRUE').update();
                 const warningMsg = `Flagging account ${goodAccount.getName()} for rebuild`;
-                return { result: await this.buildResults(inventoryBook, responses), warning: warningMsg };
+                let results = await this.buildResults(inventoryBook, responses);
+                results.push(warningMsg);
+                return { result: results };
             }
         }
         
@@ -45,20 +47,19 @@ export class InterceptorOrderProcessorDeleteGoods extends InterceptorOrderProces
     }
 
     private async getGoodAccount(inventoryBook: Book, transactionPayload: bkper.Transaction): Promise<Account | undefined> {
-        if (transactionPayload.debitAccount?.type == AccountType.OUTGOING) {
-            return await inventoryBook.getAccount(transactionPayload.debitAccount.id);
+        if (transactionPayload.debitAccount?.type == AccountType.INCOMING) {
+            return await inventoryBook.getAccount(transactionPayload.creditAccount?.id);
         }
-        if (transactionPayload.creditAccount?.type == AccountType.INCOMING) {
-            return await inventoryBook.getAccount(transactionPayload.creditAccount.id);
+        if (transactionPayload.creditAccount?.type == AccountType.OUTGOING) {
+            return await inventoryBook.getAccount(transactionPayload.debitAccount?.id);
         }
         return undefined;
     }
 
     private async buildResults(inventoryBook: Book, responses: Transaction[]): Promise<string[]> {
-        const bookAnchor = buildBookAnchor(inventoryBook);
         let results: string[] = [];
         for (const response of responses) {
-            results.push(`${bookAnchor}: ${await this.buildDeleteResponse(response)}`);
+            results.push(`${await this.buildDeleteResponse(response)}`);
         }
         return results;
     }
