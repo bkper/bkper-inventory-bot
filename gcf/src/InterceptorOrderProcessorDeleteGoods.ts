@@ -1,7 +1,7 @@
 import { Account, AccountType, Book, Transaction } from "bkper-js";
 import { Result } from "./index.js";
 import { InterceptorOrderProcessorDelete } from "./InterceptorOrderProcessorDelete.js";
-import { buildBookAnchor, getExchangeCodeFromAccount, getFinancialBook, getGoodAccount } from "./BotService.js";
+import { getExchangeCodeFromAccount, getFinancialBook } from "./BotService.js";
 import { NEEDS_REBUILD_PROP, ORIGINAL_QUANTITY_PROP } from "./constants.js";
 
 export class InterceptorOrderProcessorDeleteGoods extends InterceptorOrderProcessorDelete {
@@ -28,7 +28,7 @@ export class InterceptorOrderProcessorDeleteGoods extends InterceptorOrderProces
             if (responses) {
                 goodAccount.setProperty(NEEDS_REBUILD_PROP, 'TRUE').update();
                 const warningMsg = `Flagging account ${goodAccount.getName()} for rebuild`;
-                let results = await this.buildResults(inventoryBook, responses);
+                let results = await this.buildResults(responses);
                 results.push(warningMsg);
                 return { result: results };
             }
@@ -40,7 +40,7 @@ export class InterceptorOrderProcessorDeleteGoods extends InterceptorOrderProces
         // delete COGS transaction in financial book when deleting a sale transaction in inventory book
         responses = financialBook && transactionPayload ? await this.cascadeDeleteTransactions(financialBook, transactionPayload) : undefined;
         if (responses) {
-            return { result: await this.buildResults(financialBook!, responses) };
+            return { result: await this.buildResults(responses) };
         }
 
         return { result: false };
@@ -54,14 +54,6 @@ export class InterceptorOrderProcessorDeleteGoods extends InterceptorOrderProces
             return await inventoryBook.getAccount(transactionPayload.debitAccount?.id);
         }
         return undefined;
-    }
-
-    private async buildResults(inventoryBook: Book, responses: Transaction[]): Promise<string[]> {
-        let results: string[] = [];
-        for (const response of responses) {
-            results.push(`${await this.buildDeleteResponse(response)}`);
-        }
-        return results;
     }
 
 }

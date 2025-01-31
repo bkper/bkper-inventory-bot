@@ -29,6 +29,14 @@ export abstract class InterceptorOrderProcessorDelete {
 		return undefined;
 	}
 
+	protected async buildResults(responses: Transaction[]): Promise<string[]> {
+        let results: string[] = [];
+        for (const response of responses) {
+            results.push(`${await this.buildDeleteResponse(response)}`);
+        }
+        return results;
+    }
+
 	protected async buildDeleteResponse(tx: Transaction): Promise<string> {
 		return `DELETED: ${tx.getDateFormatted()} ${tx.getAmount()} ${await tx.getCreditAccountName()} ${await tx.getDebitAccountName()} ${tx.getDescription()}`
 	}
