@@ -55,32 +55,31 @@ namespace CostOfSalesService {
                 // Reset purchase transactions
                 if (tx.getProperty(LIQUIDATION_LOG_PROP)) {
                     // Trash splitted transaction
-                    if (!tx.getProperty(ORIGINAL_QUANTITY_PROP)) {
-                        processor.setInventoryBookTransactionToTrash(tx);
-                    } else {
-                        // Reset parent transaction
-                        const txAmount = tx.getAmount();
-                        const txGoodPurchaseCost = BkperApp.newAmount(tx.getProperty(GOOD_PURCHASE_COST_PROP));
-                        const txAdditionalCosts = tx.getProperty(ADD_COSTS_PROP) ? BkperApp.newAmount(tx.getProperty(ADD_COSTS_PROP)) : BkperApp.newAmount(0);
+                    processor.setInventoryBookTransactionToTrash(tx);
+                }
+                if (tx.getProperty(ORIGINAL_QUANTITY_PROP)) {
+                    // Reset parent transaction
+                    const txAmount = tx.getAmount();
+                    const txGoodPurchaseCost = BkperApp.newAmount(tx.getProperty(GOOD_PURCHASE_COST_PROP));
+                    const txAdditionalCosts = tx.getProperty(ADD_COSTS_PROP) ? BkperApp.newAmount(tx.getProperty(ADD_COSTS_PROP)) : BkperApp.newAmount(0);
 
-                        const unitGoodPurchaseCost = txGoodPurchaseCost.div(txAmount);
-                        const unitAdditionalCosts = txAdditionalCosts.div(txAmount);
+                    const unitGoodPurchaseCost = txGoodPurchaseCost.div(txAmount);
+                    const unitAdditionalCosts = txAdditionalCosts.div(txAmount);
 
-                        const originalAmount = BkperApp.newAmount(tx.getProperty(ORIGINAL_QUANTITY_PROP));
-                        const originalGoodPurchaseCost = originalAmount.times(unitGoodPurchaseCost);
-                        const originalAdditionalCosts = originalAmount.times(unitAdditionalCosts);
+                    const originalAmount = BkperApp.newAmount(tx.getProperty(ORIGINAL_QUANTITY_PROP));
+                    const originalGoodPurchaseCost = originalAmount.times(unitGoodPurchaseCost);
+                    const originalAdditionalCosts = originalAmount.times(unitAdditionalCosts);
 
-                        tx.setAmount(originalAmount);
-                        tx.setProperty(GOOD_PURCHASE_COST_PROP, originalGoodPurchaseCost.toString());
-                        tx.setProperty(ADD_COSTS_PROP, originalAdditionalCosts.toString());
-                        tx.setProperty(TOTAL_COST_PROP, originalGoodPurchaseCost.plus(originalAdditionalCosts).toString());
+                    tx.setAmount(originalAmount);
+                    tx.setProperty(GOOD_PURCHASE_COST_PROP, originalGoodPurchaseCost.toString());
+                    tx.setProperty(ADD_COSTS_PROP, originalAdditionalCosts.toString());
+                    tx.setProperty(TOTAL_COST_PROP, originalGoodPurchaseCost.plus(originalAdditionalCosts).toString());
 
-                        // remove liquidation log
-                        tx.deleteProperty(LIQUIDATION_LOG_PROP);
+                    // remove liquidation log
+                    tx.deleteProperty(LIQUIDATION_LOG_PROP);
 
-                        // Store transaction to be updated
-                        processor.setInventoryBookTransactionToUpdate(tx);
-                    }
+                    // Store transaction to be updated
+                    processor.setInventoryBookTransactionToUpdate(tx);
                 }
             }
         }
