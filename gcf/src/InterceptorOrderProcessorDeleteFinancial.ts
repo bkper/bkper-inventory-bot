@@ -67,7 +67,10 @@ export class InterceptorOrderProcessorDeleteFinancial extends InterceptorOrderPr
                     for (const remoteId of transactionPayload.remoteIds) {
                         let inventoryBookTransaction = await inventoryBook.getTransaction(remoteId);
                         if (inventoryBookTransaction) {
-                            await flagInventoryAccountForRebuildIfNeeded(inventoryBookTransaction);
+                            const response = await flagInventoryAccountForRebuildIfNeeded(inventoryBookTransaction);
+                            if (response) {
+                                responses.push(response);
+                            }
                             break;
                         }
                     }
