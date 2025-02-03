@@ -19,36 +19,21 @@ export class EventHandlerTransactionDeleted extends EventHandlerTransaction {
     }
 
     protected getTransactionQuery(transaction: bkper.Transaction): string {
-        if (transaction.properties && transaction.properties[GOOD_PROP]) {
-            return `remoteId:${transaction.id}`;
-        }
-        return `remoteId:${transaction.properties?.[PURCHASE_CODE_PROP] ?? ''}_${transaction.debitAccount?.normalizedName ?? ''}`;
-
+        return '';
     }
 
-    protected connectedTransactionNotFound(financialBook: Book, inventoryBook: Book, financialTransaction: bkper.Transaction, goodExcCode: string): Promise<string> {
+    protected connectedTransactionNotFound(financialBook: Book, inventoryBook: Book, financialTransaction: bkper.Transaction, goodExcCode?: string): Promise<string | undefined> {
         return new Promise((resolve, reject) => {
-            const result = 'Transaction not found in Inventory book';
+            const result = undefined;
             resolve(result);
         });
     }
 
-    protected async connectedTransactionFound(financialBook: Book, inventoryBook: Book, financialTransaction: bkper.Transaction, goodTransaction: Transaction, goodExcCode: string): Promise<string> {
-        let bookAnchor = buildBookAnchor(inventoryBook);
-
-        if (goodTransaction.isChecked()) {
-            goodTransaction.uncheck();
-        }
-
-        // await flagStockAccountForRebuildIfNeeded(stockTransaction);
-
-        await goodTransaction.remove();
-
-        let amountFormatted = inventoryBook.formatValue(goodTransaction.getAmount())
-
-        let record = `DELETED: ${goodTransaction.getDateFormatted()} ${amountFormatted} ${await goodTransaction.getCreditAccountName()} ${await goodTransaction.getDebitAccountName()} ${goodTransaction.getDescription()}`;
-
-        return `${bookAnchor}: ${record}`;
+    protected connectedTransactionFound(baseBook: Book, connectedBook: Book, financialTransaction: bkper.Transaction, goodTransaction: Transaction, goodExcCode?: string): Promise<string | undefined> {
+        return new Promise((resolve, reject) => {
+            const result = undefined;
+            resolve(result);
+        });
     }
 
 }
