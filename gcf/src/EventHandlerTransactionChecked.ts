@@ -1,7 +1,7 @@
 import { Account, AccountType, Amount, Book, Group, Transaction } from "bkper-js";
 import { EventHandlerTransaction } from "./EventHandlerTransaction.js";
 import { buildBookAnchor, getCOGSCalculationDateValue, getGoodExchangeCodeFromAccount, getQuantity } from "./BotService.js";
-import { CREDIT_NOTE_PROP, GOOD_BUY_ACCOUNT_NAME, GOOD_EXC_CODE_PROP, GOOD_PROP, GOOD_PURCHASE_COST_PROP, GOOD_SELL_ACCOUNT_NAME, NEEDS_REBUILD_PROP, ORDER_PROP, ORIGINAL_QUANTITY_PROP, PURCHASE_CODE_PROP, SALE_AMOUNT_PROP, SALE_INVOICE_PROP, TOTAL_ADDITIONAL_COSTS_PROP, TOTAL_COST_PROP } from "./constants.js";
+import { CREDIT_NOTE_PROP, GOOD_BUY_ACCOUNT_NAME, GOOD_EXC_CODE_PROP, GOOD_PROP, GOOD_PURCHASE_COST_PROP, GOOD_SELL_ACCOUNT_NAME, NEEDS_REBUILD_PROP, ORDER_PROP, ORIGINAL_QUANTITY_PROP, PURCHASE_CODE_PROP, PURCHASE_INVOICE_PROP, SALE_AMOUNT_PROP, SALE_INVOICE_PROP, TOTAL_ADDITIONAL_COSTS_PROP, TOTAL_COST_PROP } from "./constants.js";
 import { Result } from "./index.js";
 import { InterceptorFlagRebuild } from "./InterceptorFlagRebuild.js";
 
@@ -74,12 +74,23 @@ export class EventHandlerTransactionChecked extends EventHandlerTransaction {
             }
 
             const quantity = getQuantity(inventoryBook, financialTransaction);
+            const purchaseCode = financialTransaction.properties[PURCHASE_CODE_PROP];
+            const purchaseInvoice = financialTransaction.properties[PURCHASE_INVOICE_PROP];
+            const saleInvoice = financialTransaction.properties[SALE_INVOICE_PROP];
+
             if (quantity == undefined || quantity.eq(0)) {
-                // communicate to the user that he must first check the good purchase transaction before checking additional costs or credit note transactions
+                // communicate to the user to first check the good purchase transaction before checking additional costs or credit note transactions
                 if (financialTransaction.properties[PURCHASE_CODE_PROP]) {
                     throw new Error(`ERROR: you must first check the good purchase transaction (purchase_code: ${financialTransaction.properties[PURCHASE_CODE_PROP]}) before checking additional costs or credit note transactions.`);
                 }
                 return undefined;
+            }
+
+            // prevent bot response when purchase or sale transactions are missing needed properties
+            if (saleInvoice == undefined) {
+                if (purchaseCode == undefined || purchaseInvoice == undefined) {
+                    return undefined;
+                }
             }
 
             const inventoryBookAnchor = buildBookAnchor(inventoryBook);
