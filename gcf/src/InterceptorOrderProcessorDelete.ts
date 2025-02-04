@@ -5,13 +5,14 @@ import { ORIGINAL_QUANTITY_PROP } from "./constants.js";
 export abstract class InterceptorOrderProcessorDelete {
 
 	protected async cascadeDeleteTransactions(book: Book, remoteTx: bkper.Transaction): Promise<Transaction[] | undefined> {
-		let responses: Transaction[] = [];
+		let responses: Transaction[] | undefined = undefined;
 		// splitted purchase transactions in inventory book
 		if (remoteTx.properties?.[ORIGINAL_QUANTITY_PROP]) {
 			const splittedTransactions = (await book.listTransactions(`parent_id:'${remoteTx.id}'`)).getItems();
 			for (const splittedTransaction of splittedTransactions) {
-				await splittedTransaction.uncheck();
-				responses.push(await splittedTransaction.trash());
+				responses = [];
+				console.log("ENTROU")
+				responses.push(await uncheckAndRemove(splittedTransaction));
 			}
 			return responses;
 		}
@@ -22,11 +23,12 @@ export abstract class InterceptorOrderProcessorDelete {
 			if (tx.isChecked()) {
 				tx = await tx.uncheck();
 			}
+			responses = [];
 			responses.push(await tx.trash());
 			return responses;
 		}
 		
-		return undefined;
+		return responses;
 	}
 
 	protected async buildResults(responses: Transaction[]): Promise<string[]> {
