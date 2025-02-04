@@ -1,4 +1,4 @@
-import { Account, AccountType, Book, Transaction } from "bkper-js";
+import { Account, AccountType, Book, Transaction, Amount } from "bkper-js";
 import { Result } from "./index.js";
 import { InterceptorOrderProcessorDelete } from "./InterceptorOrderProcessorDelete.js";
 import { getExchangeCodeFromAccount, getFinancialBook } from "./BotService.js";
@@ -24,16 +24,20 @@ export class InterceptorOrderProcessorDeleteGoods extends InterceptorOrderProces
 
         // delete splitted purchase transactions in inventory book and flag account for rebuild when deleting the original purchase transaction
         if (transactionPayload!.properties?.[ORIGINAL_QUANTITY_PROP]) {
-            responses = await this.cascadeDeleteTransactions(inventoryBook, transactionPayload!);
-            if (responses) {
-                goodAccount.setProperty(NEEDS_REBUILD_PROP, 'TRUE').update();
-                const warningMsg = `Flagging account ${goodAccount.getName()} for rebuild`;
-                let results = await this.buildResults(responses);
-                results.push(warningMsg);
-                return { result: results };
+            const originalQuantity = new Amount(transactionPayload!.properties[ORIGINAL_QUANTITY_PROP]).toNumber();
+            const amount = new Amount(transactionPayload!.amount ?? 0).toNumber();
+            if (originalQuantity != amount) {
+                responses = await this.cascadeDeleteTransactions(inventoryBook, transactionPayload!);
+                if (responses) {
+                    goodAccount.setProperty(NEEDS_REBUILD_PROP, 'TRUE').update();
+                    const warningMsg = `Flagging account ${goodAccount.getName()} for rebuild`;
+                    let results = await this.buildResults(responses);
+                    results.push(warningMsg);
+                    return { result: results };
+                }
             }
         }
-        
+
         const goodExcCode = await getExchangeCodeFromAccount(goodAccount);
         const financialBook = await getFinancialBook(inventoryBook, goodExcCode);
 
