@@ -38,10 +38,11 @@ export abstract class InterceptorOrderProcessorDelete {
 		return responses;
 	}
 
-	protected async buildResults(responses: Transaction[]): Promise<string[]> {
+    protected async buildDeleteResults(responses: Transaction[], book?: Book): Promise<string[]> {
         let results: string[] = [];
         for (const response of responses) {
-            results.push(`${await this.buildDeleteResponse(response)}`);
+            const bookAnchor = book ? buildBookAnchor(book) : '';
+            results.push(`${bookAnchor} ${await this.buildDeleteResponse(response)}`);
         }
         return results;
     }

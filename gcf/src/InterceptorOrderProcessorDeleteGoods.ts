@@ -22,16 +22,17 @@ export class InterceptorOrderProcessorDeleteGoods extends InterceptorOrderProces
 
         let responses: Transaction[] | undefined;
 
-        // delete splitted purchase transactions in inventory book and flag account for rebuild when deleting the original purchase transaction
+        // deleted transaction is the root purchase transaction
         if (transactionPayload!.properties?.[ORIGINAL_QUANTITY_PROP]) {
             const originalQuantity = new Amount(transactionPayload!.properties[ORIGINAL_QUANTITY_PROP]).toNumber();
             const amount = new Amount(transactionPayload!.amount ?? 0).toNumber();
             if (originalQuantity != amount) {
-                responses = await this.cascadeDeleteTransactions(inventoryBook, transactionPayload!);
+                // transaction had been already splitted: delete splitted transactions in inventory book and flag account for rebuild
+                goodAccount.setProperty(NEEDS_REBUILD_PROP, 'TRUE').update();
+                responses = await this.cascadeDeleteInventoryTransactions(inventoryBook, transactionPayload!);
                 if (responses) {
-                    goodAccount.setProperty(NEEDS_REBUILD_PROP, 'TRUE').update();
                     const warningMsg = `Flagging account ${goodAccount.getName()} for rebuild`;
-                    let results = await this.buildResults(responses);
+                    let results = await this.buildDeleteResults(responses);
                     results.push(warningMsg);
                     return { result: results };
                 }
@@ -41,10 +42,10 @@ export class InterceptorOrderProcessorDeleteGoods extends InterceptorOrderProces
         const goodExcCode = await getExchangeCodeFromAccount(goodAccount);
         const financialBook = await getFinancialBook(inventoryBook, goodExcCode);
 
-        // delete COGS transaction in financial book when deleting a sale transaction in inventory book
-        responses = financialBook && transactionPayload ? await this.cascadeDeleteTransactions(financialBook, transactionPayload) : undefined;
+        // deleted transaction is the sale transaction: delete COGS transaction in financial book
+        responses = financialBook && transactionPayload ? await this.cascadeDeleteFinancialTransactions(financialBook, transactionPayload) : undefined;
         if (responses) {
-            return { result: await this.buildResults(responses) };
+            return { result: await this.buildDeleteResults(responses, financialBook) };
         }
 
         return { result: false };
