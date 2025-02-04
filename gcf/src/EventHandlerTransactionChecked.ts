@@ -60,7 +60,8 @@ export class EventHandlerTransactionChecked extends EventHandlerTransaction {
             const record = `${connectedTransaction.getDate()} ${connectedTransaction.getAmount()} ${await connectedTransaction.getCreditAccountName()} ${await connectedTransaction.getDebitAccountName()} ${connectedTransaction.getDescription()}`;
             return `FOUND: ${bookAnchor}: ${record}`;
         }
-        return 'ERROR (connectedTransactionFound): financialTransaction is missing required fields';
+        console.log('ERROR (connectedTransactionFound): financialTransaction is missing required fields');
+        return undefined;
     }
 
     // create purchase (Buy) or sale (Sell) transactions in the inventory book in response to the financial transactions
@@ -166,7 +167,8 @@ export class EventHandlerTransactionChecked extends EventHandlerTransaction {
                 }
             }
         }
-        return 'ERROR (connectedTransactionNotFound): financialTransaction is missing required fields';
+        console.log('ERROR (connectedTransactionNotFound): financialTransaction is missing required fields');
+        return undefined;
     }
 
     private checkLastTxDate(goodAccount: Account, transaction: bkper.Transaction): boolean {
