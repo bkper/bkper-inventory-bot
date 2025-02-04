@@ -41,8 +41,8 @@ export abstract class InterceptorOrderProcessorDelete {
     protected async buildDeleteResults(responses: Transaction[], book?: Book): Promise<string[]> {
         let results: string[] = [];
         for (const response of responses) {
-            const bookAnchor = book ? buildBookAnchor(book) : '';
-            results.push(`${bookAnchor} ${await this.buildDeleteResponse(response)}`);
+            const bookAnchor = book ? buildBookAnchor(book) : undefined;
+            bookAnchor ? results.push(`${bookAnchor}: ${await this.buildDeleteResponse(response)}`) : results.push(`${await this.buildDeleteResponse(response)}`);
         }
         return results;
     }
