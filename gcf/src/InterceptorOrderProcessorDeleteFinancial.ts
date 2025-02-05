@@ -1,8 +1,8 @@
-import { AccountType, Book, Transaction } from "bkper-js";
+import { AccountType, Amount, Book, Transaction } from "bkper-js";
 import { InterceptorOrderProcessorDelete } from "./InterceptorOrderProcessorDelete.js";
 import { Result } from "./index.js";
-import { GOOD_PROP, PURCHASE_CODE_PROP, PURCHASE_INVOICE_PROP, QUANTITY_PROP, COGS_HASHTAG } from "./constants.js";
-import { flagInventoryAccountForRebuildIfNeeded, getInventoryBook } from "./BotService.js";
+import { GOOD_PROP, PURCHASE_CODE_PROP, PURCHASE_INVOICE_PROP, QUANTITY_PROP, COGS_HASHTAG, ORIGINAL_QUANTITY_PROP, NEEDS_REBUILD_PROP } from "./constants.js";
+import { flagInventoryAccountForRebuildIfNeeded, getInventoryBook, getQuantity, updateGoodTransaction } from "./BotService.js";
 
 export class InterceptorOrderProcessorDeleteFinancial extends InterceptorOrderProcessorDelete {
 
@@ -45,7 +45,22 @@ export class InterceptorOrderProcessorDeleteFinancial extends InterceptorOrderPr
                 }
             }
 
-            // TODO: deleted transaction is the additional cost transaction or credit note transaction
+            // deleted transaction is the additional cost transaction or credit note transaction
+            if (transactionPayload.properties[PURCHASE_CODE_PROP] != undefined && (transactionPayload.properties[PURCHASE_CODE_PROP] != transactionPayload.properties[PURCHASE_INVOICE_PROP])) {
+                const inventoryBook = getInventoryBook(financialBook);
+                const inventoryTx = inventoryBook ? await inventoryBook.getTransaction(transactionPayload.id) : undefined;
+                if (inventoryTx) {
+                    const originalQuantity = new Amount(transactionPayload.properties[ORIGINAL_QUANTITY_PROP]).toNumber();
+                    const amount = new Amount(transactionPayload!.amount ?? 0).toNumber();
+                    if (originalQuantity != amount) {
+                        // transaction had been already processed in FIFO: flag account for rebuild
+                    } else {
+                        // update inventory transaction with new quantity and total costs
+                        await updateGoodTransaction(transactionPayload, inventoryTx, true);
+                    }
+                    responses.push(`UPDATED: ${inventoryTx.getDate()} ${inventoryTx.getAmount()} ${await inventoryTx.getCreditAccountName()} ${await inventoryTx.getDebitAccountName()} ${inventoryTx.getDescription()}`);
+                }
+            }
 
             // deleted transaction is the sale transaction
             if (transactionPayload.properties[GOOD_PROP] != undefined && transactionPayload.debitAccount.type == AccountType.INCOMING) {
