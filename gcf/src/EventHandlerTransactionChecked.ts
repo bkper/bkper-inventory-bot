@@ -18,13 +18,12 @@ export class EventHandlerTransactionChecked extends EventHandlerTransaction {
             return `remoteId:${transaction.id}`;
         } else if (transaction.properties && transaction.properties[CREDIT_NOTE_PROP] == undefined) {
             if (transaction.properties && transaction.debitAccount) {
-                // checking purchase transactions
+                // checking purchase or additional cost transactions
                 return `remoteId:${transaction.properties[PURCHASE_CODE_PROP]}_${transaction.debitAccount.normalizedName}`;
             }
         } else if (transaction.properties && transaction.properties[CREDIT_NOTE_PROP] != undefined) {
             // checking credit note transactions
             if (transaction.properties && transaction.creditAccount) {
-                // checking purchase transactions
                 return `remoteId:${transaction.properties[PURCHASE_CODE_PROP]}_${transaction.creditAccount.normalizedName}`;
             }
         }
@@ -49,6 +48,13 @@ export class EventHandlerTransactionChecked extends EventHandlerTransaction {
             // prevent bot response when checking root financial transaction
             if (financialTransaction.creditAccount.type == AccountType.LIABILITY || financialTransaction.debitAccount.type == AccountType.LIABILITY) {
                 return undefined;
+            }
+
+            const originalQuantity = new Amount(connectedTransaction.getProperty(ORIGINAL_QUANTITY_PROP) ?? 0).toNumber();
+            const amount = connectedTransaction.getAmount()?.toNumber() ?? 0;
+            if (originalQuantity != amount) {
+                // transaction had been already calculated: return a warning message to user
+                return ` / WARNING: This purchase transaction in the Inventory Book had been already processed. Account must be rebuilt first. (purchase_code: ${financialTransaction.properties[PURCHASE_CODE_PROP]})`;
             }
 
             // update additional cost properties and transaction quantities on purchases or credit notes
