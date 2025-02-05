@@ -12,7 +12,6 @@ export abstract class InterceptorOrderProcessorDelete {
 			const splittedTransactions = (await inventoryBook.listTransactions(`parent_id:'${remoteTx.id}'`)).getItems();
 			for (const splittedTransaction of splittedTransactions) {
 				responses = [];
-				console.log("ENTROU")
 				responses.push(await uncheckAndRemove(splittedTransaction));
 			}
 			return responses;

@@ -135,8 +135,8 @@ export async function getRootTransaction(book: Book, transaction?: Transaction):
     return undefined;
 }
 
-export function buildBookAnchor(book: Book) {
-    return `<a href='https://app.bkper.com/b/#transactions:bookId=${book.getId()}'>${book.getName()}</a>`;
+export function buildBookAnchor(book?: Book): string | undefined {
+    return book ? `<a href='https://app.bkper.com/b/#transactions:bookId=${book.getId()}'>${book.getName()}</a>` : undefined;
 }
 
 export async function uncheckAndRemove(transaction: Transaction): Promise<Transaction> {
@@ -155,13 +155,14 @@ export function getCOGSCalculationDateValue(account: Account): number | null {
     return null
 }
 
-export async function flagInventoryAccountForRebuildIfNeeded(inventoryTransaction: Transaction): Promise<string | undefined> {
+export async function flagInventoryAccountForRebuildIfNeeded(financialBook: Book, inventoryTransaction: Transaction): Promise<string | undefined> {
     let inventoryAccount = await getGoodAccount(inventoryTransaction);
     if (inventoryAccount) {
         let lastTxDate = getCOGSCalculationDateValue(inventoryAccount);
         if (lastTxDate != null && inventoryTransaction.getDateValue() != undefined && inventoryTransaction.getDateValue()! <= +lastTxDate) {
             await inventoryAccount.setProperty(NEEDS_REBUILD_PROP, 'TRUE').update();
-            return `Flagging account '${inventoryAccount.getName()}' for rebuild`;
+            const inventoryBook = getInventoryBook(financialBook);
+            return buildBookAnchor(inventoryBook) ? `${buildBookAnchor(inventoryBook)}: Flagging account for rebuild` : 'Flagging account for rebuild';
         }
     }
     return undefined;

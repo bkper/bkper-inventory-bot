@@ -26,7 +26,7 @@ export class InterceptorOrderProcessorDeleteFinancial extends InterceptorOrderPr
                 // delete root purchase transaction in the inventory book and all its splitted transactions
                 const deletedTxs = await this.deleteOnInventoryBook(financialBook, transactionPayload.id);
                 if (deletedTxs) {
-                    const rebuildFlagMsg = await flagInventoryAccountForRebuildIfNeeded(deletedTxs[0]);
+                    const rebuildFlagMsg = await flagInventoryAccountForRebuildIfNeeded(financialBook, deletedTxs[0]);
                     responses = responses.concat(await this.buildDeleteResults(deletedTxs, financialBook));
                     if (rebuildFlagMsg) {
                         responses.push(rebuildFlagMsg);
@@ -51,7 +51,7 @@ export class InterceptorOrderProcessorDeleteFinancial extends InterceptorOrderPr
             if (transactionPayload.properties[GOOD_PROP] != undefined && transactionPayload.debitAccount.type == AccountType.INCOMING) {
                 const deletedTxs = await this.deleteOnInventoryBook(financialBook, transactionPayload.id);
                 if (deletedTxs) {
-                    const rebuildFlagMsg = await flagInventoryAccountForRebuildIfNeeded(deletedTxs[0]);
+                    const rebuildFlagMsg = await flagInventoryAccountForRebuildIfNeeded(financialBook, deletedTxs[0]);
                     responses = responses.concat(await this.buildDeleteResults(deletedTxs, financialBook));
                     if (rebuildFlagMsg) {
                         responses.push(rebuildFlagMsg);
@@ -66,7 +66,7 @@ export class InterceptorOrderProcessorDeleteFinancial extends InterceptorOrderPr
                     for (const remoteId of transactionPayload.remoteIds) {
                         let inventoryBookTransaction = await inventoryBook.getTransaction(remoteId);
                         if (inventoryBookTransaction) {
-                            const response = await flagInventoryAccountForRebuildIfNeeded(inventoryBookTransaction);
+                            const response = await flagInventoryAccountForRebuildIfNeeded(financialBook, inventoryBookTransaction);
                             if (response) {
                                 responses.push(response);
                             }
