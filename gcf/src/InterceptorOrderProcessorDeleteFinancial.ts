@@ -23,7 +23,7 @@ export class InterceptorOrderProcessorDeleteFinancial extends InterceptorOrderPr
 
             // deleted transaction is the purchase transaction
             if (transactionPayload.properties[QUANTITY_PROP] != undefined && transactionPayload.properties[PURCHASE_CODE_PROP] != undefined && (transactionPayload.properties[PURCHASE_CODE_PROP] == transactionPayload.properties[PURCHASE_INVOICE_PROP])) {
-                // buscar no inventory book a transacao pelo remoteId
+                // delete root purchase transaction in the inventory book and all its splitted transactions
                 const deletedTxs = await this.deleteOnInventoryBook(financialBook, transactionPayload.id);
                 if (deletedTxs) {
                     const rebuildFlagMsg = await flagInventoryAccountForRebuildIfNeeded(deletedTxs[0]);
@@ -31,18 +31,18 @@ export class InterceptorOrderProcessorDeleteFinancial extends InterceptorOrderPr
                     if (rebuildFlagMsg) {
                         responses.push(rebuildFlagMsg);
                     }
+                    // unckeck the additional cost and credit note transactions in the financial book
+                    const financialTxRemoteIds = deletedTxs[0].getRemoteIds();
+                    for (const remoteId of financialTxRemoteIds) {
+                        if (remoteId != transactionPayload.id) {
+                            const financialTx = await financialBook.getTransaction(remoteId);
+                            if (financialTx) {
+                                financialTx.uncheck();
+                                responses.push(`UNCHECKED: ${financialTx.getDate()} ${financialTx.getAmount()} ${await financialTx.getCreditAccountName()} ${await financialTx.getDebitAccountName()} ${financialTx.getDescription()}`);
+                            }
+                        }
+                    }
                 }
-
-                // pegar todos os remoteIds da good transaction
-                // buscar no livro financeiro cada uma das transacoes (remoteId acima)
-                // unckeck das transacoes
-
-                // verificar se a compra ja foi vendidida total ou parcialmente
-                // se sim:
-                //       buscar as transacoes splittadas e deletar todas elas
-                //       marcar a conta para rebuild
-
-                // deletar a transacao de compra do inventory book
             }
 
             // TODO: deleted transaction is the additional cost transaction or credit note transaction

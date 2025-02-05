@@ -218,34 +218,50 @@ export class EventHandlerTransactionChecked extends EventHandlerTransaction {
         return undefined;
     }
 
+    /**
+     * Updates an inventory transaction with new cost and quantity information based on a financial transaction.
+     * This method is used to:
+     * 1. Process credit notes by adjusting purchase costs and quantities
+     * 2. Add additional costs to existing inventory transactions
+     * 3. Update total costs and maintain transaction history by adding remote IDs
+     * 
+     * @param financialTransaction The financial transaction containing cost/credit information
+     * @param connectedTransaction The inventory transaction to update
+     * @param creditQuantity The quantity being credited (for credit notes)
+     */
     private async updateGoodTransaction(financialTransaction: bkper.Transaction, connectedTransaction: Transaction, creditQuantity: number): Promise<void> {
+        // Get current values from the inventory transaction
         const currentQuantity = connectedTransaction.getAmount()?.toNumber();
         const currentGoodPurchaseCost = connectedTransaction.getProperty(GOOD_PURCHASE_COST_PROP);
         const financialTransactionAmount = financialTransaction.amount;
         const currentTotalCost = connectedTransaction.getProperty(TOTAL_COST_PROP);
 
+        // Validate required data exists
         if (currentQuantity == undefined || currentGoodPurchaseCost == undefined || financialTransactionAmount == undefined || currentTotalCost == undefined) {
             console.log(`ERROR (updateGoodTransaction): connectedTransaction or financialTransaction is missing required data`);
             return;
         }
 
+        // Get current additional costs, defaulting to 0 if none exist
         let currentTotalAdditionalCosts = new Amount(0);
         if (connectedTransaction.getProperty(TOTAL_ADDITIONAL_COSTS_PROP)) {
             currentTotalAdditionalCosts = new Amount(connectedTransaction.getProperty(TOTAL_ADDITIONAL_COSTS_PROP)!);
         }
 
+        // Calculate new costs based on transaction type (credit note vs additional cost)
         let additionalCost = new Amount(0);
         let newGoodPurchaseCost = new Amount(0);
-        // update good purchase cost or additional costs depending whether the transaction is a credit note or additional cost
         if (financialTransaction.properties?.[CREDIT_NOTE_PROP]) {
+            // For credit notes: reduce the purchase cost by credit amount
             const goodCreditValue = new Amount(financialTransactionAmount!);
             newGoodPurchaseCost = new Amount(currentGoodPurchaseCost).minus(goodCreditValue);
         } else {
+            // For additional costs: keep purchase cost same but add additional cost
             additionalCost = new Amount(financialTransactionAmount!);
             newGoodPurchaseCost = new Amount(currentGoodPurchaseCost);
         }
 
-        // update transaction quantity on credit notes involving quantities
+        // Calculate final values and update the transaction
         const newQuantity = (financialTransaction.properties?.[CREDIT_NOTE_PROP]) ? currentQuantity - creditQuantity : currentQuantity;
         const newTotalAdditionalCosts = currentTotalAdditionalCosts.plus(additionalCost);
         const newTotalCosts = newGoodPurchaseCost.plus(newTotalAdditionalCosts);
