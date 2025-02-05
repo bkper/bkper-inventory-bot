@@ -174,11 +174,13 @@ export async function flagInventoryAccountForRebuildIfNeeded(financialBook: Book
  * 1. Process credit notes by adjusting purchase costs and quantities
  * 2. Add additional costs to existing inventory transactions
  * 3. Update total costs and maintain transaction history by adding remote IDs
+ * 4. Handle deletion of transactions by reversing cost and quantity adjustments
  * 
  * @param financialTransaction The financial transaction containing cost/credit information
  * @param connectedTransaction The inventory transaction to update
+ * @param onDelete Optional flag indicating if this is a deletion operation. When true, costs and quantities are reversed instead of added.
  */
-export async function updateGoodTransaction(financialTransaction: bkper.Transaction, connectedTransaction: Transaction): Promise<void> {
+export async function updateGoodTransaction(financialTransaction: bkper.Transaction, connectedTransaction: Transaction, onDelete?: boolean): Promise<void> {
     // Get current values from the inventory transaction
     const currentQuantity = connectedTransaction.getAmount()?.toNumber();
     const currentGoodPurchaseCost = connectedTransaction.getProperty(GOOD_PURCHASE_COST_PROP);
@@ -213,9 +215,9 @@ export async function updateGoodTransaction(financialTransaction: bkper.Transact
     }
 
     // Calculate final values and update the transaction
-    const newQuantity = (financialTransaction.properties?.[CREDIT_NOTE_PROP]) ? currentQuantity - creditQuantity : currentQuantity;
-    const newTotalAdditionalCosts = currentTotalAdditionalCosts.plus(additionalCost);
-    const newTotalCosts = newGoodPurchaseCost.plus(newTotalAdditionalCosts);
+    const newQuantity = onDelete ? ((financialTransaction.properties?.[CREDIT_NOTE_PROP]) ? currentQuantity + creditQuantity : currentQuantity) : ((financialTransaction.properties?.[CREDIT_NOTE_PROP]) ? currentQuantity - creditQuantity : currentQuantity);
+    const newTotalAdditionalCosts = onDelete ? currentTotalAdditionalCosts.minus(additionalCost) : currentTotalAdditionalCosts.plus(additionalCost);
+    const newTotalCosts = onDelete ? newGoodPurchaseCost.minus(additionalCost) : newGoodPurchaseCost.plus(newTotalAdditionalCosts);
 
     await connectedTransaction
         .setAmount(newQuantity)
