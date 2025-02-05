@@ -79,7 +79,7 @@ export class EventHandlerTransactionChecked extends EventHandlerTransaction {
             const purchaseInvoice = financialTransaction.properties[PURCHASE_INVOICE_PROP];
             const saleInvoice = financialTransaction.properties[SALE_INVOICE_PROP];
 
-            if (quantity == undefined || quantity.eq(0)) {
+            if (quantity == undefined || quantity.eq(0) || financialTransaction.properties[CREDIT_NOTE_PROP]) {
                 // communicate to the user to first check the good purchase transaction before checking additional costs or credit note transactions
                 if (financialTransaction.properties[PURCHASE_CODE_PROP]) {
                     throw new Error(`ERROR: you must first check the good purchase transaction (purchase_code: ${financialTransaction.properties[PURCHASE_CODE_PROP]}) before checking additional costs or credit note transactions.`);
