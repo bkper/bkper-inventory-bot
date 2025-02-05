@@ -1,7 +1,7 @@
 import { Account, AccountType, Amount, Book, Group, Transaction } from "bkper-js";
 import { EventHandlerTransaction } from "./EventHandlerTransaction.js";
-import { buildBookAnchor, getCOGSCalculationDateValue, getGoodExchangeCodeFromAccount, getQuantity } from "./BotService.js";
-import { CREDIT_NOTE_PROP, GOOD_BUY_ACCOUNT_NAME, GOOD_EXC_CODE_PROP, GOOD_PROP, GOOD_PURCHASE_COST_PROP, GOOD_SELL_ACCOUNT_NAME, NEEDS_REBUILD_PROP, ORDER_PROP, ORIGINAL_QUANTITY_PROP, PURCHASE_CODE_PROP, PURCHASE_INVOICE_PROP, SALE_AMOUNT_PROP, SALE_INVOICE_PROP, TOTAL_ADDITIONAL_COSTS_PROP, TOTAL_COST_PROP } from "./constants.js";
+import { buildBookAnchor, getCOGSCalculationDateValue, getGoodExchangeCodeFromAccount, getQuantity, updateGoodTransaction } from "./BotService.js";
+import { CREDIT_NOTE_PROP, GOOD_BUY_ACCOUNT_NAME, GOOD_EXC_CODE_PROP, GOOD_PROP, GOOD_PURCHASE_COST_PROP, GOOD_SELL_ACCOUNT_NAME, NEEDS_REBUILD_PROP, ORDER_PROP, ORIGINAL_QUANTITY_PROP, PURCHASE_CODE_PROP, PURCHASE_INVOICE_PROP, SALE_AMOUNT_PROP, SALE_INVOICE_PROP, TOTAL_COST_PROP } from "./constants.js";
 import { Result } from "./index.js";
 import { InterceptorFlagRebuild } from "./InterceptorFlagRebuild.js";
 
@@ -51,10 +51,8 @@ export class EventHandlerTransactionChecked extends EventHandlerTransaction {
                 return undefined;
             }
 
-            const creditQuantity = getQuantity(financialBook, financialTransaction)?.toNumber() ?? 0;
-
             // update additional cost properties and transaction quantities on purchases or credit notes
-            this.updateGoodTransaction(financialTransaction, connectedTransaction, creditQuantity);
+            updateGoodTransaction(financialTransaction, connectedTransaction);
 
             const bookAnchor = buildBookAnchor(inventoryBook);
             const record = `${connectedTransaction.getDate()} ${connectedTransaction.getAmount()} ${await connectedTransaction.getCreditAccountName()} ${await connectedTransaction.getDebitAccountName()} ${connectedTransaction.getDescription()}`;
@@ -74,7 +72,7 @@ export class EventHandlerTransactionChecked extends EventHandlerTransaction {
                 return undefined;
             }
 
-            const quantity = getQuantity(inventoryBook, financialTransaction);
+            const quantity = getQuantity(financialTransaction);
             const purchaseCode = financialTransaction.properties[PURCHASE_CODE_PROP];
             const purchaseInvoice = financialTransaction.properties[PURCHASE_INVOICE_PROP];
             const saleInvoice = financialTransaction.properties[SALE_INVOICE_PROP];
@@ -216,64 +214,6 @@ export class EventHandlerTransactionChecked extends EventHandlerTransaction {
         }
         console.log(`ERROR (getConnectedGoodAccount): financialAccount is missing required fields`);
         return undefined;
-    }
-
-    /**
-     * Updates an inventory transaction with new cost and quantity information based on a financial transaction.
-     * This method is used to:
-     * 1. Process credit notes by adjusting purchase costs and quantities
-     * 2. Add additional costs to existing inventory transactions
-     * 3. Update total costs and maintain transaction history by adding remote IDs
-     * 
-     * @param financialTransaction The financial transaction containing cost/credit information
-     * @param connectedTransaction The inventory transaction to update
-     * @param creditQuantity The quantity being credited (for credit notes)
-     */
-    private async updateGoodTransaction(financialTransaction: bkper.Transaction, connectedTransaction: Transaction, creditQuantity: number): Promise<void> {
-        // Get current values from the inventory transaction
-        const currentQuantity = connectedTransaction.getAmount()?.toNumber();
-        const currentGoodPurchaseCost = connectedTransaction.getProperty(GOOD_PURCHASE_COST_PROP);
-        const financialTransactionAmount = financialTransaction.amount;
-        const currentTotalCost = connectedTransaction.getProperty(TOTAL_COST_PROP);
-
-        // Validate required data exists
-        if (currentQuantity == undefined || currentGoodPurchaseCost == undefined || financialTransactionAmount == undefined || currentTotalCost == undefined) {
-            console.log(`ERROR (updateGoodTransaction): connectedTransaction or financialTransaction is missing required data`);
-            return;
-        }
-
-        // Get current additional costs, defaulting to 0 if none exist
-        let currentTotalAdditionalCosts = new Amount(0);
-        if (connectedTransaction.getProperty(TOTAL_ADDITIONAL_COSTS_PROP)) {
-            currentTotalAdditionalCosts = new Amount(connectedTransaction.getProperty(TOTAL_ADDITIONAL_COSTS_PROP)!);
-        }
-
-        // Calculate new costs based on transaction type (credit note vs additional cost)
-        let additionalCost = new Amount(0);
-        let newGoodPurchaseCost = new Amount(0);
-        if (financialTransaction.properties?.[CREDIT_NOTE_PROP]) {
-            // For credit notes: reduce the purchase cost by credit amount
-            const goodCreditValue = new Amount(financialTransactionAmount!);
-            newGoodPurchaseCost = new Amount(currentGoodPurchaseCost).minus(goodCreditValue);
-        } else {
-            // For additional costs: keep purchase cost same but add additional cost
-            additionalCost = new Amount(financialTransactionAmount!);
-            newGoodPurchaseCost = new Amount(currentGoodPurchaseCost);
-        }
-
-        // Calculate final values and update the transaction
-        const newQuantity = (financialTransaction.properties?.[CREDIT_NOTE_PROP]) ? currentQuantity - creditQuantity : currentQuantity;
-        const newTotalAdditionalCosts = currentTotalAdditionalCosts.plus(additionalCost);
-        const newTotalCosts = newGoodPurchaseCost.plus(newTotalAdditionalCosts);
-
-        await connectedTransaction
-            .setAmount(newQuantity)
-            .setProperty(ORIGINAL_QUANTITY_PROP, newQuantity.toString())
-            .setProperty(TOTAL_ADDITIONAL_COSTS_PROP, newTotalAdditionalCosts.toString())
-            .setProperty(TOTAL_COST_PROP, newTotalCosts.toString())
-            .setProperty(GOOD_PURCHASE_COST_PROP, newGoodPurchaseCost.toString())
-            .addRemoteId(financialTransaction.id!)
-            .update();
     }
 
 }

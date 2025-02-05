@@ -27,7 +27,7 @@ export class InterceptorOrderProcessor {
 
             if (this.isGoodPurchase(transactionPayload)) {
                 // prevent response to transactions posted without quantity or quantity = 0
-                const quantity = getQuantity(baseBook, transactionPayload);
+                const quantity = getQuantity(transactionPayload);
                 if (quantity == undefined) {
                     return { result: false };
                 }
@@ -110,7 +110,7 @@ export class InterceptorOrderProcessor {
     }
 
     private async postGoodTradeOnPurchase(baseBook: Book, buyerAccount: bkper.Account, transactionPayload: bkper.Transaction): Promise<string> {
-        const quantity = getQuantity(baseBook, transactionPayload);
+        const quantity = getQuantity(transactionPayload);
         if (quantity && transactionPayload.amount && transactionPayload.date && transactionPayload.properties) {
             const good = transactionPayload.properties![GOOD_PROP];
             const goodAccount = await this.getGoodAccount(baseBook, good);
