@@ -1,5 +1,4 @@
 // Properties
-export const ACTUAL_QUANTITY_PROP = 'actual_quantity';
 export const ADDITIONAL_COST_PROP = 'additional_cost';
 export const ADDITIONAL_COST_TX_IDS = 'add_cost_transactions';
 export const EXC_CODE_PROP = 'exc_code';

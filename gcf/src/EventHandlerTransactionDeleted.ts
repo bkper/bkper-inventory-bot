@@ -4,7 +4,6 @@ import { buildBookAnchor, isInventoryBook } from "./BotService.js";
 import { EventHandlerTransaction } from "./EventHandlerTransaction.js";
 import { InterceptorOrderProcessorDeleteFinancial } from "./InterceptorOrderProcessorDeleteFinancial.js";
 import { InterceptorOrderProcessorDeleteGoods } from "./InterceptorOrderProcessorDeleteGoods.js";
-import { GOOD_PROP, PURCHASE_CODE_PROP } from "./constants.js";
 
 export class EventHandlerTransactionDeleted extends EventHandlerTransaction {
 

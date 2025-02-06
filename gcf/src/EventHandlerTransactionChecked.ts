@@ -1,7 +1,7 @@
 import { Account, AccountType, Amount, Book, Group, Transaction } from "bkper-js";
 import { EventHandlerTransaction } from "./EventHandlerTransaction.js";
 import { buildBookAnchor, getCOGSCalculationDateValue, getGoodExchangeCodeFromAccount, getQuantity, updateGoodTransaction } from "./BotService.js";
-import { ACTUAL_QUANTITY_PROP, CREDIT_NOTE_PROP, GOOD_BUY_ACCOUNT_NAME, GOOD_EXC_CODE_PROP, GOOD_PROP, GOOD_PURCHASE_COST_PROP, GOOD_SELL_ACCOUNT_NAME, NEEDS_REBUILD_PROP, ORDER_PROP, ORIGINAL_QUANTITY_PROP, PURCHASE_CODE_PROP, PURCHASE_INVOICE_PROP, SALE_AMOUNT_PROP, SALE_INVOICE_PROP, TOTAL_COST_PROP } from "./constants.js";
+import { CREDIT_NOTE_PROP, GOOD_BUY_ACCOUNT_NAME, GOOD_EXC_CODE_PROP, GOOD_PROP, GOOD_PURCHASE_COST_PROP, GOOD_SELL_ACCOUNT_NAME, NEEDS_REBUILD_PROP, ORDER_PROP, ORIGINAL_QUANTITY_PROP, PURCHASE_CODE_PROP, PURCHASE_INVOICE_PROP, QUANTITY_PROP, SALE_AMOUNT_PROP, SALE_INVOICE_PROP, TOTAL_COST_PROP } from "./constants.js";
 import { Result } from "./index.js";
 import { InterceptorFlagRebuild } from "./InterceptorFlagRebuild.js";
 
@@ -152,7 +152,6 @@ export class EventHandlerTransactionChecked extends EventHandlerTransaction {
                         .addRemoteId(financialTransaction.id)
                         .addRemoteId(`${financialTransaction.properties[PURCHASE_CODE_PROP]}_${financialDebitAccount.normalizedName}`)
                         .setProperty(ORIGINAL_QUANTITY_PROP, quantity.toString())
-                        .setProperty(ACTUAL_QUANTITY_PROP, quantity.toString())
                         .setProperty(GOOD_PURCHASE_COST_PROP, financialAmount.toString())
                         .setProperty(ORDER_PROP, financialTransaction.properties[ORDER_PROP])
                         .setProperty(PURCHASE_CODE_PROP, financialTransaction.properties[PURCHASE_CODE_PROP])

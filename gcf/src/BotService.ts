@@ -1,6 +1,6 @@
 import { Account, AccountType, Amount, Bkper, Book, Transaction } from 'bkper-js';
 
-import { ACTUAL_QUANTITY_PROP, COGS_CALC_DATE_PROP, CREDIT_NOTE_PROP, EXC_CODE_PROP, GOOD_PROP, GOOD_PURCHASE_COST_PROP, INVENTORY_BOOK_PROP, NEEDS_REBUILD_PROP, PURCHASE_CODE_PROP, QUANTITY_PROP, TOTAL_ADDITIONAL_COSTS_PROP, TOTAL_COST_PROP } from './constants.js';
+import { COGS_CALC_DATE_PROP, CREDIT_NOTE_PROP, EXC_CODE_PROP, GOOD_PROP, GOOD_PURCHASE_COST_PROP, INVENTORY_BOOK_PROP, NEEDS_REBUILD_PROP, ORIGINAL_QUANTITY_PROP, PURCHASE_CODE_PROP, QUANTITY_PROP, TOTAL_ADDITIONAL_COSTS_PROP, TOTAL_COST_PROP } from './constants.js';
 
 export function isInventoryBook(book: Book): boolean {
     if (book.getProperty(INVENTORY_BOOK_PROP)) {
@@ -221,7 +221,7 @@ export async function updateGoodTransaction(financialTransaction: bkper.Transact
 
     await connectedTransaction
         .setAmount(newQuantity)
-        .setProperty(ACTUAL_QUANTITY_PROP, newQuantity.toString())
+        .setProperty(ORIGINAL_QUANTITY_PROP, newQuantity.toString())
         .setProperty(TOTAL_ADDITIONAL_COSTS_PROP, newTotalAdditionalCosts.toString())
         .setProperty(TOTAL_COST_PROP, newTotalCosts.toString())
         .setProperty(GOOD_PURCHASE_COST_PROP, newGoodPurchaseCost.toString())
