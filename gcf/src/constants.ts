@@ -5,6 +5,7 @@ export const EXC_CODE_PROP = 'exc_code';
 export const COGS_CALC_DATE_PROP = 'cogs_calc_date';
 export const COGS_HASHTAG = '#cost_of_sale';
 export const CREDIT_NOTE_PROP = 'credit_note';
+export const TOTAL_CREDITS_PROP = 'total_credits';
 export const GOOD_EXC_CODE_PROP = 'good_exc_code';
 export const GOOD_PROP = 'good';
 export const GOOD_PURCHASE_COST_PROP = 'good_purchase_cost';
