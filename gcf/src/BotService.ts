@@ -1,6 +1,6 @@
 import { Account, AccountType, Amount, Bkper, Book, Transaction } from 'bkper-js';
 
-import { COGS_CALC_DATE_PROP, CREDIT_NOTE_PROP, EXC_CODE_PROP, GOOD_PROP, GOOD_PURCHASE_COST_PROP, INVENTORY_BOOK_PROP, NEEDS_REBUILD_PROP, ORIGINAL_QUANTITY_PROP, PURCHASE_CODE_PROP, QUANTITY_PROP, TOTAL_ADDITIONAL_COSTS_PROP, TOTAL_COST_PROP } from './constants.js';
+import { COGS_CALC_DATE_PROP, CREDIT_NOTE_PROP, TOTAL_CREDITS_PROP, EXC_CODE_PROP, GOOD_PROP, GOOD_PURCHASE_COST_PROP, INVENTORY_BOOK_PROP, NEEDS_REBUILD_PROP, ORIGINAL_QUANTITY_PROP, PURCHASE_CODE_PROP, QUANTITY_PROP, TOTAL_ADDITIONAL_COSTS_PROP, TOTAL_COST_PROP } from './constants.js';
 
 export function isInventoryBook(book: Book): boolean {
     if (book.getProperty(INVENTORY_BOOK_PROP)) {
@@ -168,6 +168,16 @@ export async function flagInventoryAccountForRebuildIfNeeded(financialBook: Book
     return undefined;
 }
 
+export async function flagInventoryAccountForRebuild(financialBook: Book, inventoryTransaction: Transaction): Promise<string | undefined> {
+    let inventoryAccount = await getGoodAccount(inventoryTransaction);
+    if (inventoryAccount) {
+        await inventoryAccount.setProperty(NEEDS_REBUILD_PROP, 'TRUE').update();
+        const inventoryBook = getInventoryBook(financialBook);
+        return buildBookAnchor(inventoryBook) ? `${buildBookAnchor(inventoryBook)}: Flagging account for rebuild` : 'Flagging account for rebuild';
+    }
+    return undefined;
+}
+
 /**
  * Updates an inventory transaction with new cost and quantity information based on a financial transaction.
  * This method is used to:
@@ -199,25 +209,31 @@ export async function updateGoodTransaction(financialTransaction: bkper.Transact
         currentTotalAdditionalCosts = new Amount(connectedTransaction.getProperty(TOTAL_ADDITIONAL_COSTS_PROP)!);
     }
 
+    // Get current additional costs, defaulting to 0 if none exist
+    let currentTotalCredits = new Amount(0);
+    if (connectedTransaction.getProperty(TOTAL_CREDITS_PROP)) {
+        currentTotalCredits = new Amount(connectedTransaction.getProperty(TOTAL_CREDITS_PROP)!);
+    }
+
     // Calculate new costs based on transaction type (credit note vs additional cost)
     let additionalCost = new Amount(0);
+    let creditValue = new Amount(0);
     let creditQuantity = 0;
-    let newGoodPurchaseCost = new Amount(0);
-    if (financialTransaction.properties?.[CREDIT_NOTE_PROP]) {
-        // For credit notes: reduce the purchase cost by credit amount
-        const creditValue = new Amount(financialTransactionAmount!);
+    if (financialTransaction.properties?.[CREDIT_NOTE_PROP]) {   ////// REVER
+        // For credit notes: reduce the purchase cost by credit amount (increase the purchase cost on deletion)
+        creditValue = new Amount(financialTransactionAmount!);
         creditQuantity = getQuantity(financialTransaction)?.toNumber() ?? 0;
-        newGoodPurchaseCost = new Amount(currentGoodPurchaseCost).minus(creditValue);
     } else {
         // For additional costs: keep purchase cost same but add additional cost
         additionalCost = new Amount(financialTransactionAmount!);
-        newGoodPurchaseCost = new Amount(currentGoodPurchaseCost);
     }
 
     // Calculate final values and update the transaction
-    const newQuantity = onDelete ? ((financialTransaction.properties?.[CREDIT_NOTE_PROP]) ? currentQuantity + creditQuantity : currentQuantity) : ((financialTransaction.properties?.[CREDIT_NOTE_PROP]) ? currentQuantity - creditQuantity : currentQuantity);
+    const newGoodPurchaseCost = onDelete ? new Amount(currentGoodPurchaseCost).plus(creditValue) : new Amount(currentGoodPurchaseCost).minus(creditValue);
     const newTotalAdditionalCosts = onDelete ? currentTotalAdditionalCosts.minus(additionalCost) : currentTotalAdditionalCosts.plus(additionalCost);
-    const newTotalCosts = onDelete ? newGoodPurchaseCost.minus(additionalCost) : newGoodPurchaseCost.plus(newTotalAdditionalCosts);
+    const newTotalCredits = onDelete ? currentTotalCredits.minus(creditValue) : currentTotalCredits.plus(creditValue);
+    const newTotalCosts = newGoodPurchaseCost.plus(newTotalAdditionalCosts).minus(newTotalCredits);
+    const newQuantity = onDelete ? ((financialTransaction.properties?.[CREDIT_NOTE_PROP]) ? currentQuantity + creditQuantity : currentQuantity) : ((financialTransaction.properties?.[CREDIT_NOTE_PROP]) ? currentQuantity - creditQuantity : currentQuantity);
 
     await connectedTransaction
         .setAmount(newQuantity)

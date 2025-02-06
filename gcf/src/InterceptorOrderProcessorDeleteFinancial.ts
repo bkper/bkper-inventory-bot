@@ -2,7 +2,7 @@ import { AccountType, Amount, Book, Transaction } from "bkper-js";
 import { InterceptorOrderProcessorDelete } from "./InterceptorOrderProcessorDelete.js";
 import { Result } from "./index.js";
 import { GOOD_PROP, PURCHASE_CODE_PROP, PURCHASE_INVOICE_PROP, QUANTITY_PROP, COGS_HASHTAG, ORIGINAL_QUANTITY_PROP, NEEDS_REBUILD_PROP } from "./constants.js";
-import { flagInventoryAccountForRebuildIfNeeded, getInventoryBook, getQuantity, updateGoodTransaction } from "./BotService.js";
+import { flagInventoryAccountForRebuild, flagInventoryAccountForRebuildIfNeeded, getInventoryBook, getQuantity, updateGoodTransaction } from "./BotService.js";
 
 export class InterceptorOrderProcessorDeleteFinancial extends InterceptorOrderProcessorDelete {
 
@@ -52,11 +52,13 @@ export class InterceptorOrderProcessorDeleteFinancial extends InterceptorOrderPr
                 if (inventoryTx) {
                     const originalQuantity = new Amount(transactionPayload.properties[ORIGINAL_QUANTITY_PROP]).toNumber();
                     const amount = new Amount(transactionPayload!.amount ?? 0).toNumber();
+                    await updateGoodTransaction(transactionPayload, inventoryTx, true);
                     if (originalQuantity != amount) {
                         // transaction had been already processed in FIFO: flag account for rebuild
-                    } else {
-                        // update inventory transaction with new quantity and total costs
-                        await updateGoodTransaction(transactionPayload, inventoryTx, true);
+                        const rebuildFlagMsg = await flagInventoryAccountForRebuild(financialBook, inventoryTx);
+                        if (rebuildFlagMsg) {
+                            responses.push(rebuildFlagMsg);
+                        }
                     }
                     responses.push(`UPDATED: ${inventoryTx.getDate()} ${inventoryTx.getAmount()} ${await inventoryTx.getCreditAccountName()} ${await inventoryTx.getDebitAccountName()} ${inventoryTx.getDescription()}`);
                 }
