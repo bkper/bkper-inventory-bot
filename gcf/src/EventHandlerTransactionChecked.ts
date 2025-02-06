@@ -58,7 +58,7 @@ export class EventHandlerTransactionChecked extends EventHandlerTransaction {
             }
 
             // update additional cost properties and transaction quantities on purchases or credit notes
-            updateGoodTransaction(financialTransaction, connectedTransaction);
+            await updateGoodTransaction(financialTransaction, connectedTransaction);
 
             const bookAnchor = buildBookAnchor(inventoryBook);
             const record = `${connectedTransaction.getDate()} ${connectedTransaction.getAmount()} ${await connectedTransaction.getCreditAccountName()} ${await connectedTransaction.getDebitAccountName()} ${connectedTransaction.getDescription()}`;
@@ -162,7 +162,7 @@ export class EventHandlerTransactionChecked extends EventHandlerTransaction {
 
                     const record = `${newTransaction.getDate()} ${newTransaction.getAmount()} ${goodBuyAccount.getName()} ${goodAccount.getName()} ${newTransaction.getDescription()}`;
                     const needsRebuild = this.checkLastTxDate(goodAccount, financialTransaction);
-                    
+
                     if (needsRebuild) {
                         return `BUY: ${inventoryBookAnchor}: ${record} / WARNING: Transaction date is before the last COGS calculation date. Flagging account ${goodAccount.getName()} for rebuild`;
                     } else {

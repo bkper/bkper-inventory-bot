@@ -1,8 +1,8 @@
 import { AccountType, Amount, Book, Transaction } from "bkper-js";
 import { InterceptorOrderProcessorDelete } from "./InterceptorOrderProcessorDelete.js";
 import { Result } from "./index.js";
-import { GOOD_PROP, PURCHASE_CODE_PROP, PURCHASE_INVOICE_PROP, QUANTITY_PROP, COGS_HASHTAG, ORIGINAL_QUANTITY_PROP, NEEDS_REBUILD_PROP } from "./constants.js";
-import { flagInventoryAccountForRebuild, flagInventoryAccountForRebuildIfNeeded, getInventoryBook, getQuantity, updateGoodTransaction } from "./BotService.js";
+import { GOOD_PROP, PURCHASE_CODE_PROP, PURCHASE_INVOICE_PROP, QUANTITY_PROP, COGS_HASHTAG } from "./constants.js";
+import { flagInventoryAccountForRebuild, flagInventoryAccountForRebuildIfNeeded, getInventoryBook, updateGoodTransaction } from "./BotService.js";
 
 export class InterceptorOrderProcessorDeleteFinancial extends InterceptorOrderProcessorDelete {
 
@@ -48,9 +48,9 @@ export class InterceptorOrderProcessorDeleteFinancial extends InterceptorOrderPr
             // deleted transaction is the additional cost transaction or credit note transaction
             if (transactionPayload.properties[PURCHASE_CODE_PROP] != undefined && (transactionPayload.properties[PURCHASE_CODE_PROP] != transactionPayload.properties[PURCHASE_INVOICE_PROP])) {
                 const inventoryBook = getInventoryBook(financialBook);
-                const inventoryTx = inventoryBook ? await inventoryBook.getTransaction(transactionPayload.id) : undefined;
+                const inventoryTx = inventoryBook ? (await inventoryBook.listTransactions(`remoteId:${transactionPayload.id}`)).getFirst() : undefined;
                 if (inventoryTx) {
-                    const originalQuantity = new Amount(transactionPayload.properties[ORIGINAL_QUANTITY_PROP]).toNumber();
+                    const originalQuantity = new Amount(transactionPayload.properties[QUANTITY_PROP]).toNumber();
                     const amount = new Amount(transactionPayload!.amount ?? 0).toNumber();
                     await updateGoodTransaction(transactionPayload, inventoryTx, true);
                     if (originalQuantity != amount) {
