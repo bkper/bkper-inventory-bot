@@ -219,7 +219,7 @@ export async function updateGoodTransaction(financialTransaction: bkper.Transact
     let additionalCost = new Amount(0);
     let creditValue = new Amount(0);
     let creditQuantity = 0;
-    if (financialTransaction.properties?.[CREDIT_NOTE_PROP]) {   ////// REVER
+    if (financialTransaction.properties?.[CREDIT_NOTE_PROP]) {
         // For credit notes: reduce the purchase cost by credit amount (increase the purchase cost on deletion)
         creditValue = new Amount(financialTransactionAmount!);
         creditQuantity = getQuantity(financialTransaction)?.toNumber() ?? 0;
@@ -232,15 +232,16 @@ export async function updateGoodTransaction(financialTransaction: bkper.Transact
     const newGoodPurchaseCost = onDelete ? new Amount(currentGoodPurchaseCost).plus(creditValue) : new Amount(currentGoodPurchaseCost).minus(creditValue);
     const newTotalAdditionalCosts = onDelete ? currentTotalAdditionalCosts.minus(additionalCost) : currentTotalAdditionalCosts.plus(additionalCost);
     const newTotalCredits = onDelete ? currentTotalCredits.minus(creditValue) : currentTotalCredits.plus(creditValue);
-    const newTotalCosts = newGoodPurchaseCost.plus(newTotalAdditionalCosts).minus(newTotalCredits);
+    const newTotalCosts = newGoodPurchaseCost.plus(newTotalAdditionalCosts);
     const newQuantity = onDelete ? ((financialTransaction.properties?.[CREDIT_NOTE_PROP]) ? currentQuantity + creditQuantity : currentQuantity) : ((financialTransaction.properties?.[CREDIT_NOTE_PROP]) ? currentQuantity - creditQuantity : currentQuantity);
 
     await connectedTransaction
         .setAmount(newQuantity)
-        .setProperty(ORIGINAL_QUANTITY_PROP, newQuantity.toString())
-        .setProperty(TOTAL_ADDITIONAL_COSTS_PROP, newTotalAdditionalCosts.toString())
-        .setProperty(TOTAL_COST_PROP, newTotalCosts.toString())
+        .setProperty(TOTAL_ADDITIONAL_COSTS_PROP, newTotalAdditionalCosts.toNumber() != 0 ? newTotalAdditionalCosts.toString() : null)
+        .setProperty(TOTAL_CREDITS_PROP, newTotalCredits.toNumber() != 0 ? newTotalCredits.toString() : null)
         .setProperty(GOOD_PURCHASE_COST_PROP, newGoodPurchaseCost.toString())
+        .setProperty(ORIGINAL_QUANTITY_PROP, newQuantity.toString())
+        .setProperty(TOTAL_COST_PROP, newTotalCosts.toString())
         .addRemoteId(financialTransaction.id!)
         .update();
 }
