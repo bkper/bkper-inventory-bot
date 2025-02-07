@@ -28,7 +28,7 @@ export class EventHandlerTransactionDeleted extends EventHandlerTransaction {
         });
     }
 
-    protected connectedTransactionFound(baseBook: Book, connectedBook: Book, financialTransaction: bkper.Transaction, goodTransaction: Transaction, goodExcCode?: string): Promise<string | undefined> {
+    protected connectedTransactionFound(eventBook: Book, connectedBook: Book, financialTransaction: bkper.Transaction, goodTransaction: Transaction, goodExcCode?: string): Promise<string | undefined> {
         return new Promise((resolve, reject) => {
             const result = undefined;
             resolve(result);

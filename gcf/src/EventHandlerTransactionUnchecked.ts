@@ -5,8 +5,8 @@ import { InterceptorFlagRebuild } from "./InterceptorFlagRebuild.js";
 export class EventHandlerTransactionUnchecked {
 
   async handleEvent(event: bkper.Event): Promise<Result> {
-    let baseBook = await Bkper.getBook(event.bookId!);
-    const response = await new InterceptorFlagRebuild().intercept(baseBook, event);
+    let eventBook = await Bkper.getBook(event.bookId!);
+    const response = await new InterceptorFlagRebuild().intercept(eventBook, event);
     if (response.result) {
       return response;
     }

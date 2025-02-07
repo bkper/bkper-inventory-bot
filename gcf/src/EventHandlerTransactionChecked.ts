@@ -7,8 +7,8 @@ import { InterceptorFlagRebuild } from "./InterceptorFlagRebuild.js";
 
 export class EventHandlerTransactionChecked extends EventHandlerTransaction {
 
-    async intercept(baseBook: Book, event: bkper.Event): Promise<Result> {
-        let response = await new InterceptorFlagRebuild().intercept(baseBook, event);
+    async intercept(eventBook: Book, event: bkper.Event): Promise<Result> {
+        let response = await new InterceptorFlagRebuild().intercept(eventBook, event);
         return response;
     }
 
@@ -62,7 +62,7 @@ export class EventHandlerTransactionChecked extends EventHandlerTransaction {
 
             const bookAnchor = buildBookAnchor(inventoryBook);
             const record = `${connectedTransaction.getDate()} ${connectedTransaction.getAmount()} ${await connectedTransaction.getCreditAccountName()} ${await connectedTransaction.getDebitAccountName()} ${connectedTransaction.getDescription()}`;
-            return `FOUND: ${bookAnchor}: ${record}`;
+            return `FOUND: ${bookAnchor} UPDATED: ${record}`;
         }
         console.log('ERROR (connectedTransactionFound): financialTransaction is missing required fields');
         return undefined;
@@ -125,7 +125,7 @@ export class EventHandlerTransactionChecked extends EventHandlerTransaction {
                     ;
 
                 const record = `${newTransaction.getDate()} ${newTransaction.getAmount()} ${goodAccount.getName()} ${goodSellAccount.getName()} ${newTransaction.getDescription()}`;
-                const needsRebuild = this.checkLastTxDate(goodAccount, financialTransaction);
+                const needsRebuild = await this.checkLastTxDate(goodAccount, financialTransaction);
 
                 if (needsRebuild) {
                     return `SELL: ${inventoryBookAnchor}: ${record} / WARNING: Transaction date is before the last COGS calculation date. Flagging account ${goodAccount.getName()} for rebuild`;
@@ -161,7 +161,7 @@ export class EventHandlerTransactionChecked extends EventHandlerTransaction {
                         ;
 
                     const record = `${newTransaction.getDate()} ${newTransaction.getAmount()} ${goodBuyAccount.getName()} ${goodAccount.getName()} ${newTransaction.getDescription()}`;
-                    const needsRebuild = this.checkLastTxDate(goodAccount, financialTransaction);
+                    const needsRebuild = await this.checkLastTxDate(goodAccount, financialTransaction);
 
                     if (needsRebuild) {
                         return `BUY: ${inventoryBookAnchor}: ${record} / WARNING: Transaction date is before the last COGS calculation date. Flagging account ${goodAccount.getName()} for rebuild`;
@@ -175,10 +175,10 @@ export class EventHandlerTransactionChecked extends EventHandlerTransaction {
         return undefined;
     }
 
-    private checkLastTxDate(goodAccount: Account, transaction: bkper.Transaction): boolean {
+    private async checkLastTxDate(goodAccount: Account, transaction: bkper.Transaction): Promise<boolean> {
         let lastTxDate = getCOGSCalculationDateValue(goodAccount);
         if (lastTxDate != null && (transaction.dateValue != undefined && transaction.dateValue <= +lastTxDate)) {
-            goodAccount.setProperty(NEEDS_REBUILD_PROP, 'TRUE').update();
+            await goodAccount.setProperty(NEEDS_REBUILD_PROP, 'TRUE').update();
             return true;
         }
         return false;

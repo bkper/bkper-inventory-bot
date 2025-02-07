@@ -6,11 +6,11 @@ import { Result } from "./index.js";
 
 export class EventHandlerTransactionUpdated extends EventHandlerTransaction {
 
-    async intercept(baseBook: Book, event: bkper.Event): Promise<Result> {
+    async intercept(eventBook: Book, event: bkper.Event): Promise<Result> {
         if (this.shouldCascadeDeletion(event)) {
-            return await new InterceptorOrderProcessorDeleteFinancial().intercept(baseBook, event);
+            return await new InterceptorOrderProcessorDeleteFinancial().intercept(eventBook, event);
         }
-        return await new InterceptorOrderProcessor().intercept(baseBook, event);
+        return await new InterceptorOrderProcessor().intercept(eventBook, event);
     }
 
     private shouldCascadeDeletion(event: bkper.Event): boolean {
@@ -32,7 +32,7 @@ export class EventHandlerTransactionUpdated extends EventHandlerTransaction {
     protected connectedTransactionNotFound(financialBook: Book, inventoryBook: Book, financialTransaction: bkper.Transaction, goodExcCode: string): Promise<string> {
         throw new Error("Method not implemented.");
     }
-    protected connectedTransactionFound(baseBook: Book, connectedBook: Book, financialTransaction: bkper.Transaction, goodTransaction: Transaction, goodExcCode: string): Promise<string> {
+    protected connectedTransactionFound(eventBook: Book, connectedBook: Book, financialTransaction: bkper.Transaction, goodTransaction: Transaction, goodExcCode: string): Promise<string> {
         throw new Error("Method not implemented.");
     }
 

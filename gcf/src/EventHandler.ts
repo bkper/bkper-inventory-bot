@@ -4,17 +4,17 @@ import { getInventoryBook } from "./BotService.js";
 
 export abstract class EventHandler {
 
-    protected abstract processObject(baseBook: Book, connectedBook: Book, event: bkper.Event): Promise<string | undefined>;
+    protected abstract processObject(eventBook: Book, connectedBook: Book, event: bkper.Event): Promise<string | undefined>;
 
-    protected async intercept(baseBook: Book, event: bkper.Event): Promise<Result> {
+    protected async intercept(eventBook: Book, event: bkper.Event): Promise<Result> {
         return { result: false };
     }
 
     async handleEvent(event: bkper.Event): Promise<Result> {
 
-        let baseBook = new Book(event.book);
+        let eventBook = new Book(event.book);
 
-        let interceptionResponse = await this.intercept(baseBook, event);
+        let interceptionResponse = await this.intercept(eventBook, event);
         if (interceptionResponse.result) {
             return interceptionResponse;
         }
@@ -22,14 +22,14 @@ export abstract class EventHandler {
         let responses: string[] = [];
         let warningMsg: string | undefined = undefined;
 
-        let inventoryBook = getInventoryBook(baseBook);
+        let inventoryBook = getInventoryBook(eventBook);
 
-        const logtag = `Handling ${event.type} event on book ${baseBook.getName()} from user ${event.user?.username ?? 'unknown'}`;
+        const logtag = `Handling ${event.type} event on book ${eventBook.getName()} from user ${event.user?.username ?? 'unknown'}`;
         console.time(logtag);
 
         if (inventoryBook) {
             try {
-                let response = await this.processObject(baseBook, inventoryBook, event);
+                let response = await this.processObject(eventBook, inventoryBook, event);
                 if (response) {
                     if (response.includes('WARNING')) {
                         warningMsg = response.split(' / ')[1];

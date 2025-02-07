@@ -5,20 +5,20 @@ import { NEEDS_REBUILD_PROP } from "./constants.js";
 
 export class InterceptorFlagRebuild {
 
-    async intercept(baseBook: Book, event: bkper.Event): Promise<Result> {
-        if (isInventoryBook(baseBook) && event.agent?.id != 'inventory-bot') {
+    async intercept(eventBook: Book, event: bkper.Event): Promise<Result> {
+        if (isInventoryBook(eventBook) && event.agent?.id != 'inventory-bot') {
             if (event.data) {
                 if (!event.data.object) {
                     return { result: false };
                 }
                 let operation = event.data.object as bkper.TransactionOperation;
                 let transactionPayload = operation.transaction;
-                let transaction = await baseBook.getTransaction(transactionPayload!.id!);
+                let transaction = await eventBook.getTransaction(transactionPayload!.id!);
                 
                 let goodAccount = transaction ? await getGoodAccount(transaction) : null;
                 
                 if (goodAccount && goodAccount.getProperty(NEEDS_REBUILD_PROP) == null) {
-                    goodAccount.setProperty(NEEDS_REBUILD_PROP, 'TRUE').update();
+                    await goodAccount.setProperty(NEEDS_REBUILD_PROP, 'TRUE').update();
                     const msg = `Flagging account ${goodAccount.getName()} for rebuild`;
                     return { warning: msg, result: msg };
                 }

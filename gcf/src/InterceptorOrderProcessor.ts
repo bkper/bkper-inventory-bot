@@ -5,7 +5,7 @@ import { ADDITIONAL_COST_PROP, ADDITIONAL_COST_TX_IDS, GOOD_PROP, ORDER_PROP, PU
 
 export class InterceptorOrderProcessor {
 
-    async intercept(baseBook: Book, event: bkper.Event): Promise<Result> {
+    async intercept(eventBook: Book, event: bkper.Event): Promise<Result> {
 
         // prevent response to Exchange Bot transactions
         if (event.agent?.id == 'exchange-bot') {
@@ -13,7 +13,7 @@ export class InterceptorOrderProcessor {
         }
 
         // prevent response to transactions posted in the inventory book
-        if (isInventoryBook(baseBook)) {
+        if (isInventoryBook(eventBook)) {
             return { result: false };
         }
 
@@ -34,11 +34,11 @@ export class InterceptorOrderProcessor {
                 if (quantity.eq(0)) {
                     throw `Quantity must not be zero`;
                 }
-                return this.processGoodPurchase(baseBook, transactionPayload);
+                return this.processGoodPurchase(eventBook, transactionPayload);
             }
 
             if (this.isAdditionalCost(transactionPayload)) {
-                return this.processAdditionalCost(baseBook, transactionPayload);
+                return this.processAdditionalCost(eventBook, transactionPayload);
             }
         }
 
@@ -76,14 +76,14 @@ export class InterceptorOrderProcessor {
     }
 
     // post aditional financial transaction from Buyer to Good (asset) in response to good purchase transaction from Supplier to Buyer
-    private async processGoodPurchase(baseBook: Book, transactionPayload: bkper.Transaction): Promise<Result> {
+    private async processGoodPurchase(financialBookBook: Book, transactionPayload: bkper.Transaction): Promise<Result> {
         let buyerAccount = transactionPayload.debitAccount;
         if (buyerAccount) {
             let responses: string[] = await Promise.all(
                 [
-                    // this.postFees(baseBook, exchangeAccount, transactionPayload),
-                    // this.postInterestOnPurchase(baseBook, exchangeAccount, transactionPayload),
-                    this.postGoodTradeOnPurchase(baseBook, buyerAccount, transactionPayload)
+                    // this.postFees(eventBook, exchangeAccount, transactionPayload),
+                    // this.postInterestOnPurchase(eventBook, exchangeAccount, transactionPayload),
+                    this.postGoodTradeOnPurchase(financialBookBook, buyerAccount, transactionPayload)
                 ]);
             responses = responses.filter(r => r != null).filter(r => typeof r === "string");
             return { result: responses };
@@ -93,14 +93,14 @@ export class InterceptorOrderProcessor {
     }
 
     // post aditional financial transaction from Buyer to Good (asset) in response to service purchase transaction from Supplier to Buyer
-    private async processAdditionalCost(baseBook: Book, transactionPayload: bkper.Transaction): Promise<Result> {
+    private async processAdditionalCost(financialBookBook: Book, transactionPayload: bkper.Transaction): Promise<Result> {
         let buyerAccount = transactionPayload.debitAccount;
         if (buyerAccount) {
             let responses: string[] = await Promise.all(
                 [
-                    // this.postFees(baseBook, exchangeAccount, transactionPayload),
-                    // this.postInterestOnPurchase(baseBook, exchangeAccount, transactionPayload),
-                    this.postAdditionalCostOnPurchase(baseBook, buyerAccount, transactionPayload)
+                    // this.postFees(eventBook, exchangeAccount, transactionPayload),
+                    // this.postInterestOnPurchase(eventBook, exchangeAccount, transactionPayload),
+                    this.postAdditionalCostOnPurchase(financialBookBook, buyerAccount, transactionPayload)
                 ]);
             responses = responses.filter(r => r != null).filter(r => typeof r === "string");
             return { result: responses };
@@ -109,14 +109,14 @@ export class InterceptorOrderProcessor {
         }
     }
 
-    private async postGoodTradeOnPurchase(baseBook: Book, buyerAccount: bkper.Account, transactionPayload: bkper.Transaction): Promise<string> {
+    private async postGoodTradeOnPurchase(financialBookBook: Book, buyerAccount: bkper.Account, transactionPayload: bkper.Transaction): Promise<string> {
         const quantity = getQuantity(transactionPayload);
         if (quantity && transactionPayload.amount && transactionPayload.date && transactionPayload.properties) {
             const good = transactionPayload.properties![GOOD_PROP];
-            const goodAccount = await this.getGoodAccount(baseBook, good);
-            const order = this.getOrder(baseBook, transactionPayload);
+            const goodAccount = await this.getGoodAccount(financialBookBook, good);
+            const order = this.getOrder(financialBookBook, transactionPayload);
             const amount = new Amount(transactionPayload.amount);
-            const tx = await new Transaction(baseBook)
+            const tx = await new Transaction(financialBookBook)
                 .setAmount(amount)
                 .from(buyerAccount)
                 .to(goodAccount)
@@ -135,12 +135,12 @@ export class InterceptorOrderProcessor {
         return 'ERROR (postGoodTradeOnPurchase): transaction payload is missing required fields';
     }
 
-    private async postAdditionalCostOnPurchase(baseBook: Book, buyerAccount: bkper.Account, transactionPayload: bkper.Transaction): Promise<string> {
+    private async postAdditionalCostOnPurchase(financialBookBook: Book, buyerAccount: bkper.Account, transactionPayload: bkper.Transaction): Promise<string> {
         if (transactionPayload.amount && transactionPayload.date && transactionPayload.properties && transactionPayload.id) {
             let good = transactionPayload.properties![GOOD_PROP];
-            let goodAccount = await this.getGoodAccount(baseBook, good);
+            let goodAccount = await this.getGoodAccount(financialBookBook, good);
             const amount = new Amount(transactionPayload.amount);
-            let tx = await new Transaction(baseBook)
+            let tx = await new Transaction(financialBookBook)
                 .setAmount(amount)
                 .from(buyerAccount)
                 .to(goodAccount)
@@ -152,17 +152,17 @@ export class InterceptorOrderProcessor {
                 .addRemoteId(`${ADDITIONAL_COST_PROP}_${transactionPayload.id}`)
                 .post();
 
-            this.addAdditionalCostToGoodTx(baseBook, transactionPayload.properties[PURCHASE_CODE_PROP], transactionPayload.id);
+            this.addAdditionalCostToGoodTx(financialBookBook, transactionPayload.properties[PURCHASE_CODE_PROP], transactionPayload.id);
 
             return `${tx.getDate()} ${tx.getAmount()} ${await tx.getCreditAccountName()} ${await tx.getDebitAccountName()} ${tx.getDescription()}`;
         }
         return 'ERROR (postAdditionalCostOnPurchase): transaction payload is missing required fields';
     }
 
-    private async getGoodAccount(baseBook: Book, good: string): Promise<Account> {
-        let goodAccount = await baseBook.getAccount(good);
+    private async getGoodAccount(financialBookBook: Book, good: string): Promise<Account> {
+        let goodAccount = await financialBookBook.getAccount(good);
         if (goodAccount == null) {
-            goodAccount = await new Account(baseBook).setName(good).setType(AccountType.ASSET).create();
+            goodAccount = await new Account(financialBookBook).setName(good).setType(AccountType.ASSET).create();
         }
         return goodAccount;
     }
@@ -179,8 +179,8 @@ export class InterceptorOrderProcessor {
         return orderAmount.round(0).toString();
     }
 
-    private async addAdditionalCostToGoodTx(baseBook: Book, purchaseCodeProp: string, additionalCostTxId: string): Promise<string> {
-        const rootPurchaseTx = await getGoodPurchaseRootTx(baseBook, purchaseCodeProp.toLowerCase());
+    private async addAdditionalCostToGoodTx(eventBook: Book, purchaseCodeProp: string, additionalCostTxId: string): Promise<string> {
+        const rootPurchaseTx = await getGoodPurchaseRootTx(eventBook, purchaseCodeProp.toLowerCase());
         if (rootPurchaseTx) {
             let additionalCostTxIds = rootPurchaseTx.getProperty(ADDITIONAL_COST_TX_IDS);
             if (additionalCostTxIds) {

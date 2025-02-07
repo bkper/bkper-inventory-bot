@@ -7,7 +7,7 @@ export abstract class EventHandlerTransaction extends EventHandler {
 
     protected abstract getTransactionQuery(transaction: bkper.Transaction): string;
     protected abstract connectedTransactionNotFound(financialBook: Book, inventoryBook: Book, financialTransaction: bkper.Transaction, goodExcCode?: string): Promise<string | undefined>;
-    protected abstract connectedTransactionFound(baseBook: Book, connectedBook: Book, financialTransaction: bkper.Transaction, goodTransaction: Transaction, goodExcCode?: string): Promise<string | undefined>;
+    protected abstract connectedTransactionFound(eventBook: Book, connectedBook: Book, financialTransaction: bkper.Transaction, goodTransaction: Transaction, goodExcCode?: string): Promise<string | undefined>;
 
     async processObject(financialBook: Book, inventoryBook: Book, event: bkper.Event): Promise<string | undefined> {
         if (!event.data) {
