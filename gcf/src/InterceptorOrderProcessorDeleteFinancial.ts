@@ -50,10 +50,10 @@ export class InterceptorOrderProcessorDeleteFinancial extends InterceptorOrderPr
                 const inventoryBook = getInventoryBook(financialBook);
                 const inventoryTx = inventoryBook ? (await inventoryBook.listTransactions(`remoteId:${transactionPayload.id}`)).getFirst() : undefined;
                 if (inventoryTx) {
-                    const originalQuantity = new Amount(transactionPayload.properties[QUANTITY_PROP]).toNumber();
+                    const quantity = new Amount(transactionPayload.properties[QUANTITY_PROP] ?? 0).toNumber();
                     const amount = new Amount(transactionPayload!.amount ?? 0).toNumber();
                     await updateGoodTransaction(transactionPayload, inventoryTx, true);
-                    if (originalQuantity != amount) {
+                    if (quantity != amount) {
                         // transaction had been already processed in FIFO: flag account for rebuild
                         const rebuildFlagMsg = await flagInventoryAccountForRebuild(financialBook, inventoryTx);
                         if (rebuildFlagMsg) {

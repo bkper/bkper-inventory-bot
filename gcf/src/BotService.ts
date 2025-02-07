@@ -192,13 +192,13 @@ export async function flagInventoryAccountForRebuild(financialBook: Book, invent
  */
 export async function updateGoodTransaction(financialTransaction: bkper.Transaction, connectedTransaction: Transaction, onDelete?: boolean): Promise<void> {
     // Get current values from the inventory transaction
-    const currentQuantity = connectedTransaction.getAmount()?.toNumber();
+    const currentAmount = connectedTransaction.getAmount();
     const currentGoodPurchaseCost = connectedTransaction.getProperty(GOOD_PURCHASE_COST_PROP);
     const financialTransactionAmount = financialTransaction.amount;
     const currentTotalCost = connectedTransaction.getProperty(TOTAL_COST_PROP);
 
     // Validate required data exists
-    if (currentQuantity == undefined || currentGoodPurchaseCost == undefined || financialTransactionAmount == undefined || currentTotalCost == undefined) {
+    if (currentAmount == undefined || currentGoodPurchaseCost == undefined || financialTransactionAmount == undefined || currentTotalCost == undefined) {
         console.log(`ERROR (updateGoodTransaction): connectedTransaction or financialTransaction is missing required data`);
         return;
     }
@@ -209,20 +209,26 @@ export async function updateGoodTransaction(financialTransaction: bkper.Transact
         currentTotalAdditionalCosts = new Amount(connectedTransaction.getProperty(TOTAL_ADDITIONAL_COSTS_PROP)!);
     }
 
-    // Get current additional costs, defaulting to 0 if none exist
+    // Get current total credits, defaulting to 0 if none exist
     let currentTotalCredits = new Amount(0);
     if (connectedTransaction.getProperty(TOTAL_CREDITS_PROP)) {
         currentTotalCredits = new Amount(connectedTransaction.getProperty(TOTAL_CREDITS_PROP)!);
     }
 
+    // Get current original_quantity, defaulting to 0 if none exist
+    let currentOriginalQuantity = new Amount(0);
+    if (connectedTransaction.getProperty(ORIGINAL_QUANTITY_PROP)) {
+        currentOriginalQuantity = new Amount(connectedTransaction.getProperty(ORIGINAL_QUANTITY_PROP)!);
+    }
+
     // Calculate new costs based on transaction type (credit note vs additional cost)
     let additionalCost = new Amount(0);
     let creditValue = new Amount(0);
-    let creditQuantity = 0;
+    let creditQuantity = new Amount(0);
     if (financialTransaction.properties?.[CREDIT_NOTE_PROP]) {
         // For credit notes: reduce the purchase cost by credit amount (increase the purchase cost on deletion)
         creditValue = new Amount(financialTransactionAmount!);
-        creditQuantity = getQuantity(financialTransaction)?.toNumber() ?? 0;
+        creditQuantity = getQuantity(financialTransaction) ? new Amount(getQuantity(financialTransaction)!.toNumber()) : new Amount(0);
     } else {
         // For additional costs: keep purchase cost same but add additional cost
         additionalCost = new Amount(financialTransactionAmount!);
@@ -230,17 +236,18 @@ export async function updateGoodTransaction(financialTransaction: bkper.Transact
 
     // Calculate final values and update the transaction
     const newGoodPurchaseCost = onDelete ? new Amount(currentGoodPurchaseCost).plus(creditValue) : new Amount(currentGoodPurchaseCost).minus(creditValue);
+    const newOriginalQuantity = onDelete ? currentOriginalQuantity.plus(creditQuantity) : currentOriginalQuantity.minus(creditQuantity);
     const newTotalAdditionalCosts = onDelete ? currentTotalAdditionalCosts.minus(additionalCost) : currentTotalAdditionalCosts.plus(additionalCost);
     const newTotalCredits = onDelete ? currentTotalCredits.minus(creditValue) : currentTotalCredits.plus(creditValue);
     const newTotalCosts = newGoodPurchaseCost.plus(newTotalAdditionalCosts);
-    const newQuantity = onDelete ? ((financialTransaction.properties?.[CREDIT_NOTE_PROP]) ? currentQuantity + creditQuantity : currentQuantity) : ((financialTransaction.properties?.[CREDIT_NOTE_PROP]) ? currentQuantity - creditQuantity : currentQuantity);
+    const newAmount = onDelete ? ((financialTransaction.properties?.[CREDIT_NOTE_PROP]) ? currentAmount.plus(creditQuantity) : currentAmount) : ((financialTransaction.properties?.[CREDIT_NOTE_PROP]) ? currentAmount.minus(creditQuantity) : currentAmount);
 
     await connectedTransaction
-        .setAmount(newQuantity)
+        .setAmount(newAmount)
         .setProperty(TOTAL_ADDITIONAL_COSTS_PROP, newTotalAdditionalCosts.toNumber() != 0 ? newTotalAdditionalCosts.toString() : null)
         .setProperty(TOTAL_CREDITS_PROP, newTotalCredits.toNumber() != 0 ? newTotalCredits.toString() : null)
         .setProperty(GOOD_PURCHASE_COST_PROP, newGoodPurchaseCost.toString())
-        .setProperty(ORIGINAL_QUANTITY_PROP, newQuantity.toString())
+        .setProperty(ORIGINAL_QUANTITY_PROP, newOriginalQuantity.toString())
         .setProperty(TOTAL_COST_PROP, newTotalCosts.toString())
         .addRemoteId(financialTransaction.id!)
         .update();
