@@ -54,8 +54,7 @@ async function handleEvent(req: Request, res: Response) {
 
         switch (event.type) {
             case 'TRANSACTION_POSTED':
-                // result = await new EventHandlerTransactionPosted().handleEvent(event);
-                result = { result: false };
+                result = await new EventHandlerTransactionPosted().handleEvent(event);
                 break;
             case 'TRANSACTION_CHECKED':
                 result = await new EventHandlerTransactionChecked().handleEvent(event);
