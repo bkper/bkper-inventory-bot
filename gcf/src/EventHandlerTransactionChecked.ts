@@ -12,22 +12,13 @@ export class EventHandlerTransactionChecked extends EventHandlerTransaction {
         return response;
     }
 
+    /**
+     * Returns the remoteId query to find the matching transaction in the Inventory Book
+     * @param transaction The financial transaction to find the match for
+     * @returns Query string in the format "remoteId:<transaction_id>"
+     */
     protected getTransactionQuery(transaction: bkper.Transaction): string {
-        // checking sale transactions
-        if (transaction.creditAccount && transaction.creditAccount.type == AccountType.INCOMING) {
-            return `remoteId:${transaction.id}`;
-        } else if (transaction.properties && transaction.properties[CREDIT_NOTE_PROP] == undefined) {
-            if (transaction.properties && transaction.debitAccount) {
-                // checking purchase or additional cost transactions
-                return `remoteId:${transaction.properties[PURCHASE_CODE_PROP]}_${transaction.debitAccount.normalizedName}`;
-            }
-        } else if (transaction.properties && transaction.properties[CREDIT_NOTE_PROP] != undefined) {
-            // checking credit note transactions
-            if (transaction.properties && transaction.creditAccount) {
-                return `remoteId:${transaction.properties[PURCHASE_CODE_PROP]}_${transaction.creditAccount.normalizedName}`;
-            }
-        }
-        return '';
+        return `remoteId:${transaction.id}`;
     }
 
     // add additional cost to inventory purchase transaction total cost property
@@ -56,6 +47,8 @@ export class EventHandlerTransactionChecked extends EventHandlerTransaction {
                 // transaction had been already calculated: return a warning message to user
                 return ` / WARNING: This purchase transaction in the Inventory Book had been already processed. Account must be rebuilt first. (purchase_code: ${financialTransaction.properties[PURCHASE_CODE_PROP]})`;
             }
+
+            console.log("connectedTransactionFound: PASSOU")
 
             // update additional cost properties and transaction quantities on purchases or credit notes
             await updateGoodTransaction(financialTransaction, connectedTransaction);
