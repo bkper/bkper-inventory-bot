@@ -1,1 +1,0 @@
-https://medium.com/@s4y.solutions/es-modules-typescript-and-mocha-9e6138883e57
