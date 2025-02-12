@@ -12,44 +12,11 @@ export class EventHandlerTransactionChecked extends EventHandlerTransaction {
         return response;
     }
 
-    // add additional cost to inventory purchase transaction total cost property
-    protected async connectedTransactionFound(financialBook: Book, inventoryBook: Book, financialTransaction: bkper.Transaction, connectedTransaction: Transaction): Promise<string | undefined> {
-        if (financialTransaction.id && financialTransaction.creditAccount && financialTransaction.debitAccount && financialTransaction.properties) {
-            // prevent bot response when checking more than once the same good purchase transaction
-            for (const remoteId of connectedTransaction.getRemoteIds()) {
-                if (remoteId == financialTransaction.id) {
-                    return undefined;
-                }
-            }
-
-            // prevent bot response when checking transactions from inventory book
-            if (financialBook.getId() == inventoryBook.getId()) {
-                return undefined;
-            }
-
-            // prevent bot response when checking root financial transaction
-            if (financialTransaction.creditAccount.type == AccountType.LIABILITY || financialTransaction.debitAccount.type == AccountType.LIABILITY) {
-                return undefined;
-            }
-
-            const originalQuantity = new Amount(connectedTransaction.getProperty(ORIGINAL_QUANTITY_PROP) ?? 0).toNumber();
-            const amount = connectedTransaction.getAmount()?.toNumber() ?? 0;
-            if (originalQuantity != amount) {
-                // transaction had been already calculated: return a warning message to user
-                return ` / WARNING: This purchase transaction in the Inventory Book had been already processed. Account must be rebuilt first. (purchase_code: ${financialTransaction.properties[PURCHASE_CODE_PROP]})`;
-            }
-
-            console.log("connectedTransactionFound: PASSOU")
-
-            // update additional cost properties and transaction quantities on purchases or credit notes
-            await updateGoodTransaction(financialTransaction, connectedTransaction);
-
-            const bookAnchor = buildBookAnchor(inventoryBook);
-            const record = `${connectedTransaction.getDate()} ${connectedTransaction.getAmount()} ${await connectedTransaction.getCreditAccountName()} ${await connectedTransaction.getDebitAccountName()} ${connectedTransaction.getDescription()}`;
-            return `FOUND: ${bookAnchor} UPDATED: ${record}`;
-        }
-        console.log('ERROR (connectedTransactionFound): financialTransaction is missing required fields');
-        return undefined;
+    // financial transaction had been already replicated in the inventory book
+    protected async connectedTransactionFound(inventoryBook: Book, goodTransaction: Transaction): Promise<string | undefined> {
+        const bookAnchor = buildBookAnchor(inventoryBook);
+        const record = `${goodTransaction.getDate()} ${goodTransaction.getAmount()} ${await goodTransaction.getCreditAccountName()} ${await goodTransaction.getDebitAccountName()} ${goodTransaction.getDescription()}`;
+        return `FOUND: ${bookAnchor} ${record}`;
     }
 
     // create purchase (Buy) or sale (Sell) transactions in the inventory book in response to the financial transactions

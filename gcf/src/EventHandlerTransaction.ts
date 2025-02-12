@@ -6,7 +6,7 @@ import { GOOD_PROP } from "./constants.js";
 export abstract class EventHandlerTransaction extends EventHandler {
 
     protected abstract connectedTransactionNotFound(financialBook: Book, inventoryBook: Book, financialTransaction: bkper.Transaction, goodExcCode?: string): Promise<string | undefined>;
-    protected abstract connectedTransactionFound(eventBook: Book, connectedBook: Book, financialTransaction: bkper.Transaction, goodTransaction: Transaction, goodExcCode?: string): Promise<string | undefined>;
+    protected abstract connectedTransactionFound(connectedBook: Book, connectedTransaction: Transaction): Promise<string | undefined>;
 
     /**
      * Returns the remoteId query to find the matching transaction between Financial and Inventory Books
@@ -38,7 +38,7 @@ export abstract class EventHandlerTransaction extends EventHandler {
         
         let goodTransaction = (await inventoryBook.listTransactions(this.getTransactionQuery(financialTransaction))).getFirst();
         if (goodTransaction) {
-            return await this.connectedTransactionFound(financialBook, inventoryBook, financialTransaction, goodTransaction, goodExcCode);
+            return await this.connectedTransactionFound(inventoryBook, goodTransaction);
         } else {
             return await this.connectedTransactionNotFound(financialBook, inventoryBook, financialTransaction, goodExcCode)
         }

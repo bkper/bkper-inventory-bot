@@ -1,6 +1,6 @@
-import { Book, Transaction } from "bkper-js";
+import { Book } from "bkper-js";
 import { Result } from "./index.js";
-import { buildBookAnchor, isInventoryBook } from "./BotService.js";
+import { isInventoryBook } from "./BotService.js";
 import { EventHandlerTransaction } from "./EventHandlerTransaction.js";
 import { InterceptorOrderProcessorDeleteFinancial } from "./InterceptorOrderProcessorDeleteFinancial.js";
 import { InterceptorOrderProcessorDeleteGoods } from "./InterceptorOrderProcessorDeleteGoods.js";
@@ -24,7 +24,7 @@ export class EventHandlerTransactionDeleted extends EventHandlerTransaction {
         });
     }
 
-    protected connectedTransactionFound(eventBook: Book, connectedBook: Book, financialTransaction: bkper.Transaction, goodTransaction: Transaction, goodExcCode?: string): Promise<string | undefined> {
+    protected connectedTransactionFound(): Promise<string | undefined> {
         return new Promise((resolve, reject) => {
             const result = undefined;
             resolve(result);
