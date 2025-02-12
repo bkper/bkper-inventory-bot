@@ -105,14 +105,6 @@ export async function isPurchase(transaction: Transaction): Promise<boolean> {
     return (transaction.isPosted() == true) && (await transaction.getCreditAccount())?.getType() == AccountType.INCOMING;
 }
 
-// returns the good purchase root transaction based on the purchase code property
-export async function getGoodPurchaseRootTx(book: Book, purchaseCodeProp: string): Promise<Transaction | undefined> {
-    // get good purchase transaction from buyer
-    const goodPurchaseTx = (await book.listTransactions(`remoteId:${GOOD_PROP}_${purchaseCodeProp.toLowerCase()}`)).getFirst();
-    // get root purchase transaction from supplier
-    return await getRootTransaction(book, goodPurchaseTx);
-}
-
 /**
  * Gets the root transaction from a given transaction by looking at its remote IDs.
  * The root transaction is the original transaction posted by the user (from supplier to buyer),
@@ -241,6 +233,8 @@ export async function updateGoodTransaction(financialTransaction: bkper.Transact
     const newTotalCredits = onDelete ? currentTotalCredits.minus(creditValue) : currentTotalCredits.plus(creditValue);
     const newTotalCosts = newGoodPurchaseCost.plus(newTotalAdditionalCosts);
     const newAmount = onDelete ? ((financialTransaction.properties?.[CREDIT_NOTE_PROP]) ? currentAmount.plus(creditQuantity) : currentAmount) : ((financialTransaction.properties?.[CREDIT_NOTE_PROP]) ? currentAmount.minus(creditQuantity) : currentAmount);
+
+    console.log("updateGoodTransaction: PASSOU");
 
     await connectedTransaction
         .setAmount(newAmount)

@@ -1,6 +1,4 @@
 // Properties
-export const ADDITIONAL_COST_PROP = 'additional_cost';
-export const ADDITIONAL_COST_TX_IDS = 'add_cost_transactions';
 export const EXC_CODE_PROP = 'exc_code';
 export const COGS_CALC_DATE_PROP = 'cogs_calc_date';
 export const COGS_HASHTAG = '#cost_of_sale';
