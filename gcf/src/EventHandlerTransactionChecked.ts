@@ -12,15 +12,6 @@ export class EventHandlerTransactionChecked extends EventHandlerTransaction {
         return response;
     }
 
-    /**
-     * Returns the remoteId query to find the matching transaction in the Inventory Book
-     * @param transaction The financial transaction to find the match for
-     * @returns Query string in the format "remoteId:<transaction_id>"
-     */
-    protected getTransactionQuery(transaction: bkper.Transaction): string {
-        return `remoteId:${transaction.id}`;
-    }
-
     // add additional cost to inventory purchase transaction total cost property
     protected async connectedTransactionFound(financialBook: Book, inventoryBook: Book, financialTransaction: bkper.Transaction, connectedTransaction: Transaction): Promise<string | undefined> {
         if (financialTransaction.id && financialTransaction.creditAccount && financialTransaction.debitAccount && financialTransaction.properties) {
