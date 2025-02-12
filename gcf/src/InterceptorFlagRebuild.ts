@@ -13,7 +13,7 @@ export class InterceptorFlagRebuild {
                 }
                 let operation = event.data.object as bkper.TransactionOperation;
                 let transactionPayload = operation.transaction;
-                let transaction = await eventBook.getTransaction(transactionPayload!.id!);
+                let transaction = (await eventBook.listTransactions(transactionPayload!.id!)).getFirst();
                 
                 let goodAccount = transaction ? await getGoodAccount(transaction) : null;
                 

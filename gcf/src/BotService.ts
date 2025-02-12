@@ -1,6 +1,6 @@
 import { Account, AccountType, Amount, Bkper, Book, Transaction } from 'bkper-js';
 
-import { COGS_CALC_DATE_PROP, CREDIT_NOTE_PROP, TOTAL_CREDITS_PROP, EXC_CODE_PROP, GOOD_PROP, GOOD_PURCHASE_COST_PROP, INVENTORY_BOOK_PROP, NEEDS_REBUILD_PROP, ORIGINAL_QUANTITY_PROP, PURCHASE_CODE_PROP, QUANTITY_PROP, TOTAL_ADDITIONAL_COSTS_PROP, TOTAL_COST_PROP } from './constants.js';
+import { COGS_CALC_DATE_PROP, CREDIT_NOTE_PROP, TOTAL_CREDITS_PROP, EXC_CODE_PROP, GOOD_PURCHASE_COST_PROP, INVENTORY_BOOK_PROP, NEEDS_REBUILD_PROP, ORIGINAL_QUANTITY_PROP, QUANTITY_PROP, TOTAL_ADDITIONAL_COSTS_PROP, TOTAL_COST_PROP } from './constants.js';
 
 export function isInventoryBook(book: Book): boolean {
     if (book.getProperty(INVENTORY_BOOK_PROP)) {
@@ -103,28 +103,6 @@ export async function isSale(transaction: Transaction): Promise<boolean> {
 
 export async function isPurchase(transaction: Transaction): Promise<boolean> {
     return (transaction.isPosted() == true) && (await transaction.getCreditAccount())?.getType() == AccountType.INCOMING;
-}
-
-/**
- * Gets the root transaction from a given transaction by looking at its remote IDs.
- * The root transaction is the original transaction posted by the user (from supplier to buyer),
- * while the given transaction is typically a transaction from the buyer account to the good account.
- * Returns undefined if no root transaction is found.
- */
-export async function getRootTransaction(book: Book, transaction?: Transaction): Promise<Transaction | undefined> {
-    if (transaction) {
-        const remoteIds = transaction.getRemoteIds();
-        const purchaseCodeProp = transaction.getProperty(PURCHASE_CODE_PROP)?.toLowerCase();
-
-        for (const remoteId of remoteIds) {
-            if (remoteId != `${GOOD_PROP}_${purchaseCodeProp}`) {
-                const rootTxId = remoteId.split('_')[1];
-                const rootTx = await book.getTransaction(rootTxId);
-                return rootTx;
-            }
-        }
-    }
-    return undefined;
 }
 
 export function buildBookAnchor(book?: Book): string | undefined {

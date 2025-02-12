@@ -35,7 +35,7 @@ export class InterceptorOrderProcessorDeleteFinancial extends InterceptorOrderPr
                     const financialTxRemoteIds = deletedTxs[0].getRemoteIds();
                     for (const remoteId of financialTxRemoteIds) {
                         if (remoteId != transactionPayload.id) {
-                            const financialTx = await financialBook.getTransaction(remoteId);
+                            const financialTx = (await financialBook.listTransactions(remoteId)).getFirst();
                             if (financialTx) {
                                 financialTx.uncheck();
                                 responses.push(`UNCHECKED: ${financialTx.getDate()} ${financialTx.getAmount()} ${await financialTx.getCreditAccountName()} ${await financialTx.getDebitAccountName()} ${financialTx.getDescription()}`);
@@ -81,7 +81,7 @@ export class InterceptorOrderProcessorDeleteFinancial extends InterceptorOrderPr
                 const inventoryBook = getInventoryBook(financialBook);
                 if (inventoryBook && transactionPayload.remoteIds) {
                     for (const remoteId of transactionPayload.remoteIds) {
-                        let inventoryBookTransaction = await inventoryBook.getTransaction(remoteId);
+                        let inventoryBookTransaction = (await inventoryBook.listTransactions(remoteId)).getFirst();
                         if (inventoryBookTransaction) {
                             const response = await flagInventoryAccountForRebuildIfNeeded(financialBook, inventoryBookTransaction);
                             if (response) {
