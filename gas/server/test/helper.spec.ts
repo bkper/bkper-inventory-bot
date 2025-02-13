@@ -23,4 +23,16 @@ describe('helper', () => {
         });
     });
 
+    describe('#getAccountQuery(goodAccountName: string, beforeDate?: string, afterDate?: string): string', () => {
+        it('should return the query string for the good account with beforeDate and afterDate', () => {
+
+            const goodAccountName = 'Test Account';
+            const beforeDate = '2024-01-31';
+            const afterDate = '2024-01-01';
+            const query = helper.getAccountQuery(goodAccountName, beforeDate, afterDate);
+
+            expect(query).to.equal(`account:'${goodAccountName}' after:${afterDate} before:${beforeDate}`);
+        });
+    });
+
 });
