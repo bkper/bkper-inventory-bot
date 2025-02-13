@@ -7,6 +7,7 @@
     "upgrade": "bun --cwd ./server/src upgrade",
     "predev": "bun run login",
     "dev": "bun run-s prepush build:server watches",
+    "tests": "bun build:server",
     "prepush": "bun --cwd ../ clasp:store",
     "build:server": "bun --cwd ./server build",
     "watches": "bun run-p watch:client watch:server",
