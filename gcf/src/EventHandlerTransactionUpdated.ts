@@ -28,7 +28,7 @@ export class EventHandlerTransactionUpdated extends EventHandlerTransaction {
     protected getTransactionQuery(transaction: bkper.Transaction): string {
         throw new Error("Method not implemented.");
     }
-    protected connectedTransactionNotFound(financialBook: Book, inventoryBook: Book, financialTransaction: bkper.Transaction, goodExcCode: string): Promise<string> {
+    protected connectedTransactionNotFound(inventoryBook: Book, financialTransaction: bkper.Transaction, goodExcCode: string): Promise<string> {
         throw new Error("Method not implemented.");
     }
     protected connectedTransactionFound(eventBook: Book, transaction: Transaction): Promise<string> {
