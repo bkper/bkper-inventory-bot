@@ -22,9 +22,14 @@ Bkper.setConfig({
 const app = new App();
 
 (async function() {
-  const url = await connect({ port: 3005 });
-  console.log(`Started ngrok at ${url}`);
-  await app.setWebhookUrlDev(url).patch()
+  try {
+    console.log("Starting ngrok...")
+    const url = await connect({ port: 3005 });
+    console.log(`Started ngrok at ${url}`);
+    await app.setWebhookUrlDev(url).patch()
+  } catch (err) {
+    console.log(err)
+  }
 })();
 
 async function exit() {
