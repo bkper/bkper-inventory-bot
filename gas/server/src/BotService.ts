@@ -1,5 +1,7 @@
 namespace BotService {
 
+    const ADDITIONAL_COSTS_CREDITS_QUERY_RANGE = 2;
+
     export function getInventoryBook(book: Bkper.Book): Bkper.Book | null {
         if (book.getCollection() == null) {
             return null;
@@ -71,13 +73,39 @@ namespace BotService {
         return BkperApp.newAmount(purchaseTransaction.getProperty(GOOD_PURCHASE_COST_PROP));
     }
 
-    export function getAdditionalPurchaseCosts(purchaseTransaction: Bkper.Transaction): Bkper.Amount {
-        const addCosts = purchaseTransaction.getProperty(ADD_COSTS_PROP);
-        if (addCosts) {
-            return BkperApp.newAmount(purchaseTransaction.getProperty(ADD_COSTS_PROP));
-        } else {
-            return BkperApp.newAmount(0);
+    export function getAdditionalPurchaseCosts(financialBookbook: Bkper.Book, inventoryTransaction: Bkper.Transaction): Bkper.Amount {
+        let totalAdditionalCosts = BkperApp.newAmount(0);
+
+        // get the range in months to query for the additional cost and credit note transactions
+        const transactionDate = helper.parseDate(inventoryTransaction.getDate());
+
+        const beforeDate = new Date(transactionDate.getTime());
+        beforeDate.setMonth(beforeDate.getMonth() + ADDITIONAL_COSTS_CREDITS_QUERY_RANGE);
+        const beforeDateIsoString = Utilities.formatDate(beforeDate, financialBookbook.getTimeZone(), 'yyyy-MM-dd');
+
+        const afterDate = new Date(transactionDate.getTime());
+        afterDate.setMonth(beforeDate.getMonth() - ADDITIONAL_COSTS_CREDITS_QUERY_RANGE);
+        const afterDateIsoString = Utilities.formatDate(afterDate, financialBookbook.getTimeZone(), 'yyyy-MM-dd');
+        
+        const inventoryAccountName = inventoryTransaction.getDebitAccount().getName();
+        const query = helper.getAccountQuery(inventoryAccountName, beforeDateIsoString, afterDateIsoString);
+        console.log("QUERY: ", query);
+
+        const purchaseCode = inventoryTransaction.getProperty(PURCHASE_CODE_PROP);
+        const transactions = financialBookbook.getTransactions(query);
+        const financialAccountId = financialBookbook.getAccount(inventoryAccountName).getId();
+        while (transactions.hasNext()) {
+            const tx = transactions.next();
+            console.log("TX: ", tx.getId());
+            console.log("DEBIT ACCOUNT: ", tx.getDebitAccount().getName());
+            console.log("CREDIT ACCOUNT: ", tx.getCreditAccount().getName());
+            if (tx.isChecked() && tx.getDebitAccount().getId() == financialAccountId && tx.getProperty(PURCHASE_CODE_PROP) == purchaseCode && (tx.getProperty(PURCHASE_INVOICE_PROP) != undefined && tx.getProperty(PURCHASE_INVOICE_PROP) != purchaseCode)) {
+                console.log("ENTROU")
+                totalAdditionalCosts = totalAdditionalCosts.plus(tx.getAmount());
+            }
         }
+
+        return totalAdditionalCosts;
     }
 
     export function getTotalPurchaseCost(purchaseTransaction: Bkper.Transaction): Bkper.Amount {
@@ -105,6 +133,12 @@ namespace BotService {
         return ret;
     }
 
+    /**
+     * Gets the ISO date string for the day after the provided date
+     * @param book The book to get timezone from
+     * @param toDateIsoString The reference date in ISO format
+     * @returns The next day's date in ISO format yyyy-MM-dd
+     */
     export function getBeforeDateIsoString(book: Bkper.Book, toDateIsoString: string): string {
         const toDate = book.parseDate(toDateIsoString);
         let beforeDate = new Date();

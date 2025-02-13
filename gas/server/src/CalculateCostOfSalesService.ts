@@ -74,9 +74,9 @@ namespace CostOfSalesService {
         }
 
         // Fire batch operations
-        processor.fireBatchOperations();
+        // processor.fireBatchOperations();
 
-        storeLastCalcTxDate(goodAccount, goodAccountSaleTransactions);
+        // storeLastCalcTxDate(goodAccount, goodAccountSaleTransactions);
 
         return summary.calculatingAsync();
     }
@@ -119,94 +119,95 @@ namespace CostOfSalesService {
             // Purchase info: quantity, costs, purchase code
             const purchaseQuantity = purchaseTransaction.getAmount();
 
-
             // Cost of sale
             const goodPurchaseCost = BotService.getGoodPurchaseCost(purchaseTransaction);
-            const additionalPurchaseCost = BotService.getAdditionalPurchaseCosts(purchaseTransaction);
-            const unitGoodCost = goodPurchaseCost.div(purchaseQuantity);
-            const unitAdditionalCosts = additionalPurchaseCost.div(purchaseQuantity);
-            const unitTotalCostOfSale = unitGoodCost.plus(unitAdditionalCosts);
+            const additionalPurchaseCost = BotService.getAdditionalPurchaseCosts(financialBook, purchaseTransaction);
 
-            const purchaseCode = BotService.getPurchaseCode(purchaseTransaction);
+            console.log(`ADDITIONAL COSTS: ${additionalPurchaseCost.toString()}`);
+            // const unitGoodCost = goodPurchaseCost.div(purchaseQuantity);
+            // const unitAdditionalCosts = additionalPurchaseCost.div(purchaseQuantity);
+            // const unitTotalCostOfSale = unitGoodCost.plus(unitAdditionalCosts);
 
-            // Sold quantity GTE purchase quantity: update & check purchase transaction
-            if (soldQuantity.gte(purchaseQuantity)) {
+            // const purchaseCode = BotService.getPurchaseCode(purchaseTransaction);
 
-                saleCost = saleCost.plus(BotService.getTotalPurchaseCost(purchaseTransaction));
+            // // Sold quantity GTE purchase quantity: update & check purchase transaction
+            // if (soldQuantity.gte(purchaseQuantity)) {
 
-                saleLiquidationLog = logLiquidation(saleTransaction, unitTotalCostOfSale);
-                purchaseTransaction.setProperty(LIQUIDATION_LOG_PROP, JSON.stringify(saleLiquidationLog));
+            //     saleCost = saleCost.plus(BotService.getTotalPurchaseCost(purchaseTransaction));
 
-                // Store transaction to be updated
-                purchaseTransaction.setChecked(true);
-                processor.setInventoryBookTransactionToUpdate(purchaseTransaction);
+            //     saleLiquidationLog = logLiquidation(saleTransaction, unitTotalCostOfSale);
+            //     purchaseTransaction.setProperty(LIQUIDATION_LOG_PROP, JSON.stringify(saleLiquidationLog));
 
-                purchaseLogEntries.push(logPurchase(purchaseQuantity, unitTotalCostOfSale, purchaseTransaction));
-                soldQuantity = soldQuantity.minus(purchaseQuantity);
+            //     // Store transaction to be updated
+            //     purchaseTransaction.setChecked(true);
+            //     processor.setInventoryBookTransactionToUpdate(purchaseTransaction);
 
-                // Sold quantity LT purchase quantity: update purchase + update & check splitted purchase transaction
-            } else {
-                const remainingBuyQuantity = purchaseQuantity.minus(soldQuantity);
-                const partialBuyQuantity = purchaseQuantity.minus(remainingBuyQuantity);
+            //     purchaseLogEntries.push(logPurchase(purchaseQuantity, unitTotalCostOfSale, purchaseTransaction));
+            //     soldQuantity = soldQuantity.minus(purchaseQuantity);
 
-                saleCost = saleCost.plus(partialBuyQuantity.times(unitTotalCostOfSale));
+            //     // Sold quantity LT purchase quantity: update purchase + update & check splitted purchase transaction
+            // } else {
+            //     const remainingBuyQuantity = purchaseQuantity.minus(soldQuantity);
+            //     const partialBuyQuantity = purchaseQuantity.minus(remainingBuyQuantity);
 
-                purchaseTransaction
-                    .setAmount(remainingBuyQuantity)
-                    .setProperty(GOOD_PURCHASE_COST_PROP, unitGoodCost.times(remainingBuyQuantity).toString())
-                    .setProperty(ADD_COSTS_PROP, unitAdditionalCosts.times(remainingBuyQuantity).toString())
-                    .setProperty(TOTAL_COST_PROP, unitTotalCostOfSale.times(remainingBuyQuantity).toString())
-                    ;
-                // Store transaction to be updated
-                processor.setInventoryBookTransactionToUpdate(purchaseTransaction);
+            //     saleCost = saleCost.plus(partialBuyQuantity.times(unitTotalCostOfSale));
 
-                let splittedPurchaseTransaction = inventoryBook.newTransaction()
-                    .setDate(purchaseTransaction.getDate())
-                    .setAmount(partialBuyQuantity)
-                    .setCreditAccount(purchaseTransaction.getCreditAccount())
-                    .setDebitAccount(purchaseTransaction.getDebitAccount())
-                    .setDescription(purchaseTransaction.getDescription())
-                    .setProperty(ORDER_PROP, purchaseTransaction.getProperty(ORDER_PROP))
-                    .setProperty(PARENT_ID, purchaseTransaction.getId())
-                    .setProperty(PURCHASE_CODE_PROP, purchaseCode.toString())
-                    .setProperty(GOOD_PURCHASE_COST_PROP, unitGoodCost.times(partialBuyQuantity).toString())
-                    .setProperty(ADD_COSTS_PROP, unitAdditionalCosts.times(partialBuyQuantity).toString())
-                    .setProperty(TOTAL_COST_PROP, unitTotalCostOfSale.times(partialBuyQuantity).toString())
-                    ;
+            //     purchaseTransaction
+            //         .setAmount(remainingBuyQuantity)
+            //         .setProperty(GOOD_PURCHASE_COST_PROP, unitGoodCost.times(remainingBuyQuantity).toString())
+            //         .setProperty(ADD_COSTS_PROP, unitAdditionalCosts.times(remainingBuyQuantity).toString())
+            //         .setProperty(TOTAL_COST_PROP, unitTotalCostOfSale.times(remainingBuyQuantity).toString())
+            //         ;
+            //     // Store transaction to be updated
+            //     processor.setInventoryBookTransactionToUpdate(purchaseTransaction);
 
-                saleLiquidationLog = logLiquidation(saleTransaction, unitTotalCostOfSale);
-                splittedPurchaseTransaction.setProperty(LIQUIDATION_LOG_PROP, JSON.stringify(saleLiquidationLog));
-                splittedPurchaseTransaction.setChecked(true);
+            //     let splittedPurchaseTransaction = inventoryBook.newTransaction()
+            //         .setDate(purchaseTransaction.getDate())
+            //         .setAmount(partialBuyQuantity)
+            //         .setCreditAccount(purchaseTransaction.getCreditAccount())
+            //         .setDebitAccount(purchaseTransaction.getDebitAccount())
+            //         .setDescription(purchaseTransaction.getDescription())
+            //         .setProperty(ORDER_PROP, purchaseTransaction.getProperty(ORDER_PROP))
+            //         .setProperty(PARENT_ID, purchaseTransaction.getId())
+            //         .setProperty(PURCHASE_CODE_PROP, purchaseCode.toString())
+            //         .setProperty(GOOD_PURCHASE_COST_PROP, unitGoodCost.times(partialBuyQuantity).toString())
+            //         .setProperty(ADD_COSTS_PROP, unitAdditionalCosts.times(partialBuyQuantity).toString())
+            //         .setProperty(TOTAL_COST_PROP, unitTotalCostOfSale.times(partialBuyQuantity).toString())
+            //         ;
 
-                processor.setInventoryBookTransactionToCreate(splittedPurchaseTransaction);
+            //     saleLiquidationLog = logLiquidation(saleTransaction, unitTotalCostOfSale);
+            //     splittedPurchaseTransaction.setProperty(LIQUIDATION_LOG_PROP, JSON.stringify(saleLiquidationLog));
+            //     splittedPurchaseTransaction.setChecked(true);
 
-                purchaseLogEntries.push(logPurchase(partialBuyQuantity, unitTotalCostOfSale, purchaseTransaction));
+            //     processor.setInventoryBookTransactionToCreate(splittedPurchaseTransaction);
 
-                soldQuantity = soldQuantity.minus(partialBuyQuantity);
-            }
-            // Break loop if sale is fully processed, otherwise proceed to next purchase
-            if (soldQuantity.eq(0)) {
-                break;
-            }
+            //     purchaseLogEntries.push(logPurchase(partialBuyQuantity, unitTotalCostOfSale, purchaseTransaction));
+
+            //     soldQuantity = soldQuantity.minus(partialBuyQuantity);
+            // }
+            // // Break loop if sale is fully processed, otherwise proceed to next purchase
+            // if (soldQuantity.eq(0)) {
+            //     break;
+            // }
         }
 
-        // Sold quantity EQ zero: update & check sale transaction
-        if (soldQuantity.round(inventoryBook.getFractionDigits()).eq(0)) {
-            if (purchaseLogEntries.length > 0) {
-                saleTransaction
-                    .setProperty(TOTAL_COST_PROP, saleCost.toString())
-                    .setProperty(PURCHASE_LOG_PROP, JSON.stringify(purchaseLogEntries))
-                    ;
-            }
+        // // Sold quantity EQ zero: update & check sale transaction
+        // if (soldQuantity.round(inventoryBook.getFractionDigits()).eq(0)) {
+        //     if (purchaseLogEntries.length > 0) {
+        //         saleTransaction
+        //             .setProperty(TOTAL_COST_PROP, saleCost.toString())
+        //             .setProperty(PURCHASE_LOG_PROP, JSON.stringify(purchaseLogEntries))
+        //             ;
+        //     }
 
-            // Store transaction to be updated
-            saleTransaction.setChecked(true);
-            processor.setInventoryBookTransactionToUpdate(saleTransaction);
+        //     // Store transaction to be updated
+        //     saleTransaction.setChecked(true);
+        //     processor.setInventoryBookTransactionToUpdate(saleTransaction);
 
-        }
+        // }
 
-        // post cost of sale transaction in financial book
-        addCostOfSales(financialBook, saleTransaction, saleCost, processor);
+        // // post cost of sale transaction in financial book
+        // addCostOfSales(financialBook, saleTransaction, saleCost, processor);
     }
 
     function addCostOfSales(financialBook: Bkper.Book, saleTransaction: Bkper.Transaction, saleCost: Bkper.Amount, processor: CalculateCostOfSalesProcessor) {
