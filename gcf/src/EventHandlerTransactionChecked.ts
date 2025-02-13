@@ -1,7 +1,7 @@
 import { Account, AccountType, Amount, Book, Group, Transaction } from "bkper-js";
 import { EventHandlerTransaction } from "./EventHandlerTransaction.js";
-import { buildBookAnchor, getCOGSCalculationDateValue, getGoodExchangeCodeFromAccount, getQuantity, updateGoodTransaction } from "./BotService.js";
-import { CREDIT_NOTE_PROP, GOOD_BUY_ACCOUNT_NAME, GOOD_EXC_CODE_PROP, GOOD_PROP, GOOD_PURCHASE_COST_PROP, GOOD_SELL_ACCOUNT_NAME, NEEDS_REBUILD_PROP, ORDER_PROP, ORIGINAL_QUANTITY_PROP, PURCHASE_CODE_PROP, PURCHASE_INVOICE_PROP, QUANTITY_PROP, SALE_AMOUNT_PROP, SALE_INVOICE_PROP, TOTAL_COST_PROP } from "./constants.js";
+import { buildBookAnchor, getCOGSCalculationDateValue, getGoodExchangeCodeFromAccount, getQuantity } from "./BotService.js";
+import { GOOD_BUY_ACCOUNT_NAME, GOOD_EXC_CODE_PROP, GOOD_PROP, GOOD_PURCHASE_COST_PROP, GOOD_SELL_ACCOUNT_NAME, NEEDS_REBUILD_PROP, ORDER_PROP, ORIGINAL_QUANTITY_PROP, PURCHASE_CODE_PROP, PURCHASE_INVOICE_PROP, SALE_AMOUNT_PROP, SALE_INVOICE_PROP, TOTAL_COST_PROP } from "./constants.js";
 import { Result } from "./index.js";
 import { InterceptorFlagRebuild } from "./InterceptorFlagRebuild.js";
 
@@ -20,38 +20,25 @@ export class EventHandlerTransactionChecked extends EventHandlerTransaction {
     }
 
     // create purchase (Buy) or sale (Sell) transactions in the inventory book in response to the financial transactions
-    protected async connectedTransactionNotFound(financialBook: Book, inventoryBook: Book, financialTransaction: bkper.Transaction, goodExcCode: string): Promise<string | undefined> {
+    protected async connectedTransactionNotFound(inventoryBook: Book, financialTransaction: bkper.Transaction, goodExcCode: string): Promise<string | undefined> {
         if (financialTransaction.creditAccount && financialTransaction.debitAccount && financialTransaction.date && financialTransaction.id && financialTransaction.properties) {
 
-            // prevent bot response when checking root financial transaction
-            const financialCreditAccount = financialTransaction.creditAccount;
-            if (financialCreditAccount.type == AccountType.LIABILITY) {
-                return undefined;
-            }
-
             const quantity = getQuantity(financialTransaction);
-            const purchaseCode = financialTransaction.properties[PURCHASE_CODE_PROP];
+            const financialCreditAccount = financialTransaction.creditAccount;
             const purchaseInvoice = financialTransaction.properties[PURCHASE_INVOICE_PROP];
             const saleInvoice = financialTransaction.properties[SALE_INVOICE_PROP];
 
-            if (quantity == undefined || quantity.eq(0) || financialTransaction.properties[CREDIT_NOTE_PROP]) {
-                // communicate to the user to first check the good purchase transaction before checking additional costs or credit note transactions
-                if (financialTransaction.properties[PURCHASE_CODE_PROP]) {
-                    throw new Error(`ERROR: you must first check the good purchase transaction (purchase_code: ${financialTransaction.properties[PURCHASE_CODE_PROP]}) before checking additional costs or credit note transactions.`);
-                }
+            // prevent bot response when transaction is missing quantity or is not a purchase or sale transaction
+            if (quantity == undefined || quantity.eq(0) || (financialCreditAccount.type != AccountType.ASSET && financialCreditAccount.type != AccountType.INCOMING)) {
                 return undefined;
             }
-
-            // prevent bot response when purchase or sale transactions are missing needed properties
-            if (saleInvoice == undefined) {
-                if (purchaseCode == undefined || purchaseInvoice == undefined) {
+            if (purchaseInvoice == undefined) {
+                // it's not a purchase transaction
+                if (saleInvoice == undefined || financialCreditAccount.type != AccountType.INCOMING) {
+                    // it's not also a sale transaction
                     return undefined;
                 }
             }
-
-            const inventoryBookAnchor = buildBookAnchor(inventoryBook);
-
-            const financialAmount = new Amount(financialTransaction.amount ?? 0);
 
             let goodAccount = await inventoryBook.getAccount(financialTransaction.properties?.[GOOD_PROP]);
             if (goodAccount) {
@@ -70,11 +57,12 @@ export class EventHandlerTransactionChecked extends EventHandlerTransaction {
                     .addRemoteId(financialTransaction.id)
                     .setProperty(SALE_INVOICE_PROP, financialTransaction.properties[SALE_INVOICE_PROP])
                     .setProperty(ORDER_PROP, financialTransaction.properties[ORDER_PROP])
-                    .setProperty(SALE_AMOUNT_PROP, financialAmount.toString())
+                    .setProperty(SALE_AMOUNT_PROP, new Amount(financialTransaction.amount ?? 0).toString())
                     .setProperty(GOOD_EXC_CODE_PROP, goodExcCode)
                     .post()
                     ;
 
+                const inventoryBookAnchor = buildBookAnchor(inventoryBook);
                 const record = `${newTransaction.getDate()} ${newTransaction.getAmount()} ${goodAccount.getName()} ${goodSellAccount.getName()} ${newTransaction.getDescription()}`;
                 const needsRebuild = await this.checkLastTxDate(goodAccount, financialTransaction);
 
@@ -101,16 +89,16 @@ export class EventHandlerTransactionChecked extends EventHandlerTransaction {
                         .setDebitAccount(goodAccount)
                         .setDescription(financialTransaction.description ?? '')
                         .addRemoteId(financialTransaction.id)
-                        .addRemoteId(`${financialTransaction.properties[PURCHASE_CODE_PROP]}_${financialDebitAccount.normalizedName}`)
-                        .setProperty(ORIGINAL_QUANTITY_PROP, quantity.toString())
-                        .setProperty(GOOD_PURCHASE_COST_PROP, financialAmount.toString())
-                        .setProperty(ORDER_PROP, financialTransaction.properties[ORDER_PROP])
                         .setProperty(PURCHASE_CODE_PROP, financialTransaction.properties[PURCHASE_CODE_PROP])
+                        .setProperty(ORIGINAL_QUANTITY_PROP, quantity.toString())
+                        .setProperty(GOOD_PURCHASE_COST_PROP, new Amount(financialTransaction.amount ?? 0).toString())
+                        .setProperty(ORDER_PROP, financialTransaction.properties[ORDER_PROP])
                         .setProperty(GOOD_EXC_CODE_PROP, goodExcCode)
-                        .setProperty(TOTAL_COST_PROP, financialAmount.toString())
+                        .setProperty(TOTAL_COST_PROP, new Amount(financialTransaction.amount ?? 0).toString())
                         .post()
                         ;
 
+                    const inventoryBookAnchor = buildBookAnchor(inventoryBook);
                     const record = `${newTransaction.getDate()} ${newTransaction.getAmount()} ${goodBuyAccount.getName()} ${goodAccount.getName()} ${newTransaction.getDescription()}`;
                     const needsRebuild = await this.checkLastTxDate(goodAccount, financialTransaction);
 
@@ -135,7 +123,7 @@ export class EventHandlerTransactionChecked extends EventHandlerTransaction {
         return false;
     }
 
-    // returns the good account from the inventory book corresponding to the good account in the financial book
+    // returns the good account from the inventory book corresponding to the good account in the financial book (creates the account if it doesn't exist)
     private async getConnectedGoodAccount(inventoryBook: Book, financialAccount: bkper.Account): Promise<Account | undefined> {
         const goodExchangeCode = getGoodExchangeCodeFromAccount(financialAccount);
         if (goodExchangeCode != undefined && financialAccount.name && financialAccount.type && financialAccount.properties) {
