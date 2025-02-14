@@ -1,3 +1,7 @@
+// Code parameters
+const ADDITIONAL_COSTS_CREDITS_QUERY_RANGE = 2;
+
+// Bkper properties
 const ADD_COSTS_PROP = 'additional_costs';
 const COGS_CALC_DATE_PROP = 'cogs_calc_date';
 const COST_OF_SALE_PROP = 'cost_of_sale';

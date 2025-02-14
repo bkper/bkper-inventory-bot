@@ -1,7 +1,5 @@
 namespace BotService {
 
-    const ADDITIONAL_COSTS_CREDITS_QUERY_RANGE = 2;
-
     export function getInventoryBook(book: Bkper.Book): Bkper.Book | null {
         if (book.getCollection() == null) {
             return null;
@@ -73,29 +71,44 @@ namespace BotService {
         return BkperApp.newAmount(purchaseTransaction.getProperty(GOOD_PURCHASE_COST_PROP));
     }
 
+    /**
+     * Gets additional purchase costs for an inventory transaction from the financial book
+     * 
+     * @param financialBookbook The financial book to search for additional costs
+     * @param inventoryTransaction The inventory transaction to get additional costs for
+     * @returns The total additional costs as a Bkper.Amount
+     */
     export function getAdditionalPurchaseCosts(financialBookbook: Bkper.Book, inventoryTransaction: Bkper.Transaction): Bkper.Amount {
         let totalAdditionalCosts = BkperApp.newAmount(0);
 
-        // get the range in months to query for the additional cost and credit note transactions
         const transactionDate = helper.parseDate(inventoryTransaction.getDate());
-
-        const beforeDate = new Date(transactionDate.getTime());
-        beforeDate.setMonth(beforeDate.getMonth() + ADDITIONAL_COSTS_CREDITS_QUERY_RANGE);
+        
+        // Calculate the range in months to query for the additional cost and credit note transactions
+        const beforeDate = new Date(transactionDate.getTime() + helper.getTimeRange());
         const beforeDateIsoString = Utilities.formatDate(beforeDate, financialBookbook.getTimeZone(), 'yyyy-MM-dd');
 
-        const afterDate = new Date(transactionDate.getTime());
-        afterDate.setMonth(beforeDate.getMonth() - ADDITIONAL_COSTS_CREDITS_QUERY_RANGE);
+        const afterDate = new Date(transactionDate.getTime() - helper.getTimeRange());
         const afterDateIsoString = Utilities.formatDate(afterDate, financialBookbook.getTimeZone(), 'yyyy-MM-dd');
         
+        // Get inventory account details and build query
         const inventoryAccountName = inventoryTransaction.getDebitAccount().getName();
         const query = helper.getAccountQuery(inventoryAccountName, beforeDateIsoString, afterDateIsoString);
 
+        // Search for matching transactions with same purchase code
         const purchaseCode = inventoryTransaction.getProperty(PURCHASE_CODE_PROP);
         const transactions = financialBookbook.getTransactions(query);
         const financialAccountId = financialBookbook.getAccount(inventoryAccountName).getId();
+        
+        // Sum up additional costs from matching transactions
         while (transactions.hasNext()) {
             const tx = transactions.next();
-            if (tx.isChecked() && tx.getDebitAccount().getId() == financialAccountId && tx.getProperty(PURCHASE_CODE_PROP) == purchaseCode && (tx.getProperty(PURCHASE_INVOICE_PROP) != undefined && tx.getProperty(PURCHASE_INVOICE_PROP) != purchaseCode)) {
+            // Only include checked transactions with matching account and purchase code
+            // but different purchase invoice number
+            if (tx.isChecked() && 
+                tx.getDebitAccount().getId() == financialAccountId && 
+                tx.getProperty(PURCHASE_CODE_PROP) == purchaseCode && 
+                (tx.getProperty(PURCHASE_INVOICE_PROP) != undefined && 
+                 tx.getProperty(PURCHASE_INVOICE_PROP) != purchaseCode)) {
                 totalAdditionalCosts = totalAdditionalCosts.plus(tx.getAmount());
             }
         }
