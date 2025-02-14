@@ -23,12 +23,13 @@ const app = new App();
 
 (async function() {
   try {
-    console.log("Starting ngrok...")
+    console.log("Starting ngrok...");
     const url = await connect({ port: 3005 });
     console.log(`Started ngrok at ${url}`);
-    await app.setWebhookUrlDev(url).patch()
+    await app.setWebhookUrlDev(url).patch();
   } catch (err) {
-    console.log(err)
+    console.log(err);
+    throw err;
   }
 })();
 
@@ -37,7 +38,8 @@ async function exit() {
     await app.setWebhookUrlDev(null).patch();
     console.log(' \nRemoved webhook.')
   } catch (err) {
-    console.log(err)
+    console.log(err);
+    throw err;
   }
   process.exit();
 }
