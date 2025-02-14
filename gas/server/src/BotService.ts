@@ -89,18 +89,13 @@ namespace BotService {
         
         const inventoryAccountName = inventoryTransaction.getDebitAccount().getName();
         const query = helper.getAccountQuery(inventoryAccountName, beforeDateIsoString, afterDateIsoString);
-        console.log("QUERY: ", query);
 
         const purchaseCode = inventoryTransaction.getProperty(PURCHASE_CODE_PROP);
         const transactions = financialBookbook.getTransactions(query);
         const financialAccountId = financialBookbook.getAccount(inventoryAccountName).getId();
         while (transactions.hasNext()) {
             const tx = transactions.next();
-            console.log("TX: ", tx.getId());
-            console.log("DEBIT ACCOUNT: ", tx.getDebitAccount().getName());
-            console.log("CREDIT ACCOUNT: ", tx.getCreditAccount().getName());
             if (tx.isChecked() && tx.getDebitAccount().getId() == financialAccountId && tx.getProperty(PURCHASE_CODE_PROP) == purchaseCode && (tx.getProperty(PURCHASE_INVOICE_PROP) != undefined && tx.getProperty(PURCHASE_INVOICE_PROP) != purchaseCode)) {
-                console.log("ENTROU")
                 totalAdditionalCosts = totalAdditionalCosts.plus(tx.getAmount());
             }
         }
