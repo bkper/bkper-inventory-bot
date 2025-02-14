@@ -82,7 +82,7 @@ namespace BotService {
         let totalAdditionalCosts = BkperApp.newAmount(0);
 
         const transactionDate = helper.parseDate(inventoryTransaction.getDate());
-        
+
         // Calculate the range in months to query for the additional cost and credit note transactions
         const beforeDate = new Date(transactionDate.getTime() + helper.getTimeRange());
         const beforeDateIsoString = Utilities.formatDate(beforeDate, financialBookbook.getTimeZone(), 'yyyy-MM-dd');
@@ -114,6 +114,12 @@ namespace BotService {
         }
 
         return totalAdditionalCosts;
+    }
+
+    export function getCreditNotes(financialBookbook: Bkper.Book, inventoryTransaction: Bkper.Transaction): CreditNote[] {
+        const creditNotes: CreditNote[] = [];
+
+        return creditNotes;
     }
 
     export function getTotalPurchaseCost(purchaseTransaction: Bkper.Transaction): Bkper.Amount {
