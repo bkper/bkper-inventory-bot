@@ -113,7 +113,7 @@ namespace BotService {
                 totalAdditionalCosts = totalAdditionalCosts.plus(tx.getAmount());
             } else if (tx.isChecked() && tx.getProperty(CREDIT_NOTE_PROP) != undefined && tx.getProperty(PURCHASE_CODE_PROP) == purchaseCode && tx.getCreditAccount().getId() == financialAccountId) {
                 totalCreditAmount = totalCreditAmount.plus(tx.getAmount());
-                totalCreditQuantity = totalCreditQuantity.plus(BkperApp.newAmount(tx.getProperty(QUANTITY_PROP)));
+                totalCreditQuantity = totalCreditQuantity.plus(BkperApp.newAmount(tx.getProperty(QUANTITY_PROP) ?? 0));
             }
         }
 
@@ -121,7 +121,7 @@ namespace BotService {
             additionalCosts: totalAdditionalCosts,
             creditNote: {
                 quantity: totalCreditQuantity.toNumber(),
-                amount: totalCreditAmount.toNumber()
+                amount: totalCreditAmount
             }
         };
     }
