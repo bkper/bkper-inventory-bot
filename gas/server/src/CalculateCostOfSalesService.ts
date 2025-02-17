@@ -116,18 +116,17 @@ namespace CostOfSalesService {
                 continue;
             }
 
-            // Purchase info: quantity, costs, purchase code
-            const purchaseQuantity = purchaseTransaction.getAmount();
+            // Original purchase info: quantity and price
+            const originalQuantity = purchaseTransaction.getAmount();
+            const originalGoodPurchaseCost = BotService.getGoodPurchaseCost(purchaseTransaction);
 
-            // Cost of sale
-            const goodPurchaseCost = BotService.getGoodPurchaseCost(purchaseTransaction);
+            // Additional costs & credit notes to update purchase transaction
             const { additionalCosts, creditNote } = BotService.getAdditionalCostsAndCreditNotes(financialBook, purchaseTransaction);
-
-            console.log(`ADDITIONAL COSTS: ${additionalCosts.toString()}`);
-            console.log(`CREDIT NOTE: ${creditNote.quantity}, " / ", ${creditNote.amount}`);
-            // const unitGoodCost = goodPurchaseCost.div(purchaseQuantity);
-            // const unitAdditionalCosts = additionalPurchaseCost.div(purchaseQuantity);
-            // const unitTotalCostOfSale = unitGoodCost.plus(unitAdditionalCosts);
+            
+            // Purchase info: quantity, costs, purchase code
+            const updatedPurchaseQuantity = purchaseTransaction.getAmount().minus(creditNote.quantity);
+            const updatedGoodPurchaseCost = BotService.getGoodPurchaseCost(purchaseTransaction).plus(additionalCosts).minus(creditNote.amount);
+            const costOfSalePerUnit = updatedGoodPurchaseCost.div(updatedPurchaseQuantity);
 
             // const purchaseCode = BotService.getPurchaseCode(purchaseTransaction);
 
