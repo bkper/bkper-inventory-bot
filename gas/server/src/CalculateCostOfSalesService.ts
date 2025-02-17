@@ -121,9 +121,10 @@ namespace CostOfSalesService {
 
             // Cost of sale
             const goodPurchaseCost = BotService.getGoodPurchaseCost(purchaseTransaction);
-            const additionalPurchaseCost = BotService.getAdditionalPurchaseCosts(financialBook, purchaseTransaction);
+            const { additionalCosts, creditNote } = BotService.getAdditionalCostsAndCreditNotes(financialBook, purchaseTransaction);
 
-            console.log(`ADDITIONAL COSTS: ${additionalPurchaseCost.toString()}`);
+            console.log(`ADDITIONAL COSTS: ${additionalCosts.toString()}`);
+            console.log(`CREDIT NOTE: ${creditNote.quantity}, " / ", ${creditNote.amount}`);
             // const unitGoodCost = goodPurchaseCost.div(purchaseQuantity);
             // const unitAdditionalCosts = additionalPurchaseCost.div(purchaseQuantity);
             // const unitTotalCostOfSale = unitGoodCost.plus(unitAdditionalCosts);

@@ -36,10 +36,10 @@ namespace helper {
 
     /**
      * Gets the time range in milliseconds for querying additional costs and credits
-     * Calculated as: constants.ADDITIONAL_COSTS_CREDITS_QUERY_RANGE * 30 days * 24 hours * 60 minutes * 60 seconds * 1000 milliseconds
+     * Calculated as: ADDITIONAL_COSTS_CREDITS_QUERY_RANGE * 30 days * 24 hours * 60 minutes * 60 seconds * 1000 milliseconds
      * @returns Time range in milliseconds
      */
-    export function getTimeRange(): number {
-        return ADDITIONAL_COSTS_CREDITS_QUERY_RANGE * 30 * 24 * 60 * 60 * 1000;
+    export function getTimeRange(months: number): number {
+        return months * 30 * 24 * 60 * 60 * 1000;
     }
 }

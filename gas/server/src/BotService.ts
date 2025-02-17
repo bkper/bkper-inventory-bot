@@ -78,18 +78,17 @@ namespace BotService {
      * @param inventoryTransaction The inventory transaction to get additional costs for
      * @returns The total additional costs as a Bkper.Amount
      */
-    export function getAdditionalPurchaseCosts(financialBookbook: Bkper.Book, inventoryTransaction: Bkper.Transaction): Bkper.Amount {
-        let totalAdditionalCosts = BkperApp.newAmount(0);
-
+    export function getAdditionalCostsAndCreditNotes(financialBookbook: Bkper.Book, inventoryTransaction: Bkper.Transaction): { additionalCosts: Bkper.Amount, creditNote: CreditNote } {
         const transactionDate = helper.parseDate(inventoryTransaction.getDate());
+        const timeRange = helper.getTimeRange(ADDITIONAL_COSTS_CREDITS_QUERY_RANGE);
 
         // Calculate the range in months to query for the additional cost and credit note transactions
-        const beforeDate = new Date(transactionDate.getTime() + helper.getTimeRange());
+        const beforeDate = new Date(transactionDate.getTime() + timeRange);
         const beforeDateIsoString = Utilities.formatDate(beforeDate, financialBookbook.getTimeZone(), 'yyyy-MM-dd');
 
-        const afterDate = new Date(transactionDate.getTime() - helper.getTimeRange());
+        const afterDate = new Date(transactionDate.getTime() - timeRange);
         const afterDateIsoString = Utilities.formatDate(afterDate, financialBookbook.getTimeZone(), 'yyyy-MM-dd');
-        
+
         // Get inventory account details and build query
         const inventoryAccountName = inventoryTransaction.getDebitAccount().getName();
         const query = helper.getAccountQuery(inventoryAccountName, beforeDateIsoString, afterDateIsoString);
@@ -98,28 +97,33 @@ namespace BotService {
         const purchaseCode = inventoryTransaction.getProperty(PURCHASE_CODE_PROP);
         const transactions = financialBookbook.getTransactions(query);
         const financialAccountId = financialBookbook.getAccount(inventoryAccountName).getId();
-        
-        // Sum up additional costs from matching transactions
+
+        // Sum up additional costs or creditsfrom matching transactions
+        let totalAdditionalCosts = BkperApp.newAmount(0);
+        let totalCreditAmount = BkperApp.newAmount(0);
+        let totalCreditQuantity = BkperApp.newAmount(0);
         while (transactions.hasNext()) {
             const tx = transactions.next();
             // Only include checked transactions with matching account and purchase code
-            // but different purchase invoice number
-            if (tx.isChecked() && 
-                tx.getDebitAccount().getId() == financialAccountId && 
-                tx.getProperty(PURCHASE_CODE_PROP) == purchaseCode && 
-                (tx.getProperty(PURCHASE_INVOICE_PROP) != undefined && 
-                 tx.getProperty(PURCHASE_INVOICE_PROP) != purchaseCode)) {
+            if (tx.isChecked() &&
+                tx.getDebitAccount().getId() == financialAccountId &&
+                tx.getProperty(PURCHASE_CODE_PROP) == purchaseCode &&
+                (tx.getProperty(PURCHASE_INVOICE_PROP) != undefined &&
+                    tx.getProperty(PURCHASE_INVOICE_PROP) != purchaseCode)) {
                 totalAdditionalCosts = totalAdditionalCosts.plus(tx.getAmount());
+            } else if (tx.isChecked() && tx.getProperty(CREDIT_NOTE_PROP) != undefined && tx.getProperty(PURCHASE_CODE_PROP) == purchaseCode && tx.getCreditAccount().getId() == financialAccountId) {
+                totalCreditAmount = totalCreditAmount.plus(tx.getAmount());
+                totalCreditQuantity = totalCreditQuantity.plus(BkperApp.newAmount(tx.getProperty(QUANTITY_PROP)));
             }
         }
 
-        return totalAdditionalCosts;
-    }
-
-    export function getCreditNotes(financialBookbook: Bkper.Book, inventoryTransaction: Bkper.Transaction): CreditNote[] {
-        const creditNotes: CreditNote[] = [];
-
-        return creditNotes;
+        return {
+            additionalCosts: totalAdditionalCosts,
+            creditNote: {
+                quantity: totalCreditQuantity.toNumber(),
+                amount: totalCreditAmount.toNumber()
+            }
+        };
     }
 
     export function getTotalPurchaseCost(purchaseTransaction: Bkper.Transaction): Bkper.Amount {
