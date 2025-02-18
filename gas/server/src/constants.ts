@@ -13,6 +13,7 @@ const INVENTORY_BOOK_PROP = 'inventory_book';
 const LIQUIDATION_LOG_PROP = 'liquidation_log';
 const NEEDS_REBUILD_PROP = 'needs_rebuild';
 const ORDER_PROP = 'order';
+const ORIGINAL_GOOD_PURCHASE_COST_PROP = 'original_good_purchase_cost';
 const ORIGINAL_QUANTITY_PROP = 'original_quantity';
 const PARENT_ID = 'parent_id';
 const PURCHASE_CODE_PROP = 'purchase_code';

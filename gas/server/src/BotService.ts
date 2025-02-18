@@ -126,10 +126,6 @@ namespace BotService {
         };
     }
 
-    export function getTotalPurchaseCost(purchaseTransaction: Bkper.Transaction): Bkper.Amount {
-        return BkperApp.newAmount(purchaseTransaction.getProperty(TOTAL_COST_PROP));
-    }
-
     export function getPurchaseCode(purchaseTransaction: Bkper.Transaction): string {
         return purchaseTransaction.getProperty(PURCHASE_CODE_PROP);
     }
