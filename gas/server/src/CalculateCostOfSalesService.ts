@@ -105,24 +105,32 @@ namespace CostOfSalesService {
         let saleCost = BkperApp.newAmount(0);
         let purchaseLogEntries: PurchaseLogEntry[] = [];
 
-        for (const purchaseTransaction of purchaseTransactions) {
+        for (const transaction of purchaseTransactions) {
 
             // Log operation status
-            console.log(`processing purchase: ${purchaseTransaction.getId()}`);
+            console.log(`processing purchase: ${transaction.getId()}`);
 
             let saleLiquidationLog: LiquidationLogEntry;
 
-            if (purchaseTransaction.isChecked()) {
+            if (transaction.isChecked()) {
                 // Only process unchecked purchases
                 continue;
             }
 
             // Original purchase info: quantity and price
-            const quantity = purchaseTransaction.getAmount();
-            const goodPurchaseCost = BotService.getGoodPurchaseCost(purchaseTransaction);
+            const originalQuantity = BkperApp.newAmount(transaction.getProperty(ORIGINAL_QUANTITY_PROP));
+            const transactionQuantity = transaction.getAmount();
+            const transactionCost = BkperApp.newAmount(transaction.getProperty(TOTAL_COST_PROP));
 
-            let updatedQuantity = BkperApp.newAmount(0);
-            let updatedGoodPurchaseCost = BkperApp.newAmount(0);
+            let additionalCosts = BkperApp.newAmount(0);
+            let creditNote: CreditNote = { amount: BkperApp.newAmount(0), quantity: 0 };
+            if (originalQuantity.toNumber() == transactionQuantity.toNumber()) {
+                // transaction hasn't been previously processed in FIFO execution
+                ({ additionalCosts, creditNote } = BotService.getAdditionalCostsAndCreditNotes(financialBook, transaction));
+            }
+
+            let updatedQuantity = transactionQuantity.minus(creditNote.quantity);
+            let updatedCost = transactionCost.minus(additionalCosts).plus(creditNote.amount);
 
             // Additional costs & credit notes to update purchase transaction if needed
             if (purchaseTransaction.getProperty(ORIGINAL_QUANTITY_PROP) == undefined) {
