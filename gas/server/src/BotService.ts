@@ -67,10 +67,6 @@ namespace BotService {
         return null;
     }
 
-    export function getGoodPurchaseCost(purchaseTransaction: Bkper.Transaction): Bkper.Amount {
-        return BkperApp.newAmount(purchaseTransaction.getProperty(GOOD_PURCHASE_COST_PROP));
-    }
-
     /**
      * Gets additional purchase costs for an inventory transaction from the financial book
      * 

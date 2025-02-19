@@ -8,7 +8,6 @@ const COST_OF_SALE_PROP = 'cost_of_sale';
 const CREDIT_NOTE_PROP = 'credit_note';
 const EXC_CODE_PROP = 'exc_code';
 const GOOD_EXC_CODE_PROP = 'good_exc_code';
-const GOOD_PURCHASE_COST_PROP = 'good_purchase_cost';
 const INVENTORY_BOOK_PROP = 'inventory_book';
 const LIQUIDATION_LOG_PROP = 'liquidation_log';
 const NEEDS_REBUILD_PROP = 'needs_rebuild';
