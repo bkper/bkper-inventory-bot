@@ -117,13 +117,9 @@ namespace BotService {
             additionalCosts: totalAdditionalCosts,
             creditNote: {
                 quantity: totalCreditQuantity.toNumber(),
-                amount: totalCreditAmount
+                amount: totalCreditAmount.toString()
             }
         };
-    }
-
-    export function getPurchaseCode(purchaseTransaction: Bkper.Transaction): string {
-        return purchaseTransaction.getProperty(PURCHASE_CODE_PROP);
     }
 
     export function compareToFIFO(tx1: Bkper.Transaction, tx2: Bkper.Transaction): number {
