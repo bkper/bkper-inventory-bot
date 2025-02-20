@@ -53,30 +53,22 @@ namespace CostOfSalesService {
                 }
 
                 // Reset purchase transactions
-                if (tx.getProperty(LIQUIDATION_LOG_PROP)) {
+                if (tx.getProperty(PARENT_ID)) {
                     // Trash splitted transaction
                     processor.setInventoryBookTransactionToTrash(tx);
                 }
                 if (tx.getProperty(ORIGINAL_QUANTITY_PROP)) {
                     // Reset parent transaction
-                    const txAmount = tx.getAmount();
-                    const txGoodPurchaseCost = BkperApp.newAmount(tx.getProperty(GOOD_PURCHASE_COST_PROP));
-                    const txAdditionalCosts = tx.getProperty(ADD_COSTS_PROP) ? BkperApp.newAmount(tx.getProperty(ADD_COSTS_PROP)) : BkperApp.newAmount(0);
+                    const goodPurchaseCost = BkperApp.newAmount(tx.getProperty(GOOD_PURCHASE_COST_PROP));
+                    const originalQuantity = BkperApp.newAmount(tx.getProperty(ORIGINAL_QUANTITY_PROP));
 
-                    const unitGoodPurchaseCost = txGoodPurchaseCost.div(txAmount);
-                    const unitAdditionalCosts = txAdditionalCosts.div(txAmount);
-
-                    const originalAmount = BkperApp.newAmount(tx.getProperty(ORIGINAL_QUANTITY_PROP));
-                    const originalGoodPurchaseCost = originalAmount.times(unitGoodPurchaseCost);
-                    const originalAdditionalCosts = originalAmount.times(unitAdditionalCosts);
-
-                    tx.setAmount(originalAmount);
-                    tx.setProperty(GOOD_PURCHASE_COST_PROP, originalGoodPurchaseCost.toString());
-                    tx.setProperty(ADD_COSTS_PROP, originalAdditionalCosts.toString());
-                    tx.setProperty(TOTAL_COST_PROP, originalGoodPurchaseCost.plus(originalAdditionalCosts).toString());
+                    tx.setAmount(originalQuantity);
+                    tx.setProperty(TOTAL_COST_PROP, goodPurchaseCost.toString());
 
                     // remove liquidation log
                     tx.deleteProperty(LIQUIDATION_LOG_PROP);
+                    tx.deleteProperty(ADD_COSTS_PROP);
+                    tx.deleteProperty(CREDIT_NOTE_PROP);
 
                     // Store transaction to be updated
                     processor.setInventoryBookTransactionToUpdate(tx);
