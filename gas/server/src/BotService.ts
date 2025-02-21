@@ -117,7 +117,7 @@ namespace BotService {
             additionalCosts: totalAdditionalCosts,
             creditNote: {
                 quantity: totalCreditQuantity.toNumber(),
-                amount: totalCreditAmount.toString()
+                amount: totalCreditAmount
             }
         };
     }

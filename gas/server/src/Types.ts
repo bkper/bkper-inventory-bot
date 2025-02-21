@@ -15,5 +15,5 @@ type LiquidationLogEntry = {
 
 type CreditNote = {
     quantity: number,
-    amount: string
+    amount: Bkper.Amount
 }

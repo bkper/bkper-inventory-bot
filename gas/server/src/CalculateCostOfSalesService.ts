@@ -110,8 +110,6 @@ namespace CostOfSalesService {
             // Log operation status
             console.log(`processing purchase: ${purchaseTransaction.getId()}`);
 
-            let saleLiquidationLog: LiquidationLogEntry;
-
             if (purchaseTransaction.isChecked()) {
                 // Only process unchecked purchases
                 continue;
@@ -124,7 +122,7 @@ namespace CostOfSalesService {
             const transactionCost = BkperApp.newAmount(purchaseTransaction.getProperty(TOTAL_COST_PROP));
 
             let additionalCosts = BkperApp.newAmount(0);
-            let creditNote: CreditNote = { amount: '', quantity: 0 };
+            let creditNote: CreditNote = { amount: BkperApp.newAmount(0), quantity: 0 };
             if (originalQuantity.toNumber() == transactionQuantity.toNumber()) {
                 // transaction hasn't been previously processed in FIFO execution. Get additional costs & credit notes to update purchase transaction
                 ({ additionalCosts, creditNote } = BotService.getAdditionalCostsAndCreditNotes(financialBook, purchaseTransaction));
@@ -132,7 +130,7 @@ namespace CostOfSalesService {
 
             // Updated purchase info: quantity, costs, purchase code
             let updatedQuantity = transactionQuantity.minus(creditNote.quantity);
-            let updatedCost = transactionCost.minus(additionalCosts).plus(creditNote.amount);
+            let updatedCost = transactionCost.plus(additionalCosts).minus(creditNote.amount);
 
             const costOfSalePerUnit = updatedCost.div(updatedQuantity);
 
@@ -147,7 +145,7 @@ namespace CostOfSalesService {
                     .setProperty(TOTAL_COST_PROP, updatedCost.toString())
                     .setProperty(LIQUIDATION_LOG_PROP, JSON.stringify(liquidationLog))
                     .setProperty(ADD_COSTS_PROP, additionalCosts.toString())
-                    .setProperty(CREDIT_NOTE_PROP, JSON.stringify(creditNote))
+                    .setProperty(CREDIT_NOTE_PROP, JSON.stringify({ quantity: creditNote.quantity, amount: creditNote.amount.toNumber() }))
                     .setChecked(true)
                     ;
 
@@ -175,7 +173,7 @@ namespace CostOfSalesService {
                     .setAmount(remainingQuantity)
                     .setProperty(TOTAL_COST_PROP, remainingCost.toString())
                     .setProperty(ADD_COSTS_PROP, additionalCosts.toString())
-                    .setProperty(CREDIT_NOTE_PROP, JSON.stringify(creditNote))
+                    .setProperty(CREDIT_NOTE_PROP, JSON.stringify({ quantity: creditNote.quantity, amount: creditNote.amount.toNumber() }))
                     ;
 
                 // Store transaction to be updated
