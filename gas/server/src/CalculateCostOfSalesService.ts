@@ -97,7 +97,7 @@ namespace CostOfSalesService {
     function processSale(financialBook: Bkper.Book, inventoryBook: Bkper.Book, saleTransaction: Bkper.Transaction, purchaseTransactions: Bkper.Transaction[], summary: Summary, processor: CalculateCostOfSalesProcessor): void {
 
         // Log operation status
-        console.log(`processing sale: ${saleTransaction.getId()}`);
+        console.log(`processing sale: ${saleTransaction.getId()} - ${saleTransaction.getDescription()}`);
 
         // Sale info: quantity, prices, exchange rates
         let soldQuantity = saleTransaction.getAmount();
@@ -106,14 +106,14 @@ namespace CostOfSalesService {
         let purchaseLogEntries: PurchaseLogEntry[] = [];
 
         for (const purchaseTransaction of purchaseTransactions) {
-
-            // Log operation status
-            console.log(`processing purchase: ${purchaseTransaction.getId()}`);
-
+            
             if (purchaseTransaction.isChecked()) {
                 // Only process unchecked purchases
                 continue;
             }
+            
+            // Log operation status
+            console.log(`processing purchase: ${purchaseTransaction.getId()} - ${purchaseTransaction.getDescription()}`);
 
             // Original purchase info: quantity and price
             const purchaseCode = purchaseTransaction.getProperty(PURCHASE_CODE_PROP);
@@ -136,6 +136,8 @@ namespace CostOfSalesService {
 
             // Sold quantity is greater than or equal to purchase quantity
             if (soldQuantity.gte(updatedQuantity)) {
+                console.log("ENTROU IF")
+
                 // compute COGS
                 saleCost = saleCost.plus(updatedCost);
 
@@ -144,10 +146,17 @@ namespace CostOfSalesService {
                 purchaseTransaction
                     .setProperty(TOTAL_COST_PROP, updatedCost.toString())
                     .setProperty(LIQUIDATION_LOG_PROP, JSON.stringify(liquidationLog))
-                    .setProperty(ADD_COSTS_PROP, additionalCosts.toString())
-                    .setProperty(CREDIT_NOTE_PROP, JSON.stringify({ quantity: creditNote.quantity, amount: creditNote.amount.toNumber() }))
-                    .setChecked(true)
                     ;
+
+                if (purchaseTransaction.getProperty(ADD_COSTS_PROP) == null && !additionalCosts.eq(0)) {
+                    purchaseTransaction.setProperty(ADD_COSTS_PROP, additionalCosts.toString());
+                }
+
+                if (purchaseTransaction.getProperty(CREDIT_NOTE_PROP) == null && !creditNote.amount.eq(0)) {
+                    purchaseTransaction.setProperty(CREDIT_NOTE_PROP, JSON.stringify({ quantity: creditNote.quantity, amount: creditNote.amount.toNumber() }));
+                }
+
+                purchaseTransaction.setChecked(true);
 
                 // Store transaction to be updated
                 processor.setInventoryBookTransactionToUpdate(purchaseTransaction);
@@ -159,6 +168,7 @@ namespace CostOfSalesService {
                 soldQuantity = soldQuantity.minus(updatedQuantity);
 
             } else {
+                console.log("ENTROU ELSE")
                 // Sold quantity is less than purchase quantity: split and update purchase transaction
                 const remainingQuantity = updatedQuantity.minus(soldQuantity);
                 const partialBuyQuantity = updatedQuantity.minus(remainingQuantity);
@@ -172,9 +182,15 @@ namespace CostOfSalesService {
                 purchaseTransaction
                     .setAmount(remainingQuantity)
                     .setProperty(TOTAL_COST_PROP, remainingCost.toString())
-                    .setProperty(ADD_COSTS_PROP, additionalCosts.toString())
-                    .setProperty(CREDIT_NOTE_PROP, JSON.stringify({ quantity: creditNote.quantity, amount: creditNote.amount.toNumber() }))
                     ;
+
+                if (purchaseTransaction.getProperty(ADD_COSTS_PROP) == null && !additionalCosts.eq(0)) {
+                    purchaseTransaction.setProperty(ADD_COSTS_PROP, additionalCosts.toString());
+                }
+
+                if (purchaseTransaction.getProperty(CREDIT_NOTE_PROP) == null && !creditNote.amount.eq(0)) {
+                    purchaseTransaction.setProperty(CREDIT_NOTE_PROP, JSON.stringify({ quantity: creditNote.quantity, amount: creditNote.amount.toNumber() }));
+                }
 
                 // Store transaction to be updated
                 processor.setInventoryBookTransactionToUpdate(purchaseTransaction);
@@ -207,6 +223,7 @@ namespace CostOfSalesService {
             }
             // Break loop if sale is fully processed, otherwise proceed to next purchase
             if (soldQuantity.eq(0)) {
+                console.log("PURCHASE TX ID: ", purchaseTransaction.getId())
                 break;
             }
         }
