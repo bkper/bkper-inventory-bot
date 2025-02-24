@@ -136,7 +136,6 @@ namespace CostOfSalesService {
 
             // Sold quantity is greater than or equal to purchase quantity
             if (soldQuantity.gte(updatedQuantity)) {
-                console.log("ENTROU IF")
 
                 // compute COGS
                 saleCost = saleCost.plus(updatedCost);
@@ -168,7 +167,6 @@ namespace CostOfSalesService {
                 soldQuantity = soldQuantity.minus(updatedQuantity);
 
             } else {
-                console.log("ENTROU ELSE")
                 // Sold quantity is less than purchase quantity: split and update purchase transaction
                 const remainingQuantity = updatedQuantity.minus(soldQuantity);
                 const partialBuyQuantity = updatedQuantity.minus(remainingQuantity);
@@ -212,6 +210,9 @@ namespace CostOfSalesService {
                     .setChecked(true)
                     ;
 
+                // Store transaction to be created: generate temporaty id in order to link up connections later
+                splittedPurchaseTransaction.addRemoteId(`${processor.generateTemporaryId()}`);
+                
                 // Store transaction to be created
                 processor.setInventoryBookTransactionToCreate(splittedPurchaseTransaction);
 
@@ -223,7 +224,6 @@ namespace CostOfSalesService {
             }
             // Break loop if sale is fully processed, otherwise proceed to next purchase
             if (soldQuantity.eq(0)) {
-                console.log("PURCHASE TX ID: ", purchaseTransaction.getId())
                 break;
             }
         }

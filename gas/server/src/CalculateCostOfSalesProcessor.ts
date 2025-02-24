@@ -19,6 +19,32 @@ class CalculateCostOfSalesProcessor {
         return remoteIds?.length > 0 ? remoteIds[0] : '';
     }
 
+    generateTemporaryId(): string {
+        return `temp_id_${Utilities.getUuid()}`;
+    }
+
+    private getTemporaryId(transaction: Bkper.Transaction): string {
+        for (const remoteId of transaction.getRemoteIds()) {
+            if (remoteId.startsWith('temp_id_')) {
+                return remoteId;
+            }
+        }
+        return '';
+    }
+
+    private linkNewIdsToOlsIds(newInventoryBookTransactions: Bkper.Transaction[]): void {
+        for (const transaction of newInventoryBookTransactions) {
+            const oldId = this.getTemporaryId(transaction);
+            const newId = transaction.getId();
+
+            // Update remoteId on new inventory book transactions
+            const connectedInventoryTx = this.inventoryBookTransactionsToCreateMap.get(`${oldId}`);
+            if (connectedInventoryTx) {
+                connectedInventoryTx.addRemoteId(`${newId}`);
+            }
+        }
+    }
+
     private checkTransactionLocked(transaction: Bkper.Transaction): void {
         if (transaction.isLocked()) {
             this.isAnyTransactionLocked = true;
@@ -47,9 +73,12 @@ class CalculateCostOfSalesProcessor {
     }
 
     fireBatchOperations(): void {
-        this.fireBatchCreateInventoryBookTransactions();
+        const newInventoryBookTransactions = this.fireBatchCreateInventoryBookTransactions();
         this.fireBatchUpdateInventoryBookTransactions();
         this.fireBatchCreateFinancialBookTransactions();
+
+        // Update remoteId on new inventory book transactions
+        this.linkNewIdsToOlsIds(newInventoryBookTransactions);
     }
 
     // Inventory book: create
@@ -70,11 +99,12 @@ class CalculateCostOfSalesProcessor {
     }
 
     // Financial book: create
-    private fireBatchCreateFinancialBookTransactions(): void {
+    private fireBatchCreateFinancialBookTransactions(): Bkper.Transaction[] {
         const financialBookTransactionsToCreate = Array.from(this.financialBookTransactionsToCreateMap.values());
         if (financialBookTransactionsToCreate.length > 0) {
-            this.financialBook.batchCreateTransactions(financialBookTransactionsToCreate);
+            return this.financialBook.batchCreateTransactions(financialBookTransactionsToCreate);
         }
+        return [];
     }
 
 }
