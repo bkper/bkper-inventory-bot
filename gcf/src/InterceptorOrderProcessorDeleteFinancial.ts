@@ -1,8 +1,8 @@
-import { AccountType, Book, Transaction } from "bkper-js";
+import { AccountType, Amount, Book, Transaction } from "bkper-js";
 import { InterceptorOrderProcessorDelete } from "./InterceptorOrderProcessorDelete.js";
 import { Result } from "./index.js";
-import { GOOD_PROP, PURCHASE_CODE_PROP, PURCHASE_INVOICE_PROP, QUANTITY_PROP, COGS_HASHTAG, NEEDS_REBUILD_PROP } from "./constants.js";
-import { flagInventoryAccountForRebuildIfNeeded, getInventoryBook } from "./BotService.js";
+import { GOOD_PROP, PURCHASE_CODE_PROP, PURCHASE_INVOICE_PROP, QUANTITY_PROP, COGS_HASHTAG, NEEDS_REBUILD_PROP, ADDITIONAL_COSTS_CREDITS_QUERY_RANGE, ORIGINAL_QUANTITY_PROP } from "./constants.js";
+import { flagInventoryAccountForRebuildIfNeeded, getAccountQuery, getInventoryBook } from "./BotService.js";
 
 export class InterceptorOrderProcessorDeleteFinancial extends InterceptorOrderProcessorDelete {
 
@@ -39,14 +39,28 @@ export class InterceptorOrderProcessorDeleteFinancial extends InterceptorOrderPr
                 if (transactionPayload.remoteIds) {
                     // transaction had been already processed by FIFO
                     const inventoryBook = getInventoryBook(financialBook);
-                    const goodAccount = await inventoryBook?.getAccount(transactionPayload.debitAccount.name);
-                    if (goodAccount) {
-                        const purchaseCode = transactionPayload.properties[PURCHASE_CODE_PROP];
-                        // query for good account transactions within ADDITIONAL_COSTS_CREDITS_QUERY_RANGE time range and look for the purchase code property
-                        // if found and it had already been processed by FIFO, flag the good account for rebuild
-                        await goodAccount.setProperty(NEEDS_REBUILD_PROP, 'TRUE').update();
-                        const warningMsg = `Flagging account ${goodAccount.getName()} for rebuild`;
-                        responses.push(warningMsg);
+                    if (inventoryBook) {
+                        const goodAccount = await inventoryBook.getAccount(transactionPayload.debitAccount.name);
+                        if (goodAccount) {
+                            const purchaseCode = transactionPayload.properties[PURCHASE_CODE_PROP];
+                            // query for good account transactions within ADDITIONAL_COSTS_CREDITS_QUERY_RANGE time range and look for the purchase code property
+                            // if found and it had already been processed by FIFO, flag the good account for rebuild
+                            const query = await this.getAccountQuery(inventoryBook, transactionPayload);
+                            const transactions = (await inventoryBook?.listTransactions(query)).getItems();
+                            for (const transaction of transactions) {
+                                if (transaction.getProperty(PURCHASE_CODE_PROP) == purchaseCode) {
+                                    const originalQuantity = new Amount(transaction.getProperty(ORIGINAL_QUANTITY_PROP) ?? 0).toNumber();
+                                    const amount = new Amount(transaction.getAmount() ?? 0).toNumber();
+                                    if (originalQuantity != amount) {
+                                        // had already been processed by FIFO
+                                        await goodAccount.setProperty(NEEDS_REBUILD_PROP, 'TRUE').update();
+                                        const warningMsg = `Flagging account ${goodAccount.getName()} for rebuild`;
+                                        responses.push(warningMsg);
+                                    }
+                                    break;
+                                }
+                            }
+                        }
                     }
                 }
             }
@@ -98,6 +112,36 @@ export class InterceptorOrderProcessorDeleteFinancial extends InterceptorOrderPr
             }
         }
         return responses;
+    }
+
+    private async getAccountQuery(inventoryBook: Book, transaction: bkper.Transaction): Promise<string> {
+        let query = '';
+        if (transaction.date && transaction.debitAccount) {
+            const transactionDate = inventoryBook.parseDate(transaction.date);
+            const timeRange = this.getTimeRange();
+
+            // Calculate the range in months to query for the additional cost and credit note transactions
+            const beforeDate = new Date(transactionDate.getTime() + timeRange);
+            const beforeDateIsoString = inventoryBook.formatDate(beforeDate, inventoryBook.getTimeZone());
+
+            const afterDate = new Date(transactionDate.getTime() - timeRange);
+            const afterDateIsoString = inventoryBook.formatDate(afterDate, inventoryBook.getTimeZone());
+
+            // Get inventory account details and build query
+            const inventoryAccount = await inventoryBook.getAccount(transaction.debitAccount.name);
+            const inventoryAccountName = inventoryAccount ? inventoryAccount.getName() : undefined;
+            query = inventoryAccountName ? getAccountQuery(inventoryAccountName, beforeDateIsoString, afterDateIsoString) : '';
+        }
+        return query;
+    }
+
+    /**
+     * Gets the time range in milliseconds for querying additional costs and credits
+     * Calculated as: ADDITIONAL_COSTS_CREDITS_QUERY_RANGE * 30 days * 24 hours * 60 minutes * 60 seconds * 1000 milliseconds
+     * @returns Time range in milliseconds
+     */
+    private getTimeRange(): number {
+        return ADDITIONAL_COSTS_CREDITS_QUERY_RANGE * 30 * 24 * 60 * 60 * 1000;
     }
 
 }
