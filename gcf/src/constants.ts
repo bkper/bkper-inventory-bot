@@ -10,6 +10,7 @@ export const INVENTORY_BOOK_PROP = 'inventory_book';
 export const NEEDS_REBUILD_PROP = 'needs_rebuild';
 export const ORDER_PROP = 'order';
 export const ORIGINAL_QUANTITY_PROP = 'original_quantity';
+export const PARENT_ID_PROP = 'parent_id';
 export const PURCHASE_CODE_PROP = 'purchase_code';
 export const PURCHASE_INVOICE_PROP = 'purchase_invoice';
 export const QUANTITY_PROP = 'quantity';
