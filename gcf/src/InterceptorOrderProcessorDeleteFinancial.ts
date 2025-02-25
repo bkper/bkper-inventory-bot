@@ -1,8 +1,8 @@
-import { AccountType, Amount, Book, Transaction } from "bkper-js";
+import { AccountType, Book, Transaction } from "bkper-js";
 import { InterceptorOrderProcessorDelete } from "./InterceptorOrderProcessorDelete.js";
 import { Result } from "./index.js";
-import { GOOD_PROP, PURCHASE_CODE_PROP, PURCHASE_INVOICE_PROP, QUANTITY_PROP, COGS_HASHTAG } from "./constants.js";
-import { flagInventoryAccountForRebuild, flagInventoryAccountForRebuildIfNeeded, getInventoryBook, updateGoodTransaction } from "./BotService.js";
+import { GOOD_PROP, PURCHASE_CODE_PROP, PURCHASE_INVOICE_PROP, QUANTITY_PROP, COGS_HASHTAG, NEEDS_REBUILD_PROP } from "./constants.js";
+import { flagInventoryAccountForRebuildIfNeeded, getInventoryBook } from "./BotService.js";
 
 export class InterceptorOrderProcessorDeleteFinancial extends InterceptorOrderProcessorDelete {
 
@@ -26,41 +26,28 @@ export class InterceptorOrderProcessorDeleteFinancial extends InterceptorOrderPr
                 // delete root purchase transaction in the inventory book and all its splitted transactions
                 const deletedTxs = await this.deleteOnInventoryBook(financialBook, transactionPayload.id);
                 if (deletedTxs) {
-                    const rebuildFlagMsg = await flagInventoryAccountForRebuildIfNeeded(financialBook, deletedTxs[0]);
                     responses = responses.concat(await this.buildDeleteResults(deletedTxs, financialBook));
+                    const rebuildFlagMsg = await flagInventoryAccountForRebuildIfNeeded(financialBook, deletedTxs[0]);
                     if (rebuildFlagMsg) {
                         responses.push(rebuildFlagMsg);
-                    }
-                    // unckeck the additional cost and credit note transactions in the financial book
-                    const financialTxRemoteIds = deletedTxs[0].getRemoteIds();
-                    for (const remoteId of financialTxRemoteIds) {
-                        if (remoteId != transactionPayload.id) {
-                            const financialTx = (await financialBook.listTransactions(remoteId)).getFirst();
-                            if (financialTx) {
-                                financialTx.uncheck();
-                                responses.push(`UNCHECKED: ${financialTx.getDate()} ${financialTx.getAmount()} ${await financialTx.getCreditAccountName()} ${await financialTx.getDebitAccountName()} ${financialTx.getDescription()}`);
-                            }
-                        }
                     }
                 }
             }
 
             // deleted transaction is the additional cost transaction or credit note transaction
             if (transactionPayload.properties[PURCHASE_CODE_PROP] != undefined && (transactionPayload.properties[PURCHASE_CODE_PROP] != transactionPayload.properties[PURCHASE_INVOICE_PROP])) {
-                const inventoryBook = getInventoryBook(financialBook);
-                const inventoryTx = inventoryBook ? (await inventoryBook.listTransactions(`remoteId:${transactionPayload.id}`)).getFirst() : undefined;
-                if (inventoryTx) {
-                    const quantity = new Amount(transactionPayload.properties[QUANTITY_PROP] ?? 0).toNumber();
-                    const amount = new Amount(transactionPayload!.amount ?? 0).toNumber();
-                    await updateGoodTransaction(transactionPayload, inventoryTx, true);
-                    if (quantity != amount) {
-                        // transaction had been already processed in FIFO: flag account for rebuild
-                        const rebuildFlagMsg = await flagInventoryAccountForRebuild(financialBook, inventoryTx);
-                        if (rebuildFlagMsg) {
-                            responses.push(rebuildFlagMsg);
-                        }
+                if (transactionPayload.remoteIds) {
+                    // transaction had been already processed by FIFO
+                    const inventoryBook = getInventoryBook(financialBook);
+                    const goodAccount = await inventoryBook?.getAccount(transactionPayload.debitAccount.name);
+                    if (goodAccount) {
+                        const purchaseCode = transactionPayload.properties[PURCHASE_CODE_PROP];
+                        // query for good account transactions within ADDITIONAL_COSTS_CREDITS_QUERY_RANGE time range and look for the purchase code property
+                        // if found and it had already been processed by FIFO, flag the good account for rebuild
+                        await goodAccount.setProperty(NEEDS_REBUILD_PROP, 'TRUE').update();
+                        const warningMsg = `Flagging account ${goodAccount.getName()} for rebuild`;
+                        responses.push(warningMsg);
                     }
-                    responses.push(`UPDATED: ${inventoryTx.getDate()} ${inventoryTx.getAmount()} ${await inventoryTx.getCreditAccountName()} ${await inventoryTx.getDebitAccountName()} ${inventoryTx.getDescription()}`);
                 }
             }
 

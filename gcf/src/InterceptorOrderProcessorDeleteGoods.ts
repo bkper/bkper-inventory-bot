@@ -38,9 +38,11 @@ export class InterceptorOrderProcessorDeleteGoods extends InterceptorOrderProces
                 if (responses) {
                     results = results.concat(await this.buildDeleteResults(responses));
                 }
-                
+
                 return { result: results };
             }
+
+            return { result: false };
         }
 
         const goodExcCode = await getExchangeCodeFromAccount(goodAccount);

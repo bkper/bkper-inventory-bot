@@ -1,3 +1,6 @@
+// Code parameters
+export const ADDITIONAL_COSTS_CREDITS_QUERY_RANGE = 2; // in months
+
 // Properties
 export const EXC_CODE_PROP = 'exc_code';
 export const COGS_CALC_DATE_PROP = 'cogs_calc_date';
