@@ -24,18 +24,22 @@ export class InterceptorOrderProcessorDeleteGoods extends InterceptorOrderProces
 
         // deleted transaction is the root purchase transaction
         if (transactionPayload!.properties?.[ORIGINAL_QUANTITY_PROP]) {
+            let results: string[] = [];
+
             const originalQuantity = new Amount(transactionPayload!.properties[ORIGINAL_QUANTITY_PROP]).toNumber();
             const amount = new Amount(transactionPayload!.amount ?? 0).toNumber();
             if (originalQuantity != amount) {
-                // transaction had been already splitted: delete splitted transactions in inventory book and flag account for rebuild
-                goodAccount.setProperty(NEEDS_REBUILD_PROP, 'TRUE').update();
+                // transaction had been already processed by FIFO: delete splitted transactions in inventory book and flag account for rebuild
+                await goodAccount.setProperty(NEEDS_REBUILD_PROP, 'TRUE').update();
+                const warningMsg = `Flagging account ${goodAccount.getName()} for rebuild`;
+                results.push(warningMsg);
+
                 responses = await this.cascadeDeleteInventoryTransactions(inventoryBook, transactionPayload!);
                 if (responses) {
-                    const warningMsg = `Flagging account ${goodAccount.getName()} for rebuild`;
-                    let results = await this.buildDeleteResults(responses);
-                    results.push(warningMsg);
-                    return { result: results };
+                    results = results.concat(await this.buildDeleteResults(responses));
                 }
+                
+                return { result: results };
             }
         }
 
