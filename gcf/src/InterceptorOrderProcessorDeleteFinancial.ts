@@ -19,7 +19,7 @@ export class InterceptorOrderProcessorDeleteFinancial extends InterceptorOrderPr
 
         let responses: string[] = [];
 
-        if (transactionPayload && transactionPayload.properties && transactionPayload.debitAccount && transactionPayload.id) {
+        if (transactionPayload && transactionPayload.properties && transactionPayload.debitAccount &&transactionPayload.creditAccount && transactionPayload.id) {
 
             // deleted transaction is the purchase transaction
             if (transactionPayload.properties[QUANTITY_PROP] != undefined && transactionPayload.properties[PURCHASE_CODE_PROP] != undefined && (transactionPayload.properties[PURCHASE_CODE_PROP] == transactionPayload.properties[PURCHASE_INVOICE_PROP])) {
@@ -36,29 +36,26 @@ export class InterceptorOrderProcessorDeleteFinancial extends InterceptorOrderPr
 
             // deleted transaction is the additional cost transaction or credit note transaction
             if (transactionPayload.properties[PURCHASE_CODE_PROP] != undefined && (transactionPayload.properties[PURCHASE_CODE_PROP] != transactionPayload.properties[PURCHASE_INVOICE_PROP])) {
-                if (transactionPayload.remoteIds) {
-                    // transaction had been already processed by FIFO
-                    const inventoryBook = getInventoryBook(financialBook);
-                    if (inventoryBook) {
-                        const goodAccount = await inventoryBook.getAccount(transactionPayload.debitAccount.name);
-                        if (goodAccount) {
-                            const purchaseCode = transactionPayload.properties[PURCHASE_CODE_PROP];
-                            // query for good account transactions within ADDITIONAL_COSTS_CREDITS_QUERY_RANGE time range and look for the purchase code property
-                            // if found and it had already been processed by FIFO, flag the good account for rebuild
-                            const query = await this.getAccountQuery(inventoryBook, transactionPayload);
-                            const transactions = (await inventoryBook?.listTransactions(query)).getItems();
-                            for (const transaction of transactions) {
-                                if (transaction.getProperty(PURCHASE_CODE_PROP) == purchaseCode) {
-                                    const originalQuantity = new Amount(transaction.getProperty(ORIGINAL_QUANTITY_PROP) ?? 0).toNumber();
-                                    const amount = new Amount(transaction.getAmount() ?? 0).toNumber();
-                                    if (originalQuantity != amount) {
-                                        // had already been processed by FIFO
-                                        await goodAccount.setProperty(NEEDS_REBUILD_PROP, 'TRUE').update();
-                                        const warningMsg = `Flagging account ${goodAccount.getName()} for rebuild`;
-                                        responses.push(warningMsg);
-                                    }
-                                    break;
+                const inventoryBook = getInventoryBook(financialBook);
+                if (inventoryBook) {
+                    const goodAccount = await inventoryBook.getAccount(transactionPayload.creditAccount.name);
+                    if (goodAccount) {
+                        const purchaseCode = transactionPayload.properties[PURCHASE_CODE_PROP];
+                        // query for good account transactions within ADDITIONAL_COSTS_CREDITS_QUERY_RANGE time range and look for the purchase code property
+                        // if found and it had already been processed by FIFO, flag the good account for rebuild
+                        const query = await this.getAccountQuery(inventoryBook, transactionPayload);
+                        const transactions = (await inventoryBook?.listTransactions(query)).getItems();
+                        for (const transaction of transactions) {
+                            if (transaction.getProperty(PURCHASE_CODE_PROP) == purchaseCode) {
+                                const originalQuantity = new Amount(transaction.getProperty(ORIGINAL_QUANTITY_PROP) ?? 0).toNumber();
+                                const amount = new Amount(transaction.getAmount() ?? 0).toNumber();
+                                if (originalQuantity != amount) {
+                                    // had already been processed by FIFO
+                                    await goodAccount.setProperty(NEEDS_REBUILD_PROP, 'TRUE').update();
+                                    const warningMsg = `Flagging account ${goodAccount.getName()} for rebuild`;
+                                    responses.push(warningMsg);
                                 }
+                                break;
                             }
                         }
                     }
@@ -106,7 +103,7 @@ export class InterceptorOrderProcessorDeleteFinancial extends InterceptorOrderPr
         const deletedInventoryTx = inventoryBook ? await this.deleteTransactionByRemoteId(inventoryBook, remoteId) : undefined;
         if (deletedInventoryTx) {
             responses = [deletedInventoryTx];
-            const cascadedResponses = await this.cascadeDeleteInventoryTransactions(inventoryBook!, deletedInventoryTx.json());
+            const cascadedResponses = await this.cascadeDeleteInventoryTransactions(inventoryBook!, deletedInventoryTx);
             if (cascadedResponses) {
                 responses = responses.concat(cascadedResponses);
             }
@@ -116,7 +113,7 @@ export class InterceptorOrderProcessorDeleteFinancial extends InterceptorOrderPr
 
     private async getAccountQuery(inventoryBook: Book, transaction: bkper.Transaction): Promise<string> {
         let query = '';
-        if (transaction.date && transaction.debitAccount) {
+        if (transaction.date && transaction.creditAccount) {
             const transactionDate = inventoryBook.parseDate(transaction.date);
             const timeRange = this.getTimeRange();
 
@@ -128,7 +125,7 @@ export class InterceptorOrderProcessorDeleteFinancial extends InterceptorOrderPr
             const afterDateIsoString = inventoryBook.formatDate(afterDate, inventoryBook.getTimeZone());
 
             // Get inventory account details and build query
-            const inventoryAccount = await inventoryBook.getAccount(transaction.debitAccount.name);
+            const inventoryAccount = await inventoryBook.getAccount(transaction.creditAccount.name);
             const inventoryAccountName = inventoryAccount ? inventoryAccount.getName() : undefined;
             query = inventoryAccountName ? getAccountQuery(inventoryAccountName, beforeDateIsoString, afterDateIsoString) : '';
         }

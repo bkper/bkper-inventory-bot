@@ -1,6 +1,6 @@
 import { Bkper } from "bkper-js";
 import { Result } from "./index.js";
-import { isInventoryBook, uncheckAndRemove } from "./BotService.js";
+import { isInventoryBook, uncheckAndTrash } from "./BotService.js";
 
 export class EventHandlerTransactionPosted {
 
@@ -18,7 +18,7 @@ export class EventHandlerTransactionPosted {
 				const transactionPayload = operation.transaction;
 				const transaction = (await eventBook.listTransactions(transactionPayload!.id!)).getFirst();
 				if (transaction) {
-					await uncheckAndRemove(transaction);
+					await uncheckAndTrash(transaction);
 				}
 				const warningMsg = `You can't post directly in the Inventory book. Transaction deleted.`;
 

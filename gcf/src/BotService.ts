@@ -1,6 +1,6 @@
 import { Account, AccountType, Amount, Bkper, Book, Transaction } from 'bkper-js';
 
-import { COGS_CALC_DATE_PROP, CREDIT_NOTE_PROP, TOTAL_CREDITS_PROP, EXC_CODE_PROP, GOOD_PURCHASE_COST_PROP, INVENTORY_BOOK_PROP, NEEDS_REBUILD_PROP, ORIGINAL_QUANTITY_PROP, QUANTITY_PROP, TOTAL_ADDITIONAL_COSTS_PROP, TOTAL_COST_PROP } from './constants.js';
+import { COGS_CALC_DATE_PROP, EXC_CODE_PROP, INVENTORY_BOOK_PROP, NEEDS_REBUILD_PROP, QUANTITY_PROP  } from './constants.js';
 
 export function isInventoryBook(book: Book): boolean {
     if (book.getProperty(INVENTORY_BOOK_PROP)) {
@@ -109,11 +109,11 @@ export function buildBookAnchor(book?: Book): string | undefined {
     return book ? `<a href='https://app.bkper.com/b/#transactions:bookId=${book.getId()}'>${book.getName()}</a>` : undefined;
 }
 
-export async function uncheckAndRemove(transaction: Transaction): Promise<Transaction> {
+export async function uncheckAndTrash(transaction: Transaction): Promise<Transaction> {
     if (transaction.isChecked()) {
         transaction = await transaction.uncheck();
     }
-    transaction = await transaction.remove();
+    transaction = await transaction.trash();
     return transaction;
 }
 

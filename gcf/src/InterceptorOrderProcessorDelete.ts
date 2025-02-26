@@ -1,20 +1,24 @@
 import { Book, Transaction } from "bkper-js";
-import { buildBookAnchor, uncheckAndRemove } from "./BotService.js";
+import { buildBookAnchor, uncheckAndTrash } from "./BotService.js";
 import { ORIGINAL_QUANTITY_PROP, PARENT_ID_PROP } from "./constants.js";
 
 export abstract class InterceptorOrderProcessorDelete {
 
-	protected async cascadeDeleteInventoryTransactions(inventoryBook: Book, deletedTx: bkper.Transaction): Promise<Transaction[] | undefined> {
+	protected async cascadeDeleteInventoryTransactions(inventoryBook: Book, deletedTx: bkper.Transaction | Transaction): Promise<Transaction[] | undefined> {
 		let responses: Transaction[] = [];
 
+		const transactionId = deletedTx instanceof Transaction ? deletedTx.getId() : deletedTx.id;
+		const originalQuantity = deletedTx instanceof Transaction ? deletedTx.getProperty(ORIGINAL_QUANTITY_PROP) : deletedTx.properties?.[ORIGINAL_QUANTITY_PROP];
+		const accountName = deletedTx instanceof Transaction ? await deletedTx.getDebitAccountName() : deletedTx.debitAccount?.name;
+
 		// splitted purchase transactions in inventory book
-		if (deletedTx.properties?.[ORIGINAL_QUANTITY_PROP]) {
-			const goodAccountTransactions = (await inventoryBook.listTransactions(`account:'${deletedTx.debitAccount?.name}' on:${deletedTx.date}`)).getItems();
+		if (originalQuantity) {
+			const goodAccountTransactions = (await inventoryBook.listTransactions(`account:'${accountName}'`)).getItems();
 			for (const transaction of goodAccountTransactions) {
 				const parentIdProp = transaction.getProperty(PARENT_ID_PROP);
-				if (parentIdProp == deletedTx.id) {
+				if (parentIdProp == transactionId) {
 					// transaction is a splitted transaction
-					responses.push(await uncheckAndRemove(transaction));
+					responses.push(await uncheckAndTrash(transaction));
 				}
 			}
 		}
@@ -55,7 +59,7 @@ export abstract class InterceptorOrderProcessorDelete {
 	protected async deleteTransactionByRemoteId(book: Book, remoteId?: string): Promise<Transaction | undefined> {
 		let tx = remoteId ? (await book.listTransactions(`remoteId:${remoteId}`)).getFirst() : undefined;
 		if (tx) {
-			tx = await uncheckAndRemove(tx);
+			tx = await uncheckAndTrash(tx);
 			return tx;
 		}
 		return undefined;
