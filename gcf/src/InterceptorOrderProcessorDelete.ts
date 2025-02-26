@@ -26,11 +26,13 @@ export abstract class InterceptorOrderProcessorDelete {
 		return responses.length > 0 ? responses : undefined;
 	}
 
-	protected async cascadeDeleteFinancialTransactions(financialBook: Book, remoteTx: bkper.Transaction): Promise<Transaction[] | undefined> {
+	protected async cascadeDeleteFinancialTransactions(financialBook: Book, remoteTx: bkper.Transaction | Transaction): Promise<Transaction[] | undefined> {
 		let responses: Transaction[] | undefined = undefined;
 
+		const remoteId = remoteTx instanceof Transaction ? remoteTx.getId() : remoteTx.id;
+
 		// COGS transaction in financial book
-		let tx = (await financialBook.listTransactions(`remoteId:${remoteTx.id}`)).getFirst();
+		let tx = (await financialBook.listTransactions(`remoteId:${remoteId}`)).getFirst();
 		if (tx) {
 			if (tx.isChecked()) {
 				tx = await tx.uncheck();

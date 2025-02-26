@@ -103,9 +103,10 @@ export class InterceptorOrderProcessorDeleteFinancial extends InterceptorOrderPr
         const deletedInventoryTx = inventoryBook ? await this.deleteTransactionByRemoteId(inventoryBook, remoteId) : undefined;
         if (deletedInventoryTx) {
             responses = [deletedInventoryTx];
-            const cascadedResponses = await this.cascadeDeleteInventoryTransactions(inventoryBook!, deletedInventoryTx);
-            if (cascadedResponses) {
-                responses = responses.concat(cascadedResponses);
+            const inventoryResponses = await this.cascadeDeleteInventoryTransactions(inventoryBook!, deletedInventoryTx);
+            const financialResponses = await this.cascadeDeleteFinancialTransactions(financialBook!, deletedInventoryTx);
+            if (inventoryResponses || financialResponses) {
+                responses = responses.concat(inventoryResponses ?? []).concat(financialResponses ?? []);
             }
         }
         return responses;
