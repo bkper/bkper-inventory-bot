@@ -16,6 +16,11 @@ class Summary {
         return this.result;
     }
 
+    setResult(result: string): this {
+        this.result = result;
+        return this;
+    }
+
     done(msg?: string): this {
         if (msg) {
             this.result = msg;
