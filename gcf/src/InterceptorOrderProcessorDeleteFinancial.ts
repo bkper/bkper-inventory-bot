@@ -2,7 +2,7 @@ import { AccountType, Amount, Book, Transaction } from "bkper-js";
 import { InterceptorOrderProcessorDelete } from "./InterceptorOrderProcessorDelete.js";
 import { Result } from "./index.js";
 import { GOOD_PROP, PURCHASE_CODE_PROP, PURCHASE_INVOICE_PROP, QUANTITY_PROP, COGS_HASHTAG, NEEDS_REBUILD_PROP, ADDITIONAL_COSTS_CREDITS_QUERY_RANGE, ORIGINAL_QUANTITY_PROP } from "./constants.js";
-import { flagInventoryAccountForRebuildIfNeeded, getAccountQuery, getInventoryBook } from "./BotService.js";
+import { flagInventoryAccountForRebuild, flagInventoryAccountForRebuildIfNeeded, getAccountQuery, getInventoryBook } from "./BotService.js";
 
 export class InterceptorOrderProcessorDeleteFinancial extends InterceptorOrderProcessorDelete {
 
@@ -81,7 +81,7 @@ export class InterceptorOrderProcessorDeleteFinancial extends InterceptorOrderPr
                     for (const remoteId of transactionPayload.remoteIds) {
                         let inventoryBookTransaction = (await inventoryBook.listTransactions(remoteId)).getFirst();
                         if (inventoryBookTransaction) {
-                            const response = await flagInventoryAccountForRebuildIfNeeded(financialBook, inventoryBookTransaction);
+                            const response = await flagInventoryAccountForRebuild(financialBook, inventoryBookTransaction);
                             if (response) {
                                 responses.push(response);
                             }

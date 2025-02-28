@@ -1,7 +1,7 @@
 import { Account, AccountType, Amount, Book, Group, Transaction } from "bkper-js";
 import { EventHandlerTransaction } from "./EventHandlerTransaction.js";
 import { buildBookAnchor, getCOGSCalculationDateValue, getQuantity } from "./BotService.js";
-import { GOOD_BUY_ACCOUNT_NAME, GOOD_EXC_CODE_PROP, GOOD_PROP, GOOD_PURCHASE_COST_PROP, GOOD_SELL_ACCOUNT_NAME, NEEDS_REBUILD_PROP, ORDER_PROP, ORIGINAL_QUANTITY_PROP, PURCHASE_CODE_PROP, PURCHASE_INVOICE_PROP, SALE_AMOUNT_PROP, SALE_INVOICE_PROP, TOTAL_COST_PROP } from "./constants.js";
+import { EXC_CODE_PROP, GOOD_BUY_ACCOUNT_NAME, GOOD_PROP, GOOD_PURCHASE_COST_PROP, GOOD_SELL_ACCOUNT_NAME, NEEDS_REBUILD_PROP, ORDER_PROP, ORIGINAL_QUANTITY_PROP, PURCHASE_CODE_PROP, PURCHASE_INVOICE_PROP, SALE_AMOUNT_PROP, SALE_INVOICE_PROP, TOTAL_COST_PROP } from "./constants.js";
 import { Result } from "./index.js";
 import { InterceptorFlagRebuild } from "./InterceptorFlagRebuild.js";
 
@@ -57,7 +57,7 @@ export class EventHandlerTransactionChecked extends EventHandlerTransaction {
                 let financialAssetAccount = await financialBook.getAccount(goodProperty);
                 if (!financialAssetAccount) {
                     // create financial asset account to be used afterwards by FIFO
-                    // await this.createConnectedFinancialAssetAccount(financialBook, goodProperty);
+                    await this.createFinancialAssetAccount(financialBook, goodProperty);
                 }
                 
                 console.log('SELL: inventoryAccount', inventoryAccount.getName(), inventoryAccount.getType());
@@ -77,7 +77,7 @@ export class EventHandlerTransactionChecked extends EventHandlerTransaction {
                     .setProperty(SALE_INVOICE_PROP, financialTransaction.properties[SALE_INVOICE_PROP])
                     .setProperty(ORDER_PROP, financialTransaction.properties[ORDER_PROP])
                     .setProperty(SALE_AMOUNT_PROP, new Amount(financialTransaction.amount ?? 0).toString())
-                    .setProperty(GOOD_EXC_CODE_PROP, goodExcCode)
+                    .setProperty(EXC_CODE_PROP, goodExcCode)
                     .post()
                     ;
 
@@ -117,7 +117,7 @@ export class EventHandlerTransactionChecked extends EventHandlerTransaction {
                     .setProperty(ORIGINAL_QUANTITY_PROP, quantity.toString())
                     .setProperty(GOOD_PURCHASE_COST_PROP, new Amount(financialTransaction.amount ?? 0).toString())
                     .setProperty(ORDER_PROP, financialTransaction.properties[ORDER_PROP])
-                    .setProperty(GOOD_EXC_CODE_PROP, goodExcCode)
+                    .setProperty(EXC_CODE_PROP, goodExcCode)
                     .setProperty(TOTAL_COST_PROP, new Amount(financialTransaction.amount ?? 0).toString())
                     .post()
                     ;
@@ -192,6 +192,14 @@ export class EventHandlerTransactionChecked extends EventHandlerTransaction {
         inventoryAccount = await inventoryAccount.create();
 
         return inventoryAccount;
+    }
+
+    private async createFinancialAssetAccount(financialBook: Book, goodProperty: string): Promise<Account> {
+        const financialAssetAccount = await new Account(financialBook)
+            .setName(goodProperty)
+            .setType(AccountType.ASSET)
+            .create();
+        return financialAssetAccount;
     }
 
 }
