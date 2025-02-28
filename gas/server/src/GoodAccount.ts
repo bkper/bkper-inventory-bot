@@ -75,7 +75,7 @@ class GoodAccount {
                 if (group == null) {
                     continue;
                 }
-                let exchange = group.getProperty(GOOD_EXC_CODE_PROP);
+                let exchange = group.getProperty(EXC_CODE_PROP);
                 if (exchange != null && exchange.trim() != '') {
                     return exchange;
                 }

@@ -58,68 +58,13 @@ namespace BotService {
                 if (group == null) {
                     continue;
                 }
-                const exchange = group.getProperty(GOOD_EXC_CODE_PROP);
+                const exchange = group.getProperty(EXC_CODE_PROP);
                 if (exchange != null && exchange.trim() != '') {
                     return exchange;
                 }
             }
         }
         return null;
-    }
-
-    /**
-     * Gets additional purchase costs for an inventory transaction from the financial book
-     * 
-     * @param financialBookbook The financial book to search for additional costs
-     * @param inventoryTransaction The inventory transaction to get additional costs for
-     * @returns The total additional costs as a Bkper.Amount
-     */
-    export function getAdditionalCostsAndCreditNotes(financialBookbook: Bkper.Book, inventoryTransaction: Bkper.Transaction): { additionalCosts: Bkper.Amount, creditNote: CreditNote } {
-        const transactionDate = helper.parseDate(inventoryTransaction.getDate());
-        const timeRange = helper.getTimeRange(ADDITIONAL_COSTS_CREDITS_QUERY_RANGE);
-
-        // Calculate the range in months to query for the additional cost and credit note transactions
-        const beforeDate = new Date(transactionDate.getTime() + timeRange);
-        const beforeDateIsoString = Utilities.formatDate(beforeDate, financialBookbook.getTimeZone(), 'yyyy-MM-dd');
-
-        const afterDate = new Date(transactionDate.getTime() - timeRange);
-        const afterDateIsoString = Utilities.formatDate(afterDate, financialBookbook.getTimeZone(), 'yyyy-MM-dd');
-
-        // Get inventory account details and build query
-        const inventoryAccountName = inventoryTransaction.getDebitAccount().getName();
-        const query = helper.getAccountQuery(inventoryAccountName, beforeDateIsoString, afterDateIsoString);
-
-        // Search for matching transactions with same purchase code
-        const purchaseCode = inventoryTransaction.getProperty(PURCHASE_CODE_PROP);
-        const transactions = financialBookbook.getTransactions(query);
-        const financialAccountId = financialBookbook.getAccount(inventoryAccountName).getId();
-
-        // Sum up additional costs or creditsfrom matching transactions
-        let totalAdditionalCosts = BkperApp.newAmount(0);
-        let totalCreditAmount = BkperApp.newAmount(0);
-        let totalCreditQuantity = BkperApp.newAmount(0);
-        while (transactions.hasNext()) {
-            const tx = transactions.next();
-            // Only include checked transactions with matching account and purchase code
-            if (tx.isChecked() &&
-                tx.getDebitAccount().getId() == financialAccountId &&
-                tx.getProperty(PURCHASE_CODE_PROP) == purchaseCode &&
-                (tx.getProperty(PURCHASE_INVOICE_PROP) != undefined &&
-                    tx.getProperty(PURCHASE_INVOICE_PROP) != purchaseCode)) {
-                totalAdditionalCosts = totalAdditionalCosts.plus(tx.getAmount());
-            } else if (tx.isChecked() && tx.getProperty(CREDIT_NOTE_PROP) != undefined && tx.getProperty(PURCHASE_CODE_PROP) == purchaseCode && tx.getCreditAccount().getId() == financialAccountId) {
-                totalCreditAmount = totalCreditAmount.plus(tx.getAmount());
-                totalCreditQuantity = totalCreditQuantity.plus(BkperApp.newAmount(tx.getProperty(QUANTITY_PROP) ?? 0));
-            }
-        }
-
-        return {
-            additionalCosts: totalAdditionalCosts,
-            creditNote: {
-                quantity: totalCreditQuantity.toNumber(),
-                amount: totalCreditAmount
-            }
-        };
     }
 
     export function compareToFIFO(tx1: Bkper.Transaction, tx2: Bkper.Transaction): number {

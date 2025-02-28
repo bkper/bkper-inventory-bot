@@ -106,12 +106,12 @@ namespace CostOfSalesService {
         let purchaseLogEntries: PurchaseLogEntry[] = [];
 
         for (const purchaseTransaction of purchaseTransactions) {
-            
+
             if (purchaseTransaction.isChecked()) {
                 // Only process unchecked purchases
                 continue;
             }
-            
+
             // Log operation status
             console.log(`processing purchase: ${purchaseTransaction.getId()} - ${purchaseTransaction.getDescription()}`);
 
@@ -125,7 +125,7 @@ namespace CostOfSalesService {
             let creditNote: CreditNote = { amount: BkperApp.newAmount(0), quantity: 0 };
             if (originalQuantity.toNumber() == transactionQuantity.toNumber()) {
                 // transaction hasn't been previously processed in FIFO execution. Get additional costs & credit notes to update purchase transaction
-                ({ additionalCosts, creditNote } = BotService.getAdditionalCostsAndCreditNotes(financialBook, purchaseTransaction));
+                ({ additionalCosts, creditNote } = getAdditionalCostsAndCreditNotes(financialBook, inventoryBook, purchaseTransaction));
             }
 
             // Updated purchase info: quantity, costs, purchase code
@@ -212,7 +212,7 @@ namespace CostOfSalesService {
 
                 // Store transaction to be created: generate temporaty id in order to link up connections later
                 splittedPurchaseTransaction.addRemoteId(`${processor.generateTemporaryId()}`);
-                
+
                 // Store transaction to be created
                 processor.setInventoryBookTransactionToCreate(splittedPurchaseTransaction);
 
@@ -250,15 +250,15 @@ namespace CostOfSalesService {
         let costOfSalesAccount = financialBook.getAccount(COST_OF_SALES_ACCOUNT);
         if (!costOfSalesAccount) {
             costOfSalesAccount = financialBook.newAccount()
-            .setName(COST_OF_SALES_ACCOUNT)
-            .setType(BkperApp.AccountType.OUTGOING)
-            .create();
+                .setName(COST_OF_SALES_ACCOUNT)
+                .setType(BkperApp.AccountType.OUTGOING)
+                .create();
         }
-        
+
         let financialGoodAccount: Bkper.Account = financialBook.getAccount(saleTransaction.getCreditAccountName());
         const remoteId = saleTransaction.getId();
         const description = `#cost_of_sale ${saleTransaction.getDescription()}`;
-        
+
         // link COGS transaction in fanancial book to sale transaction in inventory book
         const costOfSaleTransaction = financialBook.newTransaction()
             .addRemoteId(remoteId)
@@ -274,6 +274,75 @@ namespace CostOfSalesService {
 
         // Store transaction to be created
         processor.setFinancialBookTransactionToCreate(costOfSaleTransaction);
+    }
+
+    /**
+     * Gets additional costs and credit notes associated with a purchase transaction
+     * 
+     * @param financialBookbook The financial book containing cost transactions
+     * @param inventoryBook The inventory book containing quantity transactions
+     * @param inventoryTransaction The inventory transaction to find costs/credits for
+     * @returns Object containing total additional costs and credit note details
+     */
+    export function getAdditionalCostsAndCreditNotes(financialBookbook: Bkper.Book, inventoryBook: Bkper.Book, inventoryTransaction: Bkper.Transaction): { additionalCosts: Bkper.Amount, creditNote: CreditNote } {
+        // Calculate date range to search for related transactions
+        const transactionDate = helper.parseDate(inventoryTransaction.getDate());
+        const timeRange = helper.getTimeRange(ADDITIONAL_COSTS_CREDITS_QUERY_RANGE);
+
+        const beforeDate = new Date(transactionDate.getTime() + timeRange);
+        const beforeDateIsoString = Utilities.formatDate(beforeDate, financialBookbook.getTimeZone(), 'yyyy-MM-dd');
+
+        const afterDate = new Date(transactionDate.getTime() - timeRange);
+        const afterDateIsoString = Utilities.formatDate(afterDate, financialBookbook.getTimeZone(), 'yyyy-MM-dd');
+
+        // Build query to find transactions for the inventory account within date range
+        const inventoryAccountName = inventoryTransaction.getDebitAccount().getName();
+        const query = helper.getAccountQuery(inventoryAccountName, beforeDateIsoString, afterDateIsoString);
+
+        const purchaseCode = inventoryTransaction.getProperty(PURCHASE_CODE_PROP);
+        const transactions = financialBookbook.getTransactions(query);
+        const financialAccountId = financialBookbook.getAccount(inventoryAccountName).getId();
+
+        // Initialize totals
+        let totalAdditionalCosts = BkperApp.newAmount(0);
+        let totalCreditAmount = BkperApp.newAmount(0);
+        let totalCreditQuantity = BkperApp.newAmount(0);
+
+        // Process each transaction found
+        while (transactions.hasNext()) {
+            const tx = transactions.next();
+
+            // Check for additional costs transactions
+            if (tx.isChecked() &&
+                tx.getDebitAccount().getId() == financialAccountId &&
+                tx.getProperty(PURCHASE_CODE_PROP) == purchaseCode &&
+                (tx.getProperty(PURCHASE_INVOICE_PROP) != undefined &&
+                    tx.getProperty(PURCHASE_INVOICE_PROP) != purchaseCode)) {
+                totalAdditionalCosts = totalAdditionalCosts.plus(tx.getAmount());
+            } 
+            // Check for credit note transactions
+            else if (tx.isChecked() && tx.getProperty(CREDIT_NOTE_PROP) != undefined && tx.getProperty(PURCHASE_CODE_PROP) == purchaseCode && tx.getCreditAccount().getId() == financialAccountId) {
+                totalCreditAmount = totalCreditAmount.plus(tx.getAmount());
+                const quantity = BkperApp.newAmount(tx.getProperty(QUANTITY_PROP) ?? 0).toNumber();
+                if (quantity > 0) {
+                    totalCreditQuantity = totalCreditQuantity.plus(BkperApp.newAmount(quantity));
+                    // check credit note transaction in inventory book
+                    const inventoryCreditNoteTx = inventoryBook.getTransactions(`remoteId:${tx.getId()}`);
+                    if (inventoryCreditNoteTx.hasNext()) {
+                        inventoryCreditNoteTx.next().setChecked(true).update();
+                    }
+                }
+            }
+        }
+
+        // Return totals
+        return {
+            additionalCosts: totalAdditionalCosts,
+            creditNote: {
+                quantity: totalCreditQuantity.toNumber(),
+                amount: totalCreditAmount
+            }
+        };
     }
 
     function getLiquidationLog(transaction: Bkper.Transaction, costOfSalePerUnit: Bkper.Amount, excRate?: Bkper.Amount): LiquidationLogEntry {
