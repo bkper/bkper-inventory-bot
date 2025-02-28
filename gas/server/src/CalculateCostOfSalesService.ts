@@ -21,7 +21,7 @@ namespace CostOfSalesService {
 
         // Skip
         if (financialBook == null) {
-            return summary;
+            return summary.setResult(`Cannot proceed: financial book not found for good account ${goodAccount.getName()}`);
         }
 
         const beforeDate = BotService.getBeforeDateIsoString(inventoryBook, toDate);
@@ -243,12 +243,29 @@ namespace CostOfSalesService {
         }
 
         // post cost of sale transaction in financial book
-        addCostOfSales(financialBook, saleTransaction, saleCost, processor);
+        addCostOfSales(financialBook, inventoryBook,saleTransaction, saleCost, processor);
     }
 
-    function addCostOfSales(financialBook: Bkper.Book, saleTransaction: Bkper.Transaction, saleCost: Bkper.Amount, processor: CalculateCostOfSalesProcessor) {
+    function addCostOfSales(financialBook: Bkper.Book, inventoryBook: Bkper.Book, saleTransaction: Bkper.Transaction, saleCost: Bkper.Amount, processor: CalculateCostOfSalesProcessor) {
         let financialGoodAccount: Bkper.Account = financialBook.getAccount(saleTransaction.getCreditAccountName());
 
+        if (!financialGoodAccount) {
+            const accountGroups = inventoryBook.getAccount(saleTransaction.getCreditAccountName()).getGroups();
+            financialGoodAccount = financialBook.newAccount()
+                .setName(saleTransaction.getCreditAccountName())
+                .setType(BkperApp.AccountType.ASSET)
+                .setGroups(accountGroups)
+                .create();
+        }
+
+        let costOfSalesAccount = financialBook.getAccount('Cost of sales');
+        if (!costOfSalesAccount) {
+            costOfSalesAccount = financialBook.newAccount()
+                .setName('Cost of sales')
+                .setType(BkperApp.AccountType.OUTGOING)
+                .create();
+        }
+        
         // link COGS transaction in fanancial book to sale transaction in inventory book
         const remoteId = saleTransaction.getId();
         const description = `#cost_of_sale ${saleTransaction.getDescription()}`;
@@ -259,7 +276,7 @@ namespace CostOfSalesService {
             .setAmount(saleCost)
             .setDescription(description)
             .from(financialGoodAccount)
-            .to('Cost of sales')
+            .to(costOfSalesAccount)
             .setProperty(QUANTITY_SOLD_PROP, `${saleTransaction.getAmount().toNumber()}`)
             .setProperty(SALE_INVOICE_PROP, `${saleTransaction.getProperty(SALE_INVOICE_PROP)}`)
             .setChecked(true)
