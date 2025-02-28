@@ -1,6 +1,6 @@
 import { Book, Transaction } from "bkper-js";
 import { EventHandler } from "./EventHandler.js";
-import { getBookExcCode, getExchangeCodeFromAccount, getGoodExchangeCodeFromAccount } from "./BotService.js";
+import { getBookExcCode, getExchangeCodeFromAccount } from "./BotService.js";
 import { GOOD_PROP } from "./constants.js";
 
 export abstract class EventHandlerTransaction extends EventHandler {
@@ -57,7 +57,7 @@ export abstract class EventHandlerTransaction extends EventHandler {
             // purchase
             const financialDebitAccount = fiancialTransaction.debitAccount;
             if (financialDebitAccount) {
-                return getGoodExchangeCodeFromAccount(financialDebitAccount);
+                return getExchangeCodeFromAccount(financialDebitAccount);
             }
         }
         return undefined;

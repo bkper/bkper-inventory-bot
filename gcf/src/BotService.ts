@@ -52,37 +52,36 @@ export function getBookExcCode(book: Book): string | undefined {
 }
 
 // returns the excCode from an account based on its groups good_exc_code property
-export function getGoodExchangeCodeFromAccount(account: bkper.Account): string | undefined {
-    if (account.type == AccountType.INCOMING || account.type == AccountType.OUTGOING) {
-        return undefined;
-    }
-    let groups = account.groups;
-    if (groups != undefined) {
-        for (const group of groups) {
-            let goodExchange = group.properties?.[EXC_CODE_PROP];
-            if (goodExchange != undefined && goodExchange.trim() != '') {
-                return goodExchange;
+export async function getExchangeCodeFromAccount(account: Account | bkper.Account): Promise<string | undefined> {
+
+    if (account instanceof Account) {
+        if (account.getType() == AccountType.INCOMING || account.getType() == AccountType.OUTGOING) {
+            return undefined;
+        }
+        let groups = await account.getGroups();
+        if (groups != null) {
+            for (const group of groups) {
+                let excCode = group.getProperty(EXC_CODE_PROP);
+                if (excCode != undefined && excCode.trim() != '') {
+                    return excCode;
+                }
+            }
+        }
+    } else {
+        if (account.type == AccountType.INCOMING || account.type == AccountType.OUTGOING) {
+            return undefined;
+        }
+        let groups = account.groups;
+        if (groups != undefined) {
+            for (const group of groups) {
+                let goodExchange = group.properties?.[EXC_CODE_PROP];
+                if (goodExchange != undefined && goodExchange.trim() != '') {
+                    return goodExchange;
+                }
             }
         }
     }
 
-    return undefined;
-}
-
-// returns the excCode from an account based on its groups good_exc_code property
-export async function getExchangeCodeFromAccount(account: Account): Promise<string | undefined> {
-    if (account.getType() == AccountType.INCOMING || account.getType() == AccountType.OUTGOING) {
-        return undefined;
-    }
-    let groups = await account.getGroups();
-    if (groups != null) {
-        for (const group of groups) {
-            let excCode = group.getProperty(EXC_CODE_PROP);
-            if (excCode != undefined && excCode.trim() != '') {
-                return excCode;
-            }
-        }
-    }
     return undefined;
 }
 
