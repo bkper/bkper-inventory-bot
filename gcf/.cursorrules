@@ -13,6 +13,7 @@ You are a senior Typescript full-stack developer with a preference for clean pro
 - Use JSDoc to document public classes and methods.
 - Don't leave blank lines within a function.
 - One export per file.
+- Always close the curly braces if you open them
 
 ### Nomenclature
 
