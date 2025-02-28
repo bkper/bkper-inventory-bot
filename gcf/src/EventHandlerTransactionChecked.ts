@@ -20,11 +20,10 @@ export class EventHandlerTransactionChecked extends EventHandlerTransaction {
     }
 
     // create purchase (Buy) or sale (Sell) transactions in the inventory book in response to the financial transactions
-    protected async connectedTransactionNotFound(inventoryBook: Book, financialBook: Book, financialTransaction: bkper.Transaction, goodExcCode: string): Promise<string | undefined> {
-        if (financialTransaction.creditAccount && financialTransaction.debitAccount && financialTransaction.date && financialTransaction.id && financialTransaction.properties) {
+    protected async connectedTransactionNotFound(inventoryBook: Book, financialTransaction: bkper.Transaction, goodExcCode: string): Promise<string | undefined> {
+        if (financialTransaction.debitAccount && financialTransaction.date && financialTransaction.id && financialTransaction.properties) {
 
             const quantity = getQuantity(financialTransaction);
-            const financialCreditAccount = financialTransaction.creditAccount;
             const purchaseInvoice = financialTransaction.properties[PURCHASE_INVOICE_PROP];
             const saleInvoice = financialTransaction.properties[SALE_INVOICE_PROP];
 
@@ -32,32 +31,14 @@ export class EventHandlerTransactionChecked extends EventHandlerTransaction {
             if (quantity == undefined || quantity.eq(0)) {
                 return undefined;
             }
-            // if (quantity == undefined || quantity.eq(0) || (financialCreditAccount.type != AccountType.ASSET && financialCreditAccount.type != AccountType.INCOMING)) {
-            //     return undefined;
-            // }
 
-            if (purchaseInvoice == undefined) {
-                // it's not a purchase transaction
-                if (saleInvoice == undefined || financialCreditAccount.type != AccountType.INCOMING) {
-                    // it's not also a sale transaction
-                    return undefined;
-                }
-            }
-
-
-            if (financialTransaction.properties?.[SALE_INVOICE_PROP]) {
+            if (saleInvoice) {
                 // Selling
                 const goodProperty = financialTransaction.properties?.[GOOD_PROP];
 
                 let inventoryAccount = await inventoryBook.getAccount(goodProperty);
                 if (!inventoryAccount) {
                     inventoryAccount = await this.createConnectedInventoryAccount(inventoryBook, goodProperty);
-                }
-
-                let financialAssetAccount = await financialBook.getAccount(goodProperty);
-                if (!financialAssetAccount) {
-                    // create financial asset account to be used afterwards by FIFO
-                    await this.createFinancialAssetAccount(financialBook, goodProperty);
                 }
                 
                 console.log('SELL: inventoryAccount', inventoryAccount.getName(), inventoryAccount.getType());
@@ -91,7 +72,7 @@ export class EventHandlerTransactionChecked extends EventHandlerTransaction {
                     return `SELL: ${inventoryBookAnchor}: ${record}`;
                 }
 
-            } else if (financialTransaction.properties?.[PURCHASE_INVOICE_PROP]) {
+            } else if (purchaseInvoice) {
                 // Buying
                 const financialDebitAccount = financialTransaction.debitAccount;
                 let inventoryAccount = await inventoryBook.getAccount(financialDebitAccount.name);
@@ -133,7 +114,7 @@ export class EventHandlerTransactionChecked extends EventHandlerTransaction {
                 }
             }
         }
-        console.log('ERROR (connectedTransactionNotFound): financialTransaction is missing required fields');
+
         return undefined;
     }
 
@@ -192,14 +173,6 @@ export class EventHandlerTransactionChecked extends EventHandlerTransaction {
         inventoryAccount = await inventoryAccount.create();
 
         return inventoryAccount;
-    }
-
-    private async createFinancialAssetAccount(financialBook: Book, goodProperty: string): Promise<Account> {
-        const financialAssetAccount = await new Account(financialBook)
-            .setName(goodProperty)
-            .setType(AccountType.ASSET)
-            .create();
-        return financialAssetAccount;
     }
 
 }

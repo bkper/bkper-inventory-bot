@@ -5,7 +5,7 @@ import { GOOD_PROP } from "./constants.js";
 
 export abstract class EventHandlerTransaction extends EventHandler {
 
-    protected abstract connectedTransactionNotFound(inventoryBook: Book, financialBook: Book, financialTransaction: bkper.Transaction, goodExcCode?: string): Promise<string | undefined>;
+    protected abstract connectedTransactionNotFound(inventoryBook: Book, financialTransaction: bkper.Transaction, goodExcCode?: string): Promise<string | undefined>;
     protected abstract connectedTransactionFound(connectedBook: Book, connectedTransaction: Transaction): Promise<string | undefined>;
 
     /**
@@ -40,7 +40,7 @@ export abstract class EventHandlerTransaction extends EventHandler {
         if (goodTransaction) {
             return await this.connectedTransactionFound(inventoryBook, goodTransaction);
         } else {
-            return await this.connectedTransactionNotFound(inventoryBook, financialBook, financialTransaction, goodExcCode)
+            return await this.connectedTransactionNotFound(inventoryBook, financialTransaction, goodExcCode)
         }
     }
 
