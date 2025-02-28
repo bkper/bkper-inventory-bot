@@ -1,7 +1,7 @@
 import { Account, AccountType, Amount, Book, Group, Transaction } from "bkper-js";
 import { EventHandlerTransaction } from "./EventHandlerTransaction.js";
 import { buildBookAnchor, getCOGSCalculationDateValue, getQuantity } from "./BotService.js";
-import { EXC_CODE_PROP, GOOD_BUY_ACCOUNT_NAME, GOOD_PROP, GOOD_PURCHASE_COST_PROP, GOOD_SELL_ACCOUNT_NAME, NEEDS_REBUILD_PROP, ORDER_PROP, ORIGINAL_QUANTITY_PROP, PURCHASE_CODE_PROP, PURCHASE_INVOICE_PROP, SALE_AMOUNT_PROP, SALE_INVOICE_PROP, TOTAL_COST_PROP } from "./constants.js";
+import { CREDIT_NOTE_PROP, EXC_CODE_PROP, GOOD_BUY_ACCOUNT_NAME, GOOD_PROP, GOOD_PURCHASE_COST_PROP, GOOD_SELL_ACCOUNT_NAME, NEEDS_REBUILD_PROP, ORDER_PROP, ORIGINAL_QUANTITY_PROP, PURCHASE_CODE_PROP, PURCHASE_INVOICE_PROP, SALE_AMOUNT_PROP, SALE_INVOICE_PROP, TOTAL_COST_PROP } from "./constants.js";
 import { Result } from "./index.js";
 import { InterceptorFlagRebuild } from "./InterceptorFlagRebuild.js";
 
@@ -21,11 +21,12 @@ export class EventHandlerTransactionChecked extends EventHandlerTransaction {
 
     // create purchase (Buy) or sale (Sell) transactions in the inventory book in response to the financial transactions
     protected async connectedTransactionNotFound(inventoryBook: Book, financialTransaction: bkper.Transaction, goodExcCode: string): Promise<string | undefined> {
-        if (financialTransaction.debitAccount && financialTransaction.date && financialTransaction.id && financialTransaction.properties) {
+        if (financialTransaction.debitAccount && financialTransaction.creditAccount && financialTransaction.date && financialTransaction.id && financialTransaction.properties) {
 
             const quantity = getQuantity(financialTransaction);
             const purchaseInvoice = financialTransaction.properties[PURCHASE_INVOICE_PROP];
             const saleInvoice = financialTransaction.properties[SALE_INVOICE_PROP];
+            const creditNote = financialTransaction.properties[CREDIT_NOTE_PROP];
 
             // prevent bot response when transaction is missing quantity or is not a purchase or sale transaction
             if (quantity == undefined || quantity.eq(0)) {
@@ -41,8 +42,6 @@ export class EventHandlerTransactionChecked extends EventHandlerTransaction {
                     inventoryAccount = await this.createConnectedInventoryAccount(inventoryBook, goodProperty);
                 }
                 
-                console.log('SELL: inventoryAccount', inventoryAccount.getName(), inventoryAccount.getType());
-
                 let inventorySellAccount = await inventoryBook.getAccount(GOOD_SELL_ACCOUNT_NAME);
                 if (!inventorySellAccount) {
                     inventorySellAccount = await new Account(inventoryBook).setName(GOOD_SELL_ACCOUNT_NAME).setType(AccountType.OUTGOING).create();
@@ -80,8 +79,6 @@ export class EventHandlerTransactionChecked extends EventHandlerTransaction {
                     inventoryAccount = await this.createConnectedInventoryAccount(inventoryBook, financialDebitAccount);
                 }
 
-                console.log('BUY: inventoryAccount', inventoryAccount.getName(), inventoryAccount.getType());
-
                 let inventoryBuyAccount = await inventoryBook.getAccount(GOOD_BUY_ACCOUNT_NAME);
                 if (inventoryBuyAccount == null) {
                     inventoryBuyAccount = await new Account(inventoryBook).setName(GOOD_BUY_ACCOUNT_NAME).setType(AccountType.INCOMING).create();
@@ -111,6 +108,43 @@ export class EventHandlerTransactionChecked extends EventHandlerTransaction {
                     return `BUY: ${inventoryBookAnchor}: ${record} / WARNING: Transaction date is before the last COGS calculation date. Flagging account ${inventoryAccount.getName()} for rebuild`;
                 } else {
                     return `BUY: ${inventoryBookAnchor}: ${record}`;
+                }
+
+            } else if (creditNote) {
+                // Credit Note
+                const financialCreditAccount = financialTransaction.creditAccount;
+                let inventoryAccount = await inventoryBook.getAccount(financialCreditAccount.name);
+                if (!inventoryAccount) {
+                    inventoryAccount = await this.createConnectedInventoryAccount(inventoryBook, financialCreditAccount);
+                }
+                
+                let inventoryBuyAccount = await inventoryBook.getAccount(GOOD_BUY_ACCOUNT_NAME);
+                if (inventoryBuyAccount == null) {
+                    inventoryBuyAccount = await new Account(inventoryBook).setName(GOOD_BUY_ACCOUNT_NAME).setType(AccountType.INCOMING).create();
+                }
+
+                const newTransaction = await new Transaction(inventoryBook)
+                .setDate(financialTransaction.date)
+                .setAmount(quantity)
+                .setCreditAccount(inventoryAccount)
+                .setDebitAccount(inventoryBuyAccount)
+                .setDescription(financialTransaction.description ?? '')
+                .addRemoteId(financialTransaction.id)
+                .setProperty(CREDIT_NOTE_PROP, financialTransaction.properties[CREDIT_NOTE_PROP])
+                .setProperty(PURCHASE_CODE_PROP, financialTransaction.properties[PURCHASE_CODE_PROP])
+                .setProperty(ORDER_PROP, financialTransaction.properties[ORDER_PROP])
+                .setProperty(EXC_CODE_PROP, goodExcCode)
+                .post()
+                ;
+
+                const inventoryBookAnchor = buildBookAnchor(inventoryBook);
+                const record = `${newTransaction.getDate()} ${newTransaction.getAmount()} ${inventoryAccount.getName()} ${inventoryAccount.getName()} ${newTransaction.getDescription()}`;
+                const needsRebuild = await this.checkLastTxDate(inventoryAccount, financialTransaction);
+                
+                if (needsRebuild) {
+                    return `CREDIT: ${inventoryBookAnchor}: ${record} / WARNING: Transaction date is before the last COGS calculation date. Flagging account ${inventoryAccount.getName()} for rebuild`;
+                } else {
+                    return `CREDIT: ${inventoryBookAnchor}: ${record}`;
                 }
             }
         }
