@@ -243,33 +243,23 @@ namespace CostOfSalesService {
         }
 
         // post cost of sale transaction in financial book
-        addCostOfSales(financialBook, inventoryBook,saleTransaction, saleCost, processor);
+        addCostOfSales(financialBook, saleTransaction, saleCost, processor);
     }
 
-    function addCostOfSales(financialBook: Bkper.Book, inventoryBook: Bkper.Book, saleTransaction: Bkper.Transaction, saleCost: Bkper.Amount, processor: CalculateCostOfSalesProcessor) {
-        let financialGoodAccount: Bkper.Account = financialBook.getAccount(saleTransaction.getCreditAccountName());
-
-        if (!financialGoodAccount) {
-            const accountGroups = inventoryBook.getAccount(saleTransaction.getCreditAccountName()).getGroups();
-            financialGoodAccount = financialBook.newAccount()
-                .setName(saleTransaction.getCreditAccountName())
-                .setType(BkperApp.AccountType.ASSET)
-                .setGroups(accountGroups)
-                .create();
-        }
-
-        let costOfSalesAccount = financialBook.getAccount('Cost of sales');
+    function addCostOfSales(financialBook: Bkper.Book, saleTransaction: Bkper.Transaction, saleCost: Bkper.Amount, processor: CalculateCostOfSalesProcessor) {
+        let costOfSalesAccount = financialBook.getAccount(COST_OF_SALES_ACCOUNT);
         if (!costOfSalesAccount) {
             costOfSalesAccount = financialBook.newAccount()
-                .setName('Cost of sales')
-                .setType(BkperApp.AccountType.OUTGOING)
-                .create();
+            .setName(COST_OF_SALES_ACCOUNT)
+            .setType(BkperApp.AccountType.OUTGOING)
+            .create();
         }
         
-        // link COGS transaction in fanancial book to sale transaction in inventory book
+        let financialGoodAccount: Bkper.Account = financialBook.getAccount(saleTransaction.getCreditAccountName());
         const remoteId = saleTransaction.getId();
         const description = `#cost_of_sale ${saleTransaction.getDescription()}`;
-
+        
+        // link COGS transaction in fanancial book to sale transaction in inventory book
         const costOfSaleTransaction = financialBook.newTransaction()
             .addRemoteId(remoteId)
             .setDate(saleTransaction.getDate())
