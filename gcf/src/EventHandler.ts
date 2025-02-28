@@ -35,6 +35,9 @@ export abstract class EventHandler {
                         warningMsg = response.split(' / ')[1];
                         response = response.split(' / ')[0];
                     }
+                    if (response.includes('ERROR')) {
+                        return { error: response };
+                    }
                     responses.push(response);
                 }
             } catch (error) {

@@ -39,9 +39,9 @@ export class EventHandlerTransactionChecked extends EventHandlerTransaction {
 
                 let inventoryAccount = await inventoryBook.getAccount(goodProperty);
                 if (!inventoryAccount) {
-                    inventoryAccount = await this.createConnectedInventoryAccount(inventoryBook, goodProperty);
+                    return `ERROR: Inventory account '${goodProperty}' not found`;
                 }
-                
+
                 let inventorySellAccount = await inventoryBook.getAccount(GOOD_SELL_ACCOUNT_NAME);
                 if (!inventorySellAccount) {
                     inventorySellAccount = await new Account(inventoryBook).setName(GOOD_SELL_ACCOUNT_NAME).setType(AccountType.OUTGOING).create();
@@ -117,30 +117,30 @@ export class EventHandlerTransactionChecked extends EventHandlerTransaction {
                 if (!inventoryAccount) {
                     inventoryAccount = await this.createConnectedInventoryAccount(inventoryBook, financialCreditAccount);
                 }
-                
+
                 let inventoryBuyAccount = await inventoryBook.getAccount(GOOD_BUY_ACCOUNT_NAME);
                 if (inventoryBuyAccount == null) {
                     inventoryBuyAccount = await new Account(inventoryBook).setName(GOOD_BUY_ACCOUNT_NAME).setType(AccountType.INCOMING).create();
                 }
 
                 const newTransaction = await new Transaction(inventoryBook)
-                .setDate(financialTransaction.date)
-                .setAmount(quantity)
-                .setCreditAccount(inventoryAccount)
-                .setDebitAccount(inventoryBuyAccount)
-                .setDescription(financialTransaction.description ?? '')
-                .addRemoteId(financialTransaction.id)
-                .setProperty(CREDIT_NOTE_PROP, financialTransaction.properties[CREDIT_NOTE_PROP])
-                .setProperty(PURCHASE_CODE_PROP, financialTransaction.properties[PURCHASE_CODE_PROP])
-                .setProperty(ORDER_PROP, financialTransaction.properties[ORDER_PROP])
-                .setProperty(EXC_CODE_PROP, goodExcCode)
-                .post()
-                ;
+                    .setDate(financialTransaction.date)
+                    .setAmount(quantity)
+                    .setCreditAccount(inventoryAccount)
+                    .setDebitAccount(inventoryBuyAccount)
+                    .setDescription(financialTransaction.description ?? '')
+                    .addRemoteId(financialTransaction.id)
+                    .setProperty(CREDIT_NOTE_PROP, financialTransaction.properties[CREDIT_NOTE_PROP])
+                    .setProperty(PURCHASE_CODE_PROP, financialTransaction.properties[PURCHASE_CODE_PROP])
+                    .setProperty(ORDER_PROP, financialTransaction.properties[ORDER_PROP])
+                    .setProperty(EXC_CODE_PROP, goodExcCode)
+                    .post()
+                    ;
 
                 const inventoryBookAnchor = buildBookAnchor(inventoryBook);
                 const record = `${newTransaction.getDate()} ${newTransaction.getAmount()} ${inventoryAccount.getName()} ${inventoryAccount.getName()} ${newTransaction.getDescription()}`;
                 const needsRebuild = await this.checkLastTxDate(inventoryAccount, financialTransaction);
-                
+
                 if (needsRebuild) {
                     return `CREDIT: ${inventoryBookAnchor}: ${record} / WARNING: Transaction date is before the last COGS calculation date. Flagging account ${inventoryAccount.getName()} for rebuild`;
                 } else {
@@ -162,24 +162,12 @@ export class EventHandlerTransactionChecked extends EventHandlerTransaction {
     }
 
     // returns the good account from the inventory book corresponding to the good account in the financial book (creates the account if it doesn't exist)
-    private async createConnectedInventoryAccount(inventoryBook: Book, financialAccount: bkper.Account | string): Promise<Account> {
+    private async createConnectedInventoryAccount(inventoryBook: Book, financialAccount: bkper.Account): Promise<Account> {
 
-        let inventoryAccountName: string;
-        let inventoryAccountProperties: { [key: string]: string; } = {};
-        let inventoryAccountArchived: boolean;
-        let inventoryAccountGroups: bkper.Group[] = [];
-
-        if (typeof (financialAccount) === 'string') {
-            inventoryAccountName = financialAccount;
-            inventoryAccountProperties = {};
-            inventoryAccountArchived = false;
-            inventoryAccountGroups = [];
-        } else {
-            inventoryAccountName = financialAccount.name!;
-            inventoryAccountProperties = financialAccount.properties ?? {};
-            inventoryAccountArchived = financialAccount.archived ?? false;
-            inventoryAccountGroups = financialAccount.groups ?? [];
-        }
+        const inventoryAccountName = financialAccount.name!;
+        const inventoryAccountProperties = financialAccount.properties ?? {};
+        const inventoryAccountArchived = financialAccount.archived ?? false;
+        const inventoryAccountGroups = financialAccount.groups ?? [];
 
         let inventoryAccount = new Account(inventoryBook)
             .setName(inventoryAccountName)
@@ -193,7 +181,7 @@ export class EventHandlerTransactionChecked extends EventHandlerTransaction {
                 if (!inventoryGroup) {
                     inventoryGroup = await new Group(inventoryBook)
                         .setName(group.name ?? '')
-                        .setParent(await inventoryBook.getGroup(group.parent?.name))
+                        .setParent(group.parent?.name ? await inventoryBook.getGroup(group.parent.name) : null)
                         .setProperties(group.properties ?? {})
                         .setHidden(group.hidden ?? false)
                         .create()
