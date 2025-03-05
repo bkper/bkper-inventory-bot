@@ -57,9 +57,9 @@ class Summary {
         return this;
     }
 
-    creditNoteQuantityError(): this {
+    creditNoteQuantityError(creditNote: string): this {
         this.error = true;
-        this.result = 'Cannot proceed: credit note quantity is greater than quantity purchased';
+        this.result = `Cannot proceed: credit note quantity is greater than purchased quantity. Credit note: ${creditNote}`;
         return this;
     }
 
