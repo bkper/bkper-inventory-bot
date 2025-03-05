@@ -72,22 +72,23 @@ namespace CostOfSalesService {
             if (purchaseTransaction) {
                 const creditNoteQuantity = BkperApp.newAmount(creditNoteTx.getAmount().toNumber());
                 const remainingQuantity = purchaseTransaction.getAmount().minus(creditNoteQuantity);
-                
+
                 if (remainingQuantity.toNumber() <= 0) {
                     return summary.creditNoteQuantityError(creditNoteTx.getProperty(CREDIT_NOTE_PROP));
                 } else {
                     // split purchase transaction
                     let splittedPurchaseTransaction = inventoryBook.newTransaction()
-                    .setDate(purchaseTransaction.getDate())
-                    .setAmount(creditNoteQuantity)
-                    .setCreditAccount(purchaseTransaction.getCreditAccount())
-                    .setDebitAccount(purchaseTransaction.getDebitAccount())
-                    .setDescription(purchaseTransaction.getDescription())
-                    .setProperty(PARENT_ID, purchaseTransaction.getId())
-                    .setProperty(PURCHASE_CODE_PROP, purchaseCode.toString())
-                    .setProperty(CREDIT_NOTE_PROP, creditNote)
-                    .setChecked(true)
-                    ;
+                        .setDate(purchaseTransaction.getDate())
+                        .setAmount(creditNoteQuantity)
+                        .setCreditAccount(purchaseTransaction.getCreditAccount())
+                        .setDebitAccount(purchaseTransaction.getDebitAccount())
+                        .setDescription(purchaseTransaction.getDescription())
+                        .setProperty(PARENT_ID, purchaseTransaction.getId())
+                        .setProperty(PURCHASE_CODE_PROP, purchaseCode.toString())
+                        .setProperty(CREDIT_NOTE_PROP, creditNote)
+                        .addRemoteId(creditNote)
+                        .setChecked(true)
+                        ;
 
                     // Store transaction to be created
                     processor.setInventoryBookTransactionToCreate(splittedPurchaseTransaction);
@@ -96,6 +97,10 @@ namespace CostOfSalesService {
                     purchaseTransaction.setAmount(remainingQuantity);
                     processor.setInventoryBookTransactionToUpdate(purchaseTransaction);
                     goodAccountPurchaseTransactionsMap.set(purchaseCode, purchaseTransaction);
+
+                    // check credit note transaction
+                    creditNoteTx.setChecked(true);
+                    processor.setInventoryBookTransactionToUpdate(creditNoteTx);
                 }
             }
         }
@@ -106,7 +111,7 @@ namespace CostOfSalesService {
         // Process sales
         for (const saleTransaction of goodAccountSaleTransactions) {
             if (goodAccountSaleTransactions.length > 0) {
-                processSale(financialBook, inventoryBook, saleTransaction, goodAccountPurchaseTransactions, summary, processor);
+                processSale(financialBook, inventoryBook, saleTransaction, goodAccountPurchaseTransactions, processor);
             }
             // Abort if any transaction is locked
             if (processor.hasLockedTransaction()) {
@@ -134,7 +139,7 @@ namespace CostOfSalesService {
         }
     }
 
-    function processSale(financialBook: Bkper.Book, inventoryBook: Bkper.Book, saleTransaction: Bkper.Transaction, purchaseTransactions: Bkper.Transaction[], summary: Summary, processor: CalculateCostOfSalesProcessor): void {
+    function processSale(financialBook: Bkper.Book, inventoryBook: Bkper.Book, saleTransaction: Bkper.Transaction, purchaseTransactions: Bkper.Transaction[], processor: CalculateCostOfSalesProcessor): void {
 
         // Log operation status
         console.log(`processing sale: ${saleTransaction.getId()} - ${saleTransaction.getDescription()}`);
@@ -164,7 +169,7 @@ namespace CostOfSalesService {
             const creditNotesQuantity = originalQuantity.minus(transactionQuantity).toNumber();
             let additionalCosts = BkperApp.newAmount(0);
             let creditNotesAmount = BkperApp.newAmount(0);
-            if (originalQuantity.toNumber() == transactionQuantity.toNumber()) {
+            if (purchaseTransaction.getProperty(CREDIT_NOTE_PROP) == undefined && purchaseTransaction.getProperty(ADD_COSTS_PROP) == undefined) {
                 // transaction hasn't been previously processed in FIFO execution. Get additional costs & credit notes to update purchase transaction
                 ({ additionalCosts, creditNotesAmount } = getAdditionalCostsAndCreditNotes(financialBook, purchaseTransaction));
             }
@@ -185,17 +190,10 @@ namespace CostOfSalesService {
                 purchaseTransaction
                     .setProperty(TOTAL_COST_PROP, updatedCost.toString())
                     .setProperty(LIQUIDATION_LOG_PROP, JSON.stringify(liquidationLog))
+                    .setProperty(ADD_COSTS_PROP, additionalCosts.toString())
+                    .setProperty(CREDIT_NOTE_PROP, JSON.stringify({ quantity: creditNotesQuantity, amount: creditNotesAmount.toNumber() }))
+                    .setChecked(true)
                     ;
-
-                if (purchaseTransaction.getProperty(ADD_COSTS_PROP) == null && !additionalCosts.eq(0)) {
-                    purchaseTransaction.setProperty(ADD_COSTS_PROP, additionalCosts.toString());
-                }
-
-                if (purchaseTransaction.getProperty(CREDIT_NOTE_PROP) == null && !creditNotesAmount.eq(0)) {
-                    purchaseTransaction.setProperty(CREDIT_NOTE_PROP, JSON.stringify({ quantity: creditNotesQuantity, amount: creditNotesAmount.toNumber() }));
-                }
-
-                purchaseTransaction.setChecked(true);
 
                 // Store transaction to be updated
                 processor.setInventoryBookTransactionToUpdate(purchaseTransaction);
@@ -220,15 +218,13 @@ namespace CostOfSalesService {
                 purchaseTransaction
                     .setAmount(remainingQuantity)
                     .setProperty(TOTAL_COST_PROP, remainingCost.toString())
+                    .setProperty(ADD_COSTS_PROP, additionalCosts.toString())
+                    .setProperty(CREDIT_NOTE_PROP, JSON.stringify({ quantity: creditNotesQuantity, amount: creditNotesAmount.toNumber() }))
                     ;
 
-                if (purchaseTransaction.getProperty(ADD_COSTS_PROP) == null && !additionalCosts.eq(0)) {
                     purchaseTransaction.setProperty(ADD_COSTS_PROP, additionalCosts.toString());
-                }
 
-                if (purchaseTransaction.getProperty(CREDIT_NOTE_PROP) == null && !creditNotesAmount.eq(0)) {
                     purchaseTransaction.setProperty(CREDIT_NOTE_PROP, JSON.stringify({ quantity: creditNotesQuantity, amount: creditNotesAmount.toNumber() }));
-                }
 
                 // Store transaction to be updated
                 processor.setInventoryBookTransactionToUpdate(purchaseTransaction);
@@ -247,11 +243,9 @@ namespace CostOfSalesService {
                     .setProperty(TOTAL_COST_PROP, splittedCost.toString())
                     .setProperty(LIQUIDATION_LOG_PROP, JSON.stringify(liquidationLog))
                     .setProperty(ORDER_PROP, purchaseTransaction.getProperty(ORDER_PROP))
+                    .addRemoteId(processor.generateId())
                     .setChecked(true)
                     ;
-
-                // Store transaction to be created: generate temporaty id in order to link up connections later
-                splittedPurchaseTransaction.addRemoteId(`${processor.generateTemporaryId()}`);
 
                 // Store transaction to be created
                 processor.setInventoryBookTransactionToCreate(splittedPurchaseTransaction);
@@ -368,16 +362,16 @@ namespace CostOfSalesService {
                 (tx.getProperty(PURCHASE_INVOICE_PROP) != undefined &&
                     tx.getProperty(PURCHASE_INVOICE_PROP) != purchaseCode)) {
                 totalAdditionalCosts = totalAdditionalCosts.plus(tx.getAmount());
-            } 
+            }
             // Check for credit notes:
             // - Transaction must be checked
             // - Must have credit note property
             // - Must have matching purchase code  
             // - Must credit the same account
-            else if (tx.isChecked() && 
-                     tx.getProperty(CREDIT_NOTE_PROP) != undefined &&
-                     tx.getProperty(PURCHASE_CODE_PROP) == purchaseCode &&
-                     tx.getCreditAccount().getId() == financialAccountId) {
+            else if (tx.isChecked() &&
+                tx.getProperty(CREDIT_NOTE_PROP) != undefined &&
+                tx.getProperty(PURCHASE_CODE_PROP) == purchaseCode &&
+                tx.getCreditAccount().getId() == financialAccountId) {
                 totalCreditAmount = totalCreditAmount.plus(tx.getAmount());
             }
         }
