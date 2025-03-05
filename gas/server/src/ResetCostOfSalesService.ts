@@ -73,6 +73,11 @@ namespace CostOfSalesService {
                     // Store transaction to be updated
                     processor.setInventoryBookTransactionToUpdate(tx);
                 }
+
+                // Reset credit note transaction
+                if (tx.getProperty(CREDIT_NOTE_PROP)) {
+                    processor.setInventoryBookTransactionToUpdate(tx);
+                }
             }
         }
 
