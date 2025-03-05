@@ -28,7 +28,8 @@ namespace CostOfSalesService {
         const iterator = inventoryBook.getTransactions(helper.getAccountQuery(goodAccount.getName(), beforeDate));
 
         let goodAccountSaleTransactions: Bkper.Transaction[] = [];
-        let goodAccountPurchaseTransactions: Bkper.Transaction[] = [];
+        let goodAccountPurchaseTransactionsMap: Map<string, Bkper.Transaction> = new Map();
+        let goodAccountCreditNoteTransactionsMap: Map<string, Bkper.Transaction> = new Map();
 
         let totalSalesQuantity = 0;
         let totalPurchasedQuantity = 0;
@@ -44,8 +45,12 @@ namespace CostOfSalesService {
                 totalSalesQuantity += tx.getAmount().toNumber();
             }
             if (BotService.isPurchase(tx)) {
-                goodAccountPurchaseTransactions.push(tx);
+                goodAccountPurchaseTransactionsMap.set(tx.getProperty(PURCHASE_CODE_PROP), tx);
                 totalPurchasedQuantity += tx.getAmount().toNumber();
+            }
+            if (BotService.isCreditNote(tx)) {
+                goodAccountCreditNoteTransactionsMap.set(tx.getProperty(PURCHASE_CODE_PROP), tx);
+                totalPurchasedQuantity -= tx.getAmount().toNumber();
             }
         }
 
@@ -54,14 +59,48 @@ namespace CostOfSalesService {
         }
         // Total sales quantity cannot be greater than available quantity in inventory
         if (totalSalesQuantity > totalPurchasedQuantity) {
-            return summary.quantityError();
+            return summary.salequantityError();
         }
-
-        goodAccountSaleTransactions = goodAccountSaleTransactions.sort(BotService.compareToFIFO);
-        goodAccountPurchaseTransactions = goodAccountPurchaseTransactions.sort(BotService.compareToFIFO);
 
         // Processor
         const processor = new CalculateCostOfSalesProcessor(inventoryBook, financialBook);
+
+        // process credit notes before sales
+        for (const [purchaseCode, creditNoteTx] of goodAccountCreditNoteTransactionsMap.entries()) {
+            const purchaseTransaction = goodAccountPurchaseTransactionsMap.get(purchaseCode);
+            if (purchaseTransaction) {
+                const creditNoteQuantity = BkperApp.newAmount(creditNoteTx.getAmount().toNumber());
+                const remainingQuantity = purchaseTransaction.getAmount().minus(creditNoteQuantity);
+                
+                if (remainingQuantity.toNumber() < 0) {
+                    return summary.creditNoteQuantityError();
+                } else {
+                    // split purchase transaction
+                    let splittedPurchaseTransaction = inventoryBook.newTransaction()
+                    .setDate(purchaseTransaction.getDate())
+                    .setAmount(creditNoteQuantity)
+                    .setCreditAccount(purchaseTransaction.getCreditAccount())
+                    .setDebitAccount(purchaseTransaction.getDebitAccount())
+                    .setDescription(purchaseTransaction.getDescription())
+                    .setProperty(PARENT_ID, purchaseTransaction.getId())
+                    .setProperty(PURCHASE_CODE_PROP, purchaseCode.toString())
+                    .setProperty(CREDIT_NOTE_PROP, creditNoteTx.getProperty(CREDIT_NOTE_PROP))
+                    .setChecked(true)
+                    ;
+
+                    // Store transaction to be created
+                    processor.setInventoryBookTransactionToCreate(splittedPurchaseTransaction);
+
+                    // update purchase transaction
+                    purchaseTransaction.setAmount(remainingQuantity);
+                    processor.setInventoryBookTransactionToUpdate(purchaseTransaction);
+                    goodAccountPurchaseTransactionsMap.set(purchaseCode, purchaseTransaction);
+                }
+            }
+        }
+
+        goodAccountSaleTransactions = goodAccountSaleTransactions.sort(BotService.compareToFIFO);
+        const goodAccountPurchaseTransactions = Array.from(goodAccountPurchaseTransactionsMap.values()).sort(BotService.compareToFIFO);
 
         // Process sales
         for (const saleTransaction of goodAccountSaleTransactions) {

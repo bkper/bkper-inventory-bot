@@ -51,9 +51,15 @@ class Summary {
         return this;
     }
 
-    quantityError(): this {
+    salequantityError(): this {
         this.error = true;
         this.result = 'Cannot proceed: sales quantity is greater than quantity purchased';
+        return this;
+    }
+
+    creditNoteQuantityError(): this {
+        this.error = true;
+        this.result = 'Cannot proceed: credit note quantity is greater than quantity purchased';
         return this;
     }
 

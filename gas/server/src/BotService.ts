@@ -44,6 +44,10 @@ namespace BotService {
         return transaction.isPosted() && transaction.getCreditAccount().getType() == BkperApp.AccountType.INCOMING;
     }
 
+    export function isCreditNote(transaction: Bkper.Transaction): boolean {
+        return transaction.isPosted() && transaction.getDebitAccount().getType() == BkperApp.AccountType.INCOMING && transaction.getProperty(CREDIT_NOTE_PROP) != undefined;
+    }
+
     export function getExcCode(book: Bkper.Book): string {
         return book.getProperty(EXC_CODE_PROP, 'exchange_code');
     }
