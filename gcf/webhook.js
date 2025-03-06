@@ -24,7 +24,7 @@ const app = new App();
 (async function() {
   try {
     console.log("Starting ngrok...");
-    const url = await connect({ port: 3005 });
+    const url = await connect({ port: 3005, authtoken_from_env: true });
     console.log(`Started ngrok at ${url}`);
     await app.setWebhookUrlDev(url).patch();
   } catch (err) {
