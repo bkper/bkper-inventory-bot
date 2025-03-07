@@ -1,16 +1,16 @@
 id: inventory-bot
-name: Inventory Bot
+name: Inventory Agent
 description: Keep inventory book in sync with financial books
 logoUrl: https://static.thenounproject.com/png/2318887-200.png
 ownerName: Bkper
 ownerLogoUrl: https://avatars.githubusercontent.com/u/11943086?v=4
 ownerWebsite: https://bkper.com
-repoUrl: https://github.com/bkper/inventory-bot
+repoUrl: https://github.com/bkper/inventory-agent
 repoPrivate: false
 deprecated: false
 menuUrl: https://script.google.com/macros/s/AKfycbzQEzvupNCQbCDHkN_jLgRoraB1ROZ5gX1W1VQ129Kh3wKvWxA6VmDt7qwy09LGwFBY/exec?bookId=${book.id}&accountId=${account.id}&groupId=${group.id}
 menuUrlDev: https://script.google.com/macros/s/AKfycbz7i2sEi2ftvstt-fy1hRJh8N627meMRj_4l2HQb60/dev?bookId=${book.id}&accountId=${account.id}&groupId=${group.id}
-menuText: Inventory Bot
+menuText: Inventory Agent
 menuPopupWidth: 600
 menuPopupHeight: 600
 webhookUrl: https://us-central1-inventory-bot-405017.cloudfunctions.net/prodGen2
