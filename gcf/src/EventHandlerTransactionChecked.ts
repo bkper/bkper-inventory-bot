@@ -74,8 +74,12 @@ export class EventHandlerTransactionChecked extends EventHandlerTransaction {
                 // Buying
                 const financialDebitAccount = financialTransaction.debitAccount;
                 let inventoryAccount = await inventoryBook.getAccount(financialDebitAccount.name);
+                // if account is not found, create it
                 if (!inventoryAccount) {
                     inventoryAccount = await this.createConnectedInventoryAccountOnPurchase(inventoryBook, financialDebitAccount);
+                } else {
+                    // if account was created on sale, check if groups and properties are correctly set
+                    await this.checkInventoryAccount(inventoryBook, financialDebitAccount);
                 }
 
                 let inventoryBuyAccount = await inventoryBook.getAccount(GOOD_BUY_ACCOUNT_NAME);
@@ -183,11 +187,10 @@ export class EventHandlerTransactionChecked extends EventHandlerTransaction {
                         .setHidden(group.hidden ?? false)
                         .create();
                 }
-                if (inventoryGroup) {
-                    inventoryAccount.addGroup(inventoryGroup);
-                }
+                inventoryAccount.addGroup(inventoryGroup);
             }
         }
+
         inventoryAccount = await inventoryAccount.create();
 
         return inventoryAccount;
@@ -200,4 +203,55 @@ export class EventHandlerTransactionChecked extends EventHandlerTransaction {
             .setType(AccountType.ASSET)
             .create();
     }
+
+    // check if inventory account groups and properties match the financial account groups and properties
+    private async checkInventoryAccount(inventoryBook: Book, financialAccount: bkper.Account): Promise<boolean> {
+
+        const inventoryAccount = await inventoryBook.getAccount(financialAccount.name);
+
+        if (!inventoryAccount) {
+            return false;
+        }
+
+        const inventoryAccountProperties = financialAccount.properties ?? {};
+        const inventoryAccountArchived = financialAccount.archived ?? false;
+        const inventoryAccountGroups = financialAccount.groups ?? [];
+
+        let needsUpdate = false;
+
+        // update properties and archived if needed
+        if (inventoryAccount.getProperties() != inventoryAccountProperties) {
+            inventoryAccount.setProperties(inventoryAccountProperties);
+            needsUpdate = true;
+        }
+
+        if (inventoryAccount.isArchived() != inventoryAccountArchived) {
+            inventoryAccount.setArchived(inventoryAccountArchived);
+            needsUpdate = true;
+        }
+
+        // update groups if needed
+        if (inventoryAccountGroups.length > 0) {
+            for (const group of inventoryAccountGroups) {
+                let inventoryGroup = await inventoryBook.getGroup(group.name);
+                if (!inventoryGroup) {
+                    inventoryGroup = await new Group(inventoryBook)
+                        .setName(group.name ?? '')
+                        .setParent(group.parent?.name ? await inventoryBook.getGroup(group.parent.name) : null)
+                        .setProperties(group.properties ?? {})
+                        .setHidden(group.hidden ?? false)
+                        .create();
+                    needsUpdate = true;
+                }
+                inventoryAccount.addGroup(inventoryGroup);
+            }
+        }
+
+        if (needsUpdate) {
+            await inventoryAccount.update();
+        }
+
+        return true;
+    }
+
 }
