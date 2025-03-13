@@ -24,6 +24,7 @@ propertiesSchema:
   book:
     keys:
       - inventory_book
+      - exc_code
   transaction:
     keys:
       - good
@@ -36,4 +37,3 @@ propertiesSchema:
   group:
     keys:
       - exc_code
-      - good_exc_code
