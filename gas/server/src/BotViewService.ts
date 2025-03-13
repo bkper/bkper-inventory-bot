@@ -24,7 +24,7 @@ namespace BotViewService {
         template.account = inventoryAccount ? { id: inventoryAccount.getId(), name: inventoryAccount.getName() } : undefined;
         template.group = group ? { id: inventoryBook.getGroup(groupName!).getId(), name: groupName! } : undefined;
 
-        return template.evaluate().setTitle('Inventory Bot');
+        return template.evaluate().setTitle('Inventory Agent');
     }
 
 }
