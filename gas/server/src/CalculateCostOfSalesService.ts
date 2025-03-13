@@ -281,10 +281,10 @@ namespace CostOfSalesService {
     }
 
     function addCostOfSales(financialBook: Bkper.Book, saleTransaction: Bkper.Transaction, saleCost: Bkper.Amount, processor: CalculateCostOfSalesProcessor) {
-        let costOfSalesAccount = financialBook.getAccount(COST_OF_SALES_ACCOUNT);
+        let costOfSalesAccount = financialBook.getAccount(COGS_ACCOUNT);
         if (!costOfSalesAccount) {
             costOfSalesAccount = financialBook.newAccount()
-                .setName(COST_OF_SALES_ACCOUNT)
+                .setName(COGS_ACCOUNT)
                 .setType(BkperApp.AccountType.OUTGOING)
                 .create();
         }

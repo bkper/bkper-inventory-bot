@@ -2,7 +2,7 @@
 const ADDITIONAL_COSTS_CREDITS_QUERY_RANGE = 2; // in months
 
 // Accounts
-const COST_OF_SALES_ACCOUNT = 'Cost of sales';
+const COGS_ACCOUNT = 'Cost of goods sold';
 
 // Bkper properties
 const ADD_COSTS_PROP = 'additional_costs';
