@@ -5,9 +5,9 @@
 The Inventory Agent monitors transactions in Financial Books and automatically tracks inventory items in a separate Inventory Book. Key features include:
 
 - Automatic synchronization between Financial Books and the Inventory Book
-- Cost of Goods Sold (COGS) tracking using the FIFO (First-In, First-Out) method
-- Support for additional costs and credit notes
-- Clean inventory management with purchase and sale tracking
+- Up to date inventory management with purchase and sale tracking
+- Cost of Goods Sold ([COGS](https://www.investopedia.com/terms/c/cogs.asp)) tracking using the FIFO (First-In, First-Out) method
+- Support for handling additional costs on purchases and credit note transactions
 - Detailed transaction history with purchase and liquidation logs
 
 ## Configuration
@@ -15,8 +15,10 @@ The Inventory Agent monitors transactions in Financial Books and automatically t
 To configure the Bkper Inventory Agent, ensure the following setup:
 
 ### Collection:
+<!-- TODO: ver o passo passo na documentacao -->
    - Both Financial and Inventory Books must reside within the same [Collection](https://help.bkper.com/en/articles/4208937-collections).
    - Define a single Inventory Book per Collection. This book is identified by either:
+   <!-- TODO: verificar e corrigir -->
      - Setting the **decimal places to 0 (zero)** in the book settings, or
      - Setting the `inventory_book` property to `true`.
 
@@ -30,9 +32,11 @@ To configure the Bkper Inventory Agent, ensure the following setup:
    - **Inventory Book**:
      - `inventory_book`: **Optional** - true/false - Identifies the Inventory book of the collection. If not present, decimal places must be set to 0 (zero) in the book settings.
 
+   <!-- TODO: explain how to group and configure it -->
    **Group Properties**:
    - `exc_code`: **Required** - Defines the exchange code representing the currency of the group.
 
+<!-- TODO: explain different transactions and how to configure them -->
    **Transaction Properties**:
    - `good`: **Required** - The name or identifier of the inventory item.
    - `quantity`: **Required** - The quantity of the inventory item in the transaction.
