@@ -291,7 +291,7 @@ namespace CostOfSalesService {
 
         let financialGoodAccount: Bkper.Account = financialBook.getAccount(saleTransaction.getCreditAccountName());
         const remoteId = saleTransaction.getId();
-        const description = `#cost_of_sale ${saleTransaction.getDescription()}`;
+        const description = `#COGS ${saleTransaction.getDescription()}`;
 
         // link COGS transaction in fanancial book to sale transaction in inventory book
         const costOfSaleTransaction = financialBook.newTransaction()
