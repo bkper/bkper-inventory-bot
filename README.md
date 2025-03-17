@@ -1,11 +1,9 @@
 # Bkper Inventory Agent
 
-## Overview
-
 The Inventory Agent monitors transactions in Financial Books and automatically tracks inventory items in a separate Inventory Book. Key features include:
 
 - Automatic synchronization between Financial Books and the Inventory Book
-- Up to date inventory management with purchase and sale tracking
+- Up to date inventory management with purchases and sales quantity tracking
 - Cost of Goods Sold ([COGS](https://www.investopedia.com/terms/c/cogs.asp)) tracking using the FIFO (First-In, First-Out) method
 - Support for handling additional costs on purchases and credit note transactions
 - Detailed transaction history with purchase and liquidation logs
@@ -15,12 +13,8 @@ The Inventory Agent monitors transactions in Financial Books and automatically t
 To configure the Bkper Inventory Agent, ensure the following setup:
 
 ### Collection:
-<!-- TODO: ver o passo passo na documentacao -->
    - Both Financial and Inventory Books must reside within the same [Collection](https://help.bkper.com/en/articles/4208937-collections).
-   - Define a single Inventory Book per Collection. This book is identified by either:
-   <!-- TODO: verificar e corrigir -->
-     - Setting the **decimal places to 0 (zero)** in the book settings, or
-     - Setting the `inventory_book` property to `true`.
+   - Define a single Inventory Book per Collection. This book is identified by setting the `inventory_book` property to `true`.
 
 ### Properties Interactions:
 
@@ -30,20 +24,18 @@ To configure the Bkper Inventory Agent, ensure the following setup:
    - **Financial Books**:
      - `exc_code`: **Required** - The exchange code representing the book currency.
    - **Inventory Book**:
-     - `inventory_book`: **Optional** - true/false - Identifies the Inventory book of the collection. If not present, decimal places must be set to 0 (zero) in the book settings.
+     - `inventory_book`: **Required** set to `true` - Identifies the Inventory book of the collection.
 
-   <!-- TODO: explain how to group and configure it -->
    **Group Properties**:
-   - `exc_code`: **Required** - Defines the exchange code representing the currency of the group.
+   - `exc_code`: **Required** - Defines the exchange rate code that represents the currency in which the good is accounted for. Each good account to be tracked by the Inventory Agent must reside into a group with this property defined.
 
-<!-- TODO: explain different transactions and how to configure them -->
    **Transaction Properties**:
    - `good`: **Required** - The name or identifier of the inventory item.
    - `quantity`: **Required** - The quantity of the inventory item in the transaction.
-   - `purchase_code`: **Optional** - A unique code for purchase transactions, helpful for tracking across books.
+   - `purchase_code`: **Required in purchase transactions** - A unique code for the good purchase transactions. Also required in the additional cost and credit note transactions to reference those transactions for the good purchase transaction. Its value must be equal to the `purchase_invoice` property value in good purchase transactions, and different in additional cost or credit note transactions.
    - `purchase_invoice`: **Optional** - Reference to the purchase invoice number.
    - `sale_invoice`: **Optional** - Reference to the sale invoice number.
-   - `credit_note`: **Optional** - Indicates this transaction is a credit note.
+   - `credit_note`: **Optional** - Indicates this transaction is a credit note and references to its invoice number.
    - `order`: **Optional** - The order of the operation if multiple operations happened on the same day.
 
 ## Cost of Sales Service
@@ -71,7 +63,7 @@ To use the Inventory Agent:
 
 2. **Record transactions**: When recording purchase and sale transactions in your Financial Books, include the required properties (`good`, `quantity`, etc.).
 
-3. **Calculate COGS**: Use the agent's interface to calculate Cost of Goods Sold for inventory accounts. This can be done for:
+3. **Calculate COGS**: Use the agent's interface (in the **More** menu) to calculate Cost of Goods Sold for inventory accounts. This can be done for:
    - A specific account
    - All accounts in a group
    - All inventory accounts
