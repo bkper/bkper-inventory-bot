@@ -4,8 +4,6 @@ yarn-error.log
 .history
 .env
 tsconfig.tsbuildinfo
-**/bun.lockb
-**/bun.lock
 
 /gas/client/@types/
 /gas/client/build/
