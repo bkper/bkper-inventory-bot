@@ -5,6 +5,6 @@ yarn-error.log
 .env
 tsconfig.tsbuildinfo
 
-/gas/client/@types/
-/gas/client/build/
-/gas/server/src/*.html
+/menu/client/@types/
+/menu/client/build/
+/menu/server/src/*.html

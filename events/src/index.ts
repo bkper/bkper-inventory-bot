@@ -1,4 +1,4 @@
-import { HttpFunction } from '@google-cloud/functions-framework/build/src/functions';
+import { HttpFunction } from '@google-cloud/functions-framework/build/src/functions.js';
 import { Bkper } from 'bkper-js';
 import { Request, Response } from 'express';
 import 'source-map-support/register.js';
