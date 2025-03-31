@@ -13,7 +13,7 @@ menuUrl: https://script.google.com/macros/s/AKfycbzQEzvupNCQbCDHkN_jLgRoraB1ROZ5
 menuUrlDev: https://script.google.com/macros/s/AKfycbz7i2sEi2ftvstt-fy1hRJh8N627meMRj_4l2HQb60/dev?bookId=${book.id}&accountId=${account.id}&groupId=${group.id}
 menuPopupWidth: 600
 menuPopupHeight: 600
-webhookUrl: https://us-central1-inventory-Bot-405017.cloudfunctions.net/prodGen2
+webhookUrl: https://us-central1-inventory-bot-405017.cloudfunctions.net/prodGen2
 apiVersion: v5
 events:
   - TRANSACTION_CHECKED
