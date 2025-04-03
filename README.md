@@ -30,12 +30,24 @@ To configure the Bkper Inventory Bot, ensure the following setup:
    - `exc_code`: **Required** - Defines the exchange rate code that represents the currency in which the good is accounted for. Each good account to be tracked by the Inventory Bot must reside into a group with this property defined.
 
    **Transaction Properties**:
-   - `good`: **Required** - The name or identifier of the inventory item.
+- Good purchase transactions:
    - `quantity`: **Required** - The quantity of the inventory item in the transaction.
-   - `purchase_code`: **Required in purchase transactions** - A unique code for the good purchase transactions. Also required in the additional cost and credit note transactions to reference those transactions for the good purchase transaction. Its value must be equal to the `purchase_invoice` property value in good purchase transactions, and different in additional cost or credit note transactions.
-   - `purchase_invoice`: **Optional** - Reference to the purchase invoice number.
+   - `purchase_invoice`: **Required** - Reference to the purchase invoice number.
+   - `purchase_code`: **Required** - The code that identifies the transaction. Also required (and must have the same value) in the additional cost and credit note transactions to reference those transactions for the good purchase transaction. Its value must be equal to the `purchase_invoice` property value in good purchase transactions.
+   - `order`: **Optional** - The order of the operation if multiple operations happened on the same day.
+- Sale transactions:
+   - `good`: **Required** - The account name of the inventory item.
+   - `quantity`: **Required** - The quantity of the inventory item in the transaction.
    - `sale_invoice`: **Optional** - Reference to the sale invoice number.
-   - `credit_note`: **Optional** - Indicates this transaction is a credit note and references to its invoice number.
+   - `order`: **Optional** - The order of the operation if multiple operations happened on the same day.
+- Additional cost transactions:
+   - `purchase_code`: **Required** - Since it adds costs to a specific good purchase transaction, it must have the same value as in the good purchase transaction to reference it.
+   - `purchase_invoice`: **Required** - Reference to the additional cost invoice number.
+   - `order`: **Optional** - The order of the operation if multiple operations happened on the same day.
+- Credit note transactions:
+   - `purchase_code`: **Required** - Since it deducts costs from a specific good purchase transaction, it must have the same value as in the good purchase transaction to reference it.
+   - `credit_note`: **Required** - Indicates this transaction is a credit note and references to its invoice number.
+   - `quantity`: **Optional** - The quantity of the inventory item returned in the transaction.
    - `order`: **Optional** - The order of the operation if multiple operations happened on the same day.
 
 ## Cost of Sales Service
