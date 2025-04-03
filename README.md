@@ -50,6 +50,8 @@ To configure the Bkper Inventory Bot, ensure the following setup:
    - `quantity`: **Optional** - The quantity of the inventory item returned in the transaction.
    - `order`: **Optional** - The order of the operation if multiple operations happened on the same day.
 
+**IMPORTANT:** Always remember to check the transaction after recording it (by clicking on the ✓ icon) for the bot to perform its actions.
+
 ## Cost of Sales Service
 
 The Inventory Bot uses the FIFO ([First-In, First-Out](https://medium.com/magnimetrics/first-in-first-out-fifo-inventory-costing-f0bc00096a59)) method to calculate Cost of Goods Sold, ensuring accurate tracking of inventory costs.
