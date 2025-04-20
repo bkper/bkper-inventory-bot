@@ -1,6 +1,8 @@
 # Bkper Inventory Bot
 
-The Inventory Bot monitors transactions in Financial Books and automatically tracks inventory items in a separate Inventory Book. Key features include:
+The Inventory Bot automatically tracks inventory items in a dedicated Inventory Book, synchronizing with Financial Books to manage purchases, sales, and calculate Cost of Goods Sold (COGS) using the FIFO method.
+
+Key features include:
 
 - Automatic synchronization between Financial Books and the Inventory Book
 - Up to date inventory management with purchases and sales quantity tracking
