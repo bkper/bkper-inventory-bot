@@ -71,7 +71,7 @@ The Inventory Bot uses the FIFO ([First-In, First-Out](https://medium.com/magnim
 **Important:**
 The Inventory Bot automatically adds properties to transactions in the Inventory Book when calculating cost of sales. These properties are used for state and log control. It also manages transaction states by checking/unchecking transactions (see [Transaction States](https://help.bkper.com/en/articles/2569149-transaction-status)). These properties and states **must not** be manually altered.
 
-As a rule of thumb: only make edits, updates, deletes on the Financial book and never on the Inventory book.
+**As a rule of thumb:** only make edits, updates, deletes on the Financial book and never on the Inventory book.
 
 ## Using the Inventory Bot
 
