@@ -1,9 +1,13 @@
 import { Book, Transaction } from "bkper-js";
 import { EventHandler } from "./EventHandler.js";
-import { getBookExcCode, getExchangeCodeFromAccount } from "./BotService.js";
 import { GOOD_PROP } from "./constants.js";
+import { AppContext } from "./AppContext.js";
 
 export abstract class EventHandlerTransaction extends EventHandler {
+
+    constructor(context: AppContext) {
+        super(context);
+    }
 
     protected abstract connectedTransactionNotFound(inventoryBook: Book, financialTransaction: bkper.Transaction, goodExcCode?: string): Promise<string | undefined>;
     protected abstract connectedTransactionFound(connectedBook: Book, connectedTransaction: Transaction): Promise<string | undefined>;
@@ -21,7 +25,7 @@ export abstract class EventHandlerTransaction extends EventHandler {
         if (!event.data) {
             return undefined;
         }
-        let excCode = getBookExcCode(financialBook);
+        let excCode = this.botService.getBookExcCode(financialBook);
         let operation = event.data.object as bkper.TransactionOperation;
         let financialTransaction = operation.transaction;
 
@@ -52,12 +56,12 @@ export abstract class EventHandlerTransaction extends EventHandler {
         let goodAccount = await financialBook.getAccount(goodProp);
         if (goodAccount) {
             // sale
-            return await getExchangeCodeFromAccount(goodAccount);
+            return await this.botService.getExchangeCodeFromAccount(goodAccount);
         } else {
             // purchase
             const financialDebitAccount = financialTransaction.debitAccount;
             if (financialDebitAccount) {
-                return await getExchangeCodeFromAccount(financialDebitAccount);
+                return await this.botService.getExchangeCodeFromAccount(financialDebitAccount);
             }
         }
         return undefined;

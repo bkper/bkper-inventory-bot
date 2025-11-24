@@ -1,8 +1,17 @@
 import { Book } from "bkper-js";
 import { Result } from "./index.js";
-import { getInventoryBook } from "./BotService.js";
+import { BotService } from "./BotService.js";
+import { AppContext } from "./AppContext.js";
 
 export abstract class EventHandler {
+
+    protected context: AppContext;
+    protected botService: BotService;
+
+    constructor(context: AppContext) {
+        this.context = context;
+        this.botService = new BotService(context);
+    }
 
     protected abstract processObject(eventBook: Book, connectedBook: Book, event: bkper.Event): Promise<string | undefined>;
 
@@ -12,7 +21,7 @@ export abstract class EventHandler {
 
     async handleEvent(event: bkper.Event): Promise<Result> {
 
-        let eventBook = new Book(event.book);
+        let eventBook = new Book(event.book, this.context.bkper.getConfig());
 
         let interceptionResponse = await this.intercept(eventBook, event);
         if (interceptionResponse.result) {
@@ -22,7 +31,7 @@ export abstract class EventHandler {
         let responses: string[] = [];
         let warningMsg: string | undefined = undefined;
 
-        let inventoryBook = getInventoryBook(eventBook);
+        let inventoryBook = this.botService.getInventoryBook(eventBook);
 
         const logtag = `Handling ${event.type} event on book ${eventBook.getName()} from user ${event.user?.username ?? 'unknown'}`;
         console.time(logtag);

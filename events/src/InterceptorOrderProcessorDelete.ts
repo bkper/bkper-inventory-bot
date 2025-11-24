@@ -1,8 +1,17 @@
 import { Book, Transaction } from "bkper-js";
-import { buildBookAnchor, uncheckAndTrash } from "./BotService.js";
 import { ORIGINAL_QUANTITY_PROP, PARENT_ID_PROP } from "./constants.js";
+import { AppContext } from "./AppContext.js";
+import { BotService } from "./BotService.js";
 
 export abstract class InterceptorOrderProcessorDelete {
+
+	protected context: AppContext;
+	protected botService: BotService;
+
+	constructor(context: AppContext) {
+		this.context = context;
+		this.botService = new BotService(context);
+	}
 
 	protected async cascadeDeleteInventoryTransactions(inventoryBook: Book, deletedTx: bkper.Transaction | Transaction): Promise<Transaction[] | undefined> {
 		let responses: Transaction[] = [];
@@ -18,7 +27,7 @@ export abstract class InterceptorOrderProcessorDelete {
 				const parentIdProp = transaction.getProperty(PARENT_ID_PROP);
 				if (parentIdProp == transactionId) {
 					// transaction is a splitted transaction
-					responses.push(await uncheckAndTrash(transaction));
+					responses.push(await this.botService.uncheckAndTrash(transaction));
 				}
 			}
 		}
@@ -48,7 +57,7 @@ export abstract class InterceptorOrderProcessorDelete {
 	protected async buildDeleteResults(responses: Transaction[], book?: Book): Promise<string[]> {
 		let results: string[] = [];
 		for (const response of responses) {
-			const bookAnchor = book ? buildBookAnchor(book) : undefined;
+			const bookAnchor = book ? this.botService.buildBookAnchor(book) : undefined;
 			bookAnchor ? results.push(`${bookAnchor}: ${await this.buildDeleteResponse(response)}`) : results.push(`${await this.buildDeleteResponse(response)}`);
 		}
 		return results;
@@ -61,7 +70,7 @@ export abstract class InterceptorOrderProcessorDelete {
 	protected async deleteTransactionByRemoteId(book: Book, remoteId?: string): Promise<Transaction | undefined> {
 		let tx = remoteId ? (await book.listTransactions(`remoteId:${remoteId}`)).getFirst() : undefined;
 		if (tx) {
-			tx = await uncheckAndTrash(tx);
+			tx = await this.botService.uncheckAndTrash(tx);
 			return tx;
 		}
 		return undefined;

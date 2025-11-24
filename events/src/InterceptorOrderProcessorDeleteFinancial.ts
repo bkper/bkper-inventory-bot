@@ -2,9 +2,13 @@ import { AccountType, Amount, Book, Transaction } from "bkper-js";
 import { InterceptorOrderProcessorDelete } from "./InterceptorOrderProcessorDelete.js";
 import { Result } from "./index.js";
 import { GOOD_PROP, PURCHASE_CODE_PROP, PURCHASE_INVOICE_PROP, QUANTITY_PROP, COGS_HASHTAG, NEEDS_REBUILD_PROP, ADDITIONAL_COSTS_CREDITS_QUERY_RANGE, ORIGINAL_QUANTITY_PROP } from "./constants.js";
-import { flagInventoryAccountForRebuild, flagInventoryAccountForRebuildIfNeeded, getAccountQuery, getInventoryBook } from "./BotService.js";
+import { AppContext } from "./AppContext.js";
 
 export class InterceptorOrderProcessorDeleteFinancial extends InterceptorOrderProcessorDelete {
+
+    constructor(context: AppContext) {
+        super(context);
+    }
 
     async intercept(financialBook: Book, event: bkper.Event): Promise<Result> {
         if (!event.data) {
@@ -27,7 +31,7 @@ export class InterceptorOrderProcessorDeleteFinancial extends InterceptorOrderPr
                 const deletedTxs = await this.deleteOnInventoryBook(financialBook, transactionPayload.id);
                 if (deletedTxs) {
                     responses = responses.concat(await this.buildDeleteResults(deletedTxs, financialBook));
-                    const rebuildFlagMsg = await flagInventoryAccountForRebuildIfNeeded(financialBook, deletedTxs[0]);
+                    const rebuildFlagMsg = await this.botService.flagInventoryAccountForRebuildIfNeeded(financialBook, deletedTxs[0]);
                     if (rebuildFlagMsg) {
                         responses.push(rebuildFlagMsg);
                     }
@@ -36,7 +40,7 @@ export class InterceptorOrderProcessorDeleteFinancial extends InterceptorOrderPr
 
             // deleted transaction is the additional cost transaction or credit note transaction
             if (transactionPayload.properties[PURCHASE_CODE_PROP] != undefined && (transactionPayload.properties[PURCHASE_CODE_PROP] != transactionPayload.properties[PURCHASE_INVOICE_PROP])) {
-                const inventoryBook = getInventoryBook(financialBook);
+                const inventoryBook = this.botService.getInventoryBook(financialBook);
                 if (inventoryBook) {
                     const goodAccount = await inventoryBook.getAccount(transactionPayload.creditAccount.name);
                     if (goodAccount) {
@@ -66,7 +70,7 @@ export class InterceptorOrderProcessorDeleteFinancial extends InterceptorOrderPr
             if (transactionPayload.properties[GOOD_PROP] != undefined && transactionPayload.debitAccount.type == AccountType.INCOMING) {
                 const deletedTxs = await this.deleteOnInventoryBook(financialBook, transactionPayload.id);
                 if (deletedTxs) {
-                    const rebuildFlagMsg = await flagInventoryAccountForRebuildIfNeeded(financialBook, deletedTxs[0]);
+                    const rebuildFlagMsg = await this.botService.flagInventoryAccountForRebuildIfNeeded(financialBook, deletedTxs[0]);
                     responses = responses.concat(await this.buildDeleteResults(deletedTxs, financialBook));
                     if (rebuildFlagMsg) {
                         responses.push(rebuildFlagMsg);
@@ -76,12 +80,12 @@ export class InterceptorOrderProcessorDeleteFinancial extends InterceptorOrderPr
 
             // deleted transaction is the COGS calculated transaction
             if (transactionPayload.agentId == 'inventory-bot' && transactionPayload.description?.includes(COGS_HASHTAG)) {
-                const inventoryBook = getInventoryBook(financialBook);
+                const inventoryBook = this.botService.getInventoryBook(financialBook);
                 if (inventoryBook && transactionPayload.remoteIds) {
                     for (const remoteId of transactionPayload.remoteIds) {
                         let inventoryBookTransaction = (await inventoryBook.listTransactions(remoteId)).getFirst();
                         if (inventoryBookTransaction) {
-                            const response = await flagInventoryAccountForRebuild(financialBook, inventoryBookTransaction);
+                            const response = await this.botService.flagInventoryAccountForRebuild(financialBook, inventoryBookTransaction);
                             if (response) {
                                 responses.push(response);
                             }
@@ -99,7 +103,7 @@ export class InterceptorOrderProcessorDeleteFinancial extends InterceptorOrderPr
 
     protected async deleteOnInventoryBook(financialBook: Book, remoteId: string): Promise<Transaction[] | undefined> {
         let responses: Transaction[] | undefined = undefined;
-        let inventoryBook = getInventoryBook(financialBook);
+        let inventoryBook = this.botService.getInventoryBook(financialBook);
         const deletedInventoryTx = inventoryBook ? await this.deleteTransactionByRemoteId(inventoryBook, remoteId) : undefined;
         if (deletedInventoryTx) {
             responses = [deletedInventoryTx];
@@ -128,7 +132,7 @@ export class InterceptorOrderProcessorDeleteFinancial extends InterceptorOrderPr
             // Get inventory account details and build query
             const inventoryAccount = await inventoryBook.getAccount(transaction.creditAccount.name);
             const inventoryAccountName = inventoryAccount ? inventoryAccount.getName() : undefined;
-            query = inventoryAccountName ? getAccountQuery(inventoryAccountName, beforeDateIsoString, afterDateIsoString) : '';
+            query = inventoryAccountName ? this.botService.getAccountQuery(inventoryAccountName, beforeDateIsoString, afterDateIsoString) : '';
         }
         return query;
     }

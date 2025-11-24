@@ -1,23 +1,24 @@
+import 'source-map-support/register.js';
 import { HttpFunction } from '@google-cloud/functions-framework/build/src/functions.js';
 import { Bkper } from 'bkper-js';
 import { Request, Response } from 'express';
-import 'source-map-support/register.js';
 import express from 'express';
 import httpContext from 'express-http-context';
+import dotenv from 'dotenv';
+import { fileURLToPath } from 'url';
+import { dirname, resolve } from 'path';
 
+import { AppContext } from './AppContext.js';
 import { EventHandlerTransactionPosted } from './EventHandlerTransactionPosted.js';
 import { EventHandlerTransactionChecked } from './EventHandlerTransactionChecked.js';
 import { EventHandlerTransactionDeleted } from './EventHandlerTransactionDeleted.js';
 import { EventHandlerTransactionUnchecked } from './EventHandlerTransactionUnchecked.js';
 
-import dotenv from 'dotenv';
-import { fileURLToPath } from 'url';
-import path from 'path';
+// Ensure env at right location
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
+dotenv.config({ path: resolve(__dirname, '../../.env') });
 
-const __filename = fileURLToPath(import.meta.url); // get the resolved path to the file
-const __dirname = path.dirname(__filename); // get the name of the directory
-
-dotenv.config({ path: `${__dirname}/../../.env` });
 
 const app = express();
 app.use(httpContext.middleware);
@@ -25,27 +26,27 @@ app.use('/', handleEvent);
 export const doPost: HttpFunction = app;
 
 export type Result = {
-    result?: string[] | string | boolean,
-    error?: string,
-    warning?: string
+  result?: string[] | string | boolean,
+  error?: string,
+  warning?: string
 }
 
-function init(req: Request, res: Response) {
-    res.setHeader('Content-Type', 'application/json');
+function init(req: Request, res: Response): AppContext {
 
-    //Put OAuth token from header in the http context for later use when calling the API. https://julio.li/b/2016/10/29/request-persistence-express/
-    const oauthTokenHeader = 'bkper-oauth-token';
-    httpContext.set(oauthTokenHeader, req.headers[oauthTokenHeader]);
+  res.setHeader('Content-Type', 'application/json');
 
-    Bkper.setConfig({
-        oauthTokenProvider: process.env.NODE_ENV === 'development' ? async () => import('bkper').then(bkper => bkper.getOAuthToken()) : async () => httpContext.get(oauthTokenHeader),
-        apiKeyProvider: async () => process.env.BKPER_API_KEY || req.headers['bkper-api-key'] as string
-    })
+  const bkper = new Bkper({
+    oauthTokenProvider: async () => req.headers['bkper-oauth-token'] as string,
+    apiKeyProvider: async () => process.env.BKPER_API_KEY || req.headers['bkper-api-key'] as string
+  })
+
+  return new AppContext(httpContext, bkper);
+
 }
 
 async function handleEvent(req: Request, res: Response) {
 
-    init(req, res);
+  const context = init(req, res);
 
     try {
 
@@ -54,16 +55,16 @@ async function handleEvent(req: Request, res: Response) {
 
         switch (event.type) {
             case 'TRANSACTION_POSTED':
-                result = await new EventHandlerTransactionPosted().handleEvent(event);
+                result = await new EventHandlerTransactionPosted(context).handleEvent(event);
                 break;
             case 'TRANSACTION_CHECKED':
-                result = await new EventHandlerTransactionChecked().handleEvent(event);
+                result = await new EventHandlerTransactionChecked(context).handleEvent(event);
                 break;
             case 'TRANSACTION_UNCHECKED':
-                result = await new EventHandlerTransactionUnchecked().handleEvent(event);
+                result = await new EventHandlerTransactionUnchecked(context).handleEvent(event);
                 break;
             case 'TRANSACTION_DELETED':
-                result = await new EventHandlerTransactionDeleted().handleEvent(event);
+                result = await new EventHandlerTransactionDeleted(context).handleEvent(event);
                 break;
         }
 

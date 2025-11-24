@@ -1,20 +1,24 @@
 import { Account, AccountType, Amount, Book, Group, Transaction } from "bkper-js";
 import { EventHandlerTransaction } from "./EventHandlerTransaction.js";
-import { buildBookAnchor, getCOGSCalculationDateValue, getQuantity } from "./BotService.js";
 import { CREDIT_NOTE_PROP, EXC_CODE_PROP, GOOD_BUY_ACCOUNT_NAME, GOOD_PROP, GOOD_PURCHASE_COST_PROP, GOOD_SELL_ACCOUNT_NAME, NEEDS_REBUILD_PROP, ORDER_PROP, ORIGINAL_QUANTITY_PROP, PURCHASE_CODE_PROP, PURCHASE_INVOICE_PROP, SALE_AMOUNT_PROP, SALE_INVOICE_PROP, TOTAL_COST_PROP } from "./constants.js";
 import { Result } from "./index.js";
 import { InterceptorFlagRebuild } from "./InterceptorFlagRebuild.js";
+import { AppContext } from "./AppContext.js";
 
 export class EventHandlerTransactionChecked extends EventHandlerTransaction {
 
+    constructor(context: AppContext) {
+        super(context);
+    }
+
     async intercept(eventBook: Book, event: bkper.Event): Promise<Result> {
-        let response = await new InterceptorFlagRebuild().intercept(eventBook, event);
+        let response = await new InterceptorFlagRebuild(this.context).intercept(eventBook, event);
         return response;
     }
 
     // financial transaction had been already replicated in the inventory book
     protected async connectedTransactionFound(inventoryBook: Book, goodTransaction: Transaction): Promise<string | undefined> {
-        const bookAnchor = buildBookAnchor(inventoryBook);
+        const bookAnchor = this.botService.buildBookAnchor(inventoryBook);
         const record = `${goodTransaction.getDate()} ${goodTransaction.getAmount()} ${await goodTransaction.getCreditAccountName()} ${await goodTransaction.getDebitAccountName()} ${goodTransaction.getDescription()}`;
         return `FOUND: ${bookAnchor} ${record}`;
     }
@@ -23,7 +27,7 @@ export class EventHandlerTransactionChecked extends EventHandlerTransaction {
     protected async connectedTransactionNotFound(inventoryBook: Book, financialTransaction: bkper.Transaction, goodExcCode: string): Promise<string | undefined> {
         if (financialTransaction.debitAccount && financialTransaction.creditAccount && financialTransaction.date && financialTransaction.id && financialTransaction.properties) {
 
-            const quantity = getQuantity(financialTransaction);
+            const quantity = this.botService.getQuantity(financialTransaction);
             const purchaseInvoice = financialTransaction.properties[PURCHASE_INVOICE_PROP];
             const saleInvoice = financialTransaction.properties[SALE_INVOICE_PROP];
             const creditNote = financialTransaction.properties[CREDIT_NOTE_PROP];
@@ -60,7 +64,7 @@ export class EventHandlerTransactionChecked extends EventHandlerTransaction {
                     .setProperty(EXC_CODE_PROP, goodExcCode)
                     .post();
 
-                const inventoryBookAnchor = buildBookAnchor(inventoryBook);
+                const inventoryBookAnchor = this.botService.buildBookAnchor(inventoryBook);
                 const record = `${newTransaction.getDate()} ${newTransaction.getAmount()} ${inventoryAccount.getName()} ${inventoryAccount.getName()} ${newTransaction.getDescription()}`;
                 const needsRebuild = await this.checkLastTxDate(inventoryAccount, financialTransaction);
 
@@ -102,7 +106,7 @@ export class EventHandlerTransactionChecked extends EventHandlerTransaction {
                     .setProperty(TOTAL_COST_PROP, new Amount(financialTransaction.amount ?? 0).toString())
                     .post();
 
-                const inventoryBookAnchor = buildBookAnchor(inventoryBook);
+                const inventoryBookAnchor = this.botService.buildBookAnchor(inventoryBook);
                 const record = `${newTransaction.getDate()} ${newTransaction.getAmount()} ${inventoryBuyAccount.getName()} ${inventoryAccount.getName()} ${newTransaction.getDescription()}`;
                 const needsRebuild = await this.checkLastTxDate(inventoryAccount, financialTransaction);
 
@@ -138,7 +142,7 @@ export class EventHandlerTransactionChecked extends EventHandlerTransaction {
                     .setProperty(EXC_CODE_PROP, goodExcCode)
                     .post();
 
-                const inventoryBookAnchor = buildBookAnchor(inventoryBook);
+                const inventoryBookAnchor = this.botService.buildBookAnchor(inventoryBook);
                 const record = `${newTransaction.getDate()} ${newTransaction.getAmount()} ${inventoryAccount.getName()} ${inventoryAccount.getName()} ${newTransaction.getDescription()}`;
                 const needsRebuild = await this.checkLastTxDate(inventoryAccount, financialTransaction);
 
@@ -154,7 +158,7 @@ export class EventHandlerTransactionChecked extends EventHandlerTransaction {
     }
 
     private async checkLastTxDate(goodAccount: Account, transaction: bkper.Transaction): Promise<boolean> {
-        let lastTxDate = getCOGSCalculationDateValue(goodAccount);
+        let lastTxDate = this.botService.getCOGSCalculationDateValue(goodAccount);
         if (lastTxDate != null && (transaction.dateValue != undefined && transaction.dateValue <= +lastTxDate)) {
             await goodAccount.setProperty(NEEDS_REBUILD_PROP, 'TRUE').update();
             return true;

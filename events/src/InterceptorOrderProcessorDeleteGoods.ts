@@ -1,10 +1,14 @@
 import { Account, AccountType, Book, Transaction, Amount } from "bkper-js";
 import { Result } from "./index.js";
 import { InterceptorOrderProcessorDelete } from "./InterceptorOrderProcessorDelete.js";
-import { getExchangeCodeFromAccount, getFinancialBook } from "./BotService.js";
 import { NEEDS_REBUILD_PROP, ORIGINAL_QUANTITY_PROP } from "./constants.js";
+import { AppContext } from "./AppContext.js";
 
 export class InterceptorOrderProcessorDeleteGoods extends InterceptorOrderProcessorDelete {
+
+    constructor(context: AppContext) {
+        super(context);
+    }
 
     async intercept(inventoryBook: Book, event: bkper.Event): Promise<Result> {
 
@@ -45,8 +49,8 @@ export class InterceptorOrderProcessorDeleteGoods extends InterceptorOrderProces
             return { result: false };
         }
 
-        const goodExcCode = await getExchangeCodeFromAccount(goodAccount);
-        const financialBook = await getFinancialBook(inventoryBook, goodExcCode);
+        const goodExcCode = await this.botService.getExchangeCodeFromAccount(goodAccount);
+        const financialBook = await this.botService.getFinancialBook(inventoryBook, goodExcCode);
 
         // deleted transaction is the sale transaction: delete COGS transaction in financial book
         responses = financialBook && transactionPayload ? await this.cascadeDeleteFinancialTransactions(financialBook, transactionPayload) : undefined;
