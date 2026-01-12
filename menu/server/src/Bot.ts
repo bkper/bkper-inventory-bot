@@ -1,4 +1,5 @@
 BkperApp.setApiKey(PropertiesService.getScriptProperties().getProperty('API_KEY'));
+BkperApp.setAgentId('inventory-bot');
 
 /**
 * Object to pass server parameters to client side
